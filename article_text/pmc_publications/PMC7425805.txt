@@ -1,0 +1,691 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101262635
+32661
+J Mach Learn Res
+J Mach Learn Res
+Journal of machine learning research : JMLR
+1532-4435
+1533-7928
+
+32802002
+7425805
+NIHMS1605534
+Article
+A Regularization-Based Adaptive Test for High-Dimensional Generalized Linear Models
+Wu Chong *Department of Statistics, Florida State University, FL, USA
+
+Xu Gongjun Department of Statistics, University of Michigan, MI, USA
+
+Shen Xiaotong School of Statistics, University of Minnesota, MN, USA
+
+Pan Wei *Division of Biostatistics, University of Minnesota, MN, USA
+
+* C.W. and W. P. are the corresponding authors. CWU3@FSU.EDU, PANXX014@UMN.EDU
+26 7 2020
+2020
+26 7 2020
+13 8 2020
+21 128This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+In spite of its urgent importance in the era of big data, testing high-dimensional parameters in generalized linear models (GLMs) in the presence of high-dimensional nuisance parameters has been largely under-studied, especially with regard to constructing powerful tests for general (and unknown) alternatives. Most existing tests are powerful only against certain alternatives and may yield incorrect Type I error rates under high-dimensional nuisance parameter situations. In this paper, we propose the adaptive interaction sum of powered score (aiSPU) test in the framework of penalized regression with a non-convex penalty, called truncated Lasso penalty (TLP), which can maintain correct Type I error rates while yielding high statistical power across a wide range of alternatives. To calculate its p-values analytically, we derive its asymptotic null distribution. Via simulations, its superior finite-sample performance is demonstrated over several representative existing methods. In addition, we apply it and other representative tests to an Alzheimer’s Disease Neuroimaging Initiative (ADNI) data set, detecting possible gene-gender interactions for Alzheimer’s disease. We also put R package “aispu” implementing the proposed test on GitHub.
+
+Adaptive Test
+Truncated Lasso Penalty
+Gene-Environmental Interaction
+
+pmc1. Introduction
+
+Statistical inference in high-dimensional models has been attracting increasing attentions, owing to the surge of high-dimensional data in many fields, such as in genetics and genomics. Accordingly, there is an increasing body of literature on significance testing in high-dimensional linear or generalized linear models (GLMs), mostly on low-dimensional regression coefficients. For example, Wasserman and Roeder (2009); Meinshausen et al. (2009) proposed random sample-splitting approaches to testing on a regression coefficient of interest in a high-dimensional model. Based on the idea of polyhedral selection, Lee et al. (2016) proposed an exact post-selection estimator conditional on the selection event. Meanwhile, many researchers exploit the idea of projection or bias-correction to handle the impact of regularization and high-dimensional nuisance parameters (e.g., Javanmard and Montanari, 2014; Van de Geer et al., 2014; Zhang and Zhang, 2014; Lee et al., 2016; Shi et al., 2019; Ma et al., 2020). In spite of exciting progresses in the last few years, little work has been done to construct more general and powerful tests on high-dimensional regression coefficients in GLMs in the presence of high-dimensional nuisance parameters.
+
+It is noted that, for high-dimensional problems, classical or popular tests may not perform well, even if their asymptotic properties (such as their null distributions) are well established. Fan (1996) gave a simple example: given a p-dimensional vector follows a normal distribution, y ∼ N (θ, I), to test H0: θ = 0 versus HA: θ ≠ 0, the likelihood ratio test, Wald test, and score test statistics all share the same form T=‖y‖22, which is a sum of squares-type statistic; even under an alternative HA with ‖θ‖22→∞ as p → ∞, as long as ‖θ‖22=o(p), the power of the three tests vanishes (i.e. tending to the Type I error rate); in contrast, some adaptive tests can be much more powerful. This example convincingly demonstrates the importance of considering the power of a test in high-dimensional settings and this article aims at filling this gap.
+
+This work was motivated by a critical problem in genetics to identify interaction effects between a genetic marker set and a complex disease like Alzheimer’s. Although univariate single nucleotide polymorphism (SNP) based analyses for identifying gene-environment (G × E) interactions are popular in the community, relatively few of the findings have been replicated (Manuck and McCaffery, 2014). To improve statistical power and enhance results interpretation, many genetic association studies have now considered an alternate/supplementary approach to jointly test the interaction effect of all SNPs in a biological meaningful marker set, e.g., SNPs in a gene or a pathway (Lin et al., 2013, 2016; Su et al., 2017). Jointly testing the interaction effect of a marker set can be formulated as testing on a high-dimensional parameter (i.e., interactions between possibly high-dimensional genetic variants and environmental factors) in the presence of high-dimensional nuisance parameters (to adjust for the main effects of the genetic variants and other covariates) under a high-dimensional GLM. Since such interactions in human genetics have proven difficult to detect, while specific interaction patterns are largely unknown, it is critical to develop and apply more general and adaptive tests that are powerful across a wide range of unknown alternatives.
+
+To account for impact of high-dimensional nuisance parameters in G × E interactions testing problems, some variance-component score tests with the sum of squares-type statistics, coupled with the ridge regression to estimate the nuisance parameters under the null, have been proposed (Lin et al., 2013, 2016; Su et al., 2017). For example, Lin et al. (2013) proposed a test called gene-environment set association test (GESAT) by assuming that the G × E interaction effects follow an unspecified distribution with mean 0 and variance υ2, then testing H0 : υ2 = 0 for the overall G × E interaction. By noting that the ridge estimator is n-consistent under suitable conditions (Knight and Fu, 2000), they derived the theoretical null distribution for GESAT. While enticing, the n-consistency of the ridge estimator or asymptotic normality of the score vector may not be applicable under high-dimensional situations with finite samples, leading to incorrect Type I error rates. As to be shown in simulations, as the number of the covariates increases, methods based on the ridge penalty yield incorrect Type I error rates and substantial power loss.
+
+Meanwhile, bias-correction based methods have been proposed (Dezeure et al., 2017; Zhang and Cheng, 2017). For example, inspired by the desparsifying Lasso estimator (Van de Geer et al., 2014) and the data-splitting strategy (Wasserman and Roeder, 2009), Zhang and Cheng (2017) proposed a three-step bootstrap-assisted procedure based on a supremum-type statistic to test on high-dimensional regression coefficients in high dimensional regression models. This method can control the Type I error rate well and yield high statistical power under highly sparse alternatives. However, due to the accumulation of estimation errors of the desparsifying Lasso estimator, the estimation errors might be out of control if a burden-type or sum of squares-type statistic is used (Zhang and Cheng, 2017). Moreover, although the data-splitting strategy adopted therein helps control the Type I error rate, it reduces the power as well.
+
+To address those challenges, we propose an adaptive test, referred to as adaptive interaction sum of powered score (aiSPU) test, for testing high-dimensional regression coefficients under GLMs with high-dimensional nuisance parameters. The aiSPU test is new and appealing in two aspects. First, in aiSPU we apply the truncated Lasso penalty (TLP) (Shen et al., 2012), a non-convex penalty, to estimate the high-dimensional nuisance parameter under the null hypothesis. The TLP estimator consistently reconstructs the oracle estimator under mild assumptions, helping maintain correct Type I error rates under a high-dimensional situation. In contrast, the consistency of a convex penalty-based estimator, such as the ridge or Lasso estimator, holds under much stronger conditions. For example, the Lasso estimator is consistent under a strong irrepresentable (Wainwright, 2009), while the ridge estimator is consistent under the assumption that the sample covariance matrix of all the covariates converges to a non-singular matrix (Knight and Fu, 2000). Second, because the true alternative hypothesis is generally complex and unknown, we apply the idea of an adaptive testing (Pan et al., 2014). We first construct a group of interaction sum of powered score (iSPU) tests such that hopefully at least one of them would be powerful for a given alternative. The proposed adaptive test then data-adaptively selects the one with the most significant result with a proper adjustment for multiple testing to control the Type I error rate, and thus achieves high power.
+
+To apply the proposed test, we establish its asymptotic null distribution. In particular, we derive the joint asymptotic distribution for a set of the iSPU tests. The marginal distribution of each iSPU test statistic converges to either a normal distribution or an extreme value distribution under some conditions. Based on the theoretical results, we develop an asymptotic way to calculate the p-values for the iSPU and aiSPU simultaneously. We demonstrate the superior performance of the proposed test with some theoretical power analyses under local alternatives. Further, as to be shown in simulations and real data analyses, the proposed aiSPU test would yield correct Type I error rates and higher statistical power than several existing methods under a wide range of high-dimensional alternative hypotheses, ranging from highly dense to highly sparse alternatives.
+
+The rest of the paper is organized as follows. In Section 2, we review two representative tests before proposing our new aiSPU test. Results for simulations and analysis of the Alzheimer’s Disease Neuroimaging Initiative (ADNI) data are presented in Sections 3 and 4, respectively. We conclude with a short discussion in Section 5. All technical details, proofs, and extensive simulation results are relegated to Appendices. We have released open source R package aispu implementing the proposed test on GitHub (https://github.com/ChongWu-Biostat/aispu), and will upload it to CRAN soon.
+
+2. Methods
+
+2.1. Notation and model
+
+Even though our study was motivated by detecting gene-environmental interactions, our proposed method is general and applicable to many other problems, thus we introduce our method in a general framework. Suppose we have n independent and identically distributed (IID) observations {(Yi,Zi,Xi):i=1,2,…,n}, for which we denote an n-vector outcome (response)Y=(Y1,…,Yn)′, an n × q matrix ℤ=Z′(Z1',…,Zn')′ for q nuisance covariates (including the intercept term) with Zi=(Zi1,…,Ziq), and an n×p matrix X=(X1',..,Xn')′ for p variables of interest with Xi=(Xi1,…,Xip). Without loss of generality, we assume that E(Xi) = 0 as otherwise each Xi can be re-centered by its sample mean. We consider a generalized linear model with the canonical link function, (1) E(Y|X,ℤ)=g−1(Xβ+ℤϑ),
+
+where p-vector β and q-vector ϑ are unknown parameters, and g is the canonical link function. We are interested in testing (2) H0:β=0   versus  H1:β≠0,
+
+while treating ϑ as the high-dimensional nuisance parameter. We target the situation with “large q and p.”
+
+Remark 1 Numerous real-world problems can be formulated as testing high-dimensional parameters under GLMs in the presence of high-dimensional nuisance parameters. For example, when testing the interaction between a genetic marker set and a set of environmental variables, we can let ℤ be the environmental factors, genotypes in the marker-set, and some important covariates, and let X be the SNP-environment interaction variables. Here we consider a large number of SNPs in a marker-set, leading to high-dimensional q and p. Another example is testing gene-gene interactions (Cordell, 2009), a problem can be formulated with ℤ being all the SNPs from two genes and X being their interactions.
+
+2.2. Related existing methods
+
+In this subsection, we review two representative methods: a variance component type test called GESAT (Lin et al., 2013) and a bias-correction based test (Zhang and Cheng, 2017).
+
+By assuming βj’s follow an arbitrary distribution with mean zero and variance υ2, GESAT converts testing H0 : β = 0 to testing H0′:v2=0, which can be conducted via the following sum of squares-type statistic:Q=(Y−μ(ϑ^))′XX′(Y−μ(ϑ^)), where μ(ϑ^)=g−1(ℤϑ^) and ϑ^ is estimated under the null model, (3) E(Y|ℤ)=g−1(ℤϑ).
+
+To account for high-dimensionality of ϑ, GESAT applies the ridge regression to estimate ϑ under the null model (3). Using the property that the ridge estimator ϑ^ is n-consistent under suitable conditions (Knight and Fu, 2000), they showed that test statistic Q asymptotically follows a mixture of χ2 distributions under the H0, thus p-values can be calculated accordingly (Lin et al., 2013).
+
+Meanwhile, a three-step bootstrap-assisted procedure (Zhang and Cheng, 2017) has been proposed to test on H0. First, it randomly splits the sample into two sub-samples. Second, it screens out the irrelevant variables of X based on the first sub-sample. After screening, denote the reduced model S={j:j∉{irrelevant variables}}. Third, it computes the desparsifying Lasso estimator {β∨j}j∈S and the corresponding variance estimator w∨jj based on the second sub-sample. The non-studentized (NST) and studentized (ST) supremum type statistic are maxj∈Sn|β∨| and maxj∈Sn|β∨j|/w∨jj, respectively. Zhang and Cheng (2017) then applied a bootstrap-assisted procedure to calculate their p-values.
+
+Though appealing, both tests have limitations. First, a test based on the ridge penalty (such as GESAT) might yield incorrect Type I error rates when the dimensionality of nuisance parameters ϑ (i.e., q) is high. Note that the null distribution of GESAT is derived based on the n-consistent ridge estimator, which requires that the sample covariance matrix of Zi converges to a non-singular matrix (Knight and Fu, 2000); this assumption will not hold when q &gt; n. This may explain incorrect Type I error rates of GESAT as to be shown in simulations. Second, the existing tests might be powerless under some alternatives. It is well known that a sum of squares-type statistic (for example, GESAT) and a supremum-type statistic (for example, NST and ST) are more powerful for dense and highly sparse nonzero signals, respectively (Pan et al., 2014). However, for moderately dense nonzero signals, neither may be powerful: there might not exist one or few components of β to represent a strong departure from H0, whereas a sum of squares statistic might accumulate too much noises or estimation errors through summing over the non-informative components. Furthermore, both NST and ST only use a sub-sample to construct test statistics, further reducing power. As to be shown in simulations, the above methods would lose substantial power under some alternatives.
+
+2.3. New test statistics
+
+There are two main challenges for constructing a powerful test in a high-dimensional setting. First, estimating the high-dimensional ϑ under H0 is not trivial. Second, because the underlying association patterns are unknown, it is crucial to construct an adaptive test such that it can maintain high power across a wide range of alternatives.
+
+To accurately estimate the high-dimensional ϑ under the null model (3), we apply penalized regression by imposing the truncated Lasso penalty (TLP) (Shen et al., 2012) on the nuisance parameter ϑ. For gene-environmental interaction problems, we can impose no penalty on a subset of some pre-specified low-dimensional covariates to keep some important covariates, such as age and gender. TLP is defined as TLP(x,τ)=min(|x|,τ) for a scalar x and a tuning parameter τ. It can be regarded as the Lasso penalty for a small |x|≤τ, but imposes no penalty for a large |x|&gt;τ. We use 10-fold cross-validation to select the tuning parameters for TLP and denote ϑ^ as the TLP estimate of ϑ under H0.
+
+To maintain high power across various alternatives, we construct an adaptive test. Up to some constant, the score vector U=(U1,…,Up)′ for β in (1) is Uj=1n∑i=1n(Yi−μ^0i)Xij for 1 ≤ j ≤ p, where μ^0i=g−1(Ziϑ^). Denote Uij=(Yi−μ^0i)Xij
+
+for 1 ≤ i ≤ n and 1 ≤ j ≤ p. We first propose a class of test statistics called interaction sum of powered score (iSPU) with power index γ &gt; 0 as L(γ)=∑j=1p(1n∑i=1nUij)γ.
+
+Since L(γ)1/γ→max1≤i≤p|1n∑i=1nUij| as even integer γ → ∞, we define L(∞) as L(∞)=max1≤j≤pn(1n∑i=1nUij)2σ∨jj,
+
+where Σ∨=(σ∨kj)p×p is the covariance matrix with σ∨kj=cov[U1k,U1j] for 1 ≤ k, j ≤ p.
+
+As to be shown in simulations, the power of L(γ) depends on the unknown β under specific alternatives. Since in general there is no uniformly most-powerful test, to maintain high power across various alternatives, we propose the adaptive interaction sum of powered score (aiSPU) to combine the multiple iSPU tests with different γ: TaiSPU=minγ∈ΓPL(γ),
+
+where PL(γ) is the p-value for L(γ) and Γ contains the candidate values of γ, e.g., Γ={1,2,…,6,∞}. We take the minimum p-value to approximately select the most powerful candidate test; TaiSPU is the test statistic, but no longer a genuine p-value.
+
+To emphasize the penalty we use, in some places, we denote iSPU(γ) and aiSPU explicitly with the penalty, say TLP, as iSPU(TLP,γ) and aiSPU(TLP), respectively.
+
+Remark 2 Accurate estimation of ϑ under the null is crucial in the situation with a high-dimensional nuisance parameter. Because the n-consistency of the ridge estimator may not hold under a (relatively) high-dimensional situation, a test coupled with ridge regression may yield incorrect Type I error rates. The estimation errors of the desparsifying Lasso estimator might be out of control if a burden-type or sum of squares-type statistic is used (Zhang and Cheng, 2017), while the three-step bootstrap-assisted procedure based on a supremum-type statistic will not be powerful under dense alternatives. In contrast, because TLP enjoys the selection consistency and optimal parameter estimation under some mild conditions (Shen et al., 2012), aiSPU controls Type I error rates and achieves high power under a wide range of high-dimensional situations.
+
+Remark 3 The proposed aiSPU test can be viewed as an extension of the aSPU test (Wu et al., 2019) to high-dimensional nuisance parameter situations. The aSPU test was proposed for the situations with large p but small q, while the aiSPU test targets situations with large p and large q. Thus, the Type I error rate can be controlled by aiSPU, but not by aSPU in high-dimensional nuisance parameter situations (large q).
+
+Remark 4 Our proposed test may share some limitations of the standard score test with possible loss of power under HA, which can be fixed by taking an approach as shown in Wang (2016).
+
+2.4. Asymptotic null distribution
+
+In this subsection, we derive the asymptotic null distribution for iSPU. Before stating the theorem, we define necessary notation as follows. Let μ0≡(μ01,…,μ0n)′ be the conditional mean of Y under H0, where μ0i=E(Yi|H0)=E(Yi|Zi)=g−1(Ziϑ0) and ϑ0 is the population value of ϑ. Write Sij=(Yi−μ0i)Xij for 1 ≤ i ≤ n and 1 ≤ j ≤ p. We further define the corresponding covariance matrix Σ=(σkj)p×p with σkj=Cov[S1k,S1j] for 1 ≤ k, j ≤ p. For simplicity, we denote L(γ,μ0)=∑j=1pL(j)(γ,μ0) with L(j)(γ,μ0)=(1n∑i=1nSij)γ for 1 ≤ i ≤ n and 1 ≤ j ≤ p. Then the mean and variance of L(γ, µ0) can be denoted by ψ(γ)=∑j=1pψ(j)(γ) with ψ(j)(γ)=E[L(j)(γ,μ0)|H0], and by ω2(γ)=var[L(γ,μ0)|H0], respectively.
+
+Theorem 1 shows that (1) each iSPU(γ) converges to either a normal distribution or an extreme value distribution; (2) iSPU(∞) and iSPU with a finite γ are asymptotically independent under the H0.
+
+Theorem 1. Under assumptions C1–C7 stated in Appendix A and under the null hypothesis
+
+H0, for any fixed and finite Γ set we have: For finite candidate values γ in Γ, that is, Γ′=Γ\{∞}, the vector of the iSPU test statistics [{L(γ)−ψ(γ)}/ω(γ)]γ∈Γ′' converges weakly to a normal distribution with mean 0 and covariance matrix R(Γ′)=(ρst), i.e., N(0,R(Γ′)) as n, p → ∞, where ψ(γ), ω(γ), and R(Γ′) are defined in Appendix B.
+
+For γ = ∞, let ap = 2 log p − log log p, for any real number x, Pr{L(∞)−ap≤x}→exp{−π−1/2exp(−x/2)}.
+
+[{L(γ)−ψ(γ)}/ω(γ)]γ∈Γ′' is asymptotically independent of L(∞), that is, the joint distribution of [{L(γ)−ψ(γ)}/ω(γ)γ∈Γ′'] and L(∞) − ap converges weakly to the product of the limiting distributions given in (i) and (ii).
+
+Remark 5 We leave the technical details and assumptions into the Appendices A–C. Intuitively speaking, L(γ, µ0) with a finite γ follows a normal distribution asymptotically when Sij1 and Sij2 are independent for j1 ≠ j2. Under moment assumptions that put constraints on correlation structures, we prove that the asymptotically normal still holds for L(γ) with a finite γ and a TLP-based estimate ϑ^. For L(∞), we derive its distribution based on theorems in Cai et al. (2014). Of note, Wu et al. (2019) derived a similar Theorem under a much simpler context; our current proof is different and more challenging due to the technical complications under the adopted penalized regression framework to deal with the presence of high-dimensional nuisance parameters.
+
+Remark 6 In Theorem 1, we assume technical assumptions, such as a sparsity assumption regarding the effect from ℤ (C3) and a feature selection assumption involving Hellinger distance (C7). Because C7 is hard to validate in practice, we propose a stronger than needed beta-min like condition C7*, which is a sufficient assumption for C7. As to be shown in simulations, when the effect from ℤ is non-sparse but with sparse strong signals, our proposed method still works. In other words, under situations where C3 and C7* have been violated but C7 might hold, our proposed method still works.
+
+These technical assumptions are used to establish the difference between µ0 and μ^0 is a small order term, which can be ignored in the theoretical derivation. Once we have a good estimate of the conditional mean of Y under H0 (i.e., µ0), our proposed method works. In principle, our proposed aiSPU test can be extended to consider higher-order interactions within ℤ if µ0 can be well estimated. We leave this interesting topic for future study.
+
+Next, we briefly discuss how to calculate p-values and leave the detailed procedures into the Appendix B. According to Theorem 1, we can calculate p-values asymptotically. The p-values for individual iSPU(γ) can be calculated via either a normal or an extreme value distribution. The p-value for aiSPU can be calculated by the following two steps. First, by cov[L(t,μ0),L(s,μ0)]=o(pn−(t+s)/2) if s+t is odd and by Theorem 1 part three, iSPU with even γ, odd γ, γ = ∞ are asymptotically independent to each other (see Appendix B for details). Because for a finite γ, L(γ)−ψ(γ)/ω(γ) follows a standard normal distribution, taking the minimum p-value as test statistics equals to taking the maximum of |L(γ)−ψ(γ)|/ω(γ) as the test statistics. Further define tO=maxodd  γ∈Γ|(L(γ)−ψ(γ))|/ω(γ) and tE=maxeven  γ∈Γ(L(γ)−ψ(γ))/ω(γ) as the observed test statistics from the data and calculate the p-values for tO, tE, and L(∞) as pO=Pr[maxodd  γ∈Γ|(L(γ)−ψ(γ))/ω(γ)|&gt;tO], pE=Pr[maxeven  γ∈Γ(L(γ)−ψ(γ))/ω(γ)&gt;tE], and p∞ equals to the p-value of iSPU(∞). Specifically, we use pmvnorm() in R package mvrnorm to calculate the normal tail probabilities of pO and pE. Second, we take the minimum p-value from the above three categories, that is, pmin=min{pO,pE,p∞}. By the asymptotic independence among pO, pE, and p∞, the asymptotic p-value for the aiSPU test is paiSPU=1−(1−pmin)3.
+
+Of note, calculating ψ(γ), ω(γ) and R(Γ′) involves Σ=(σkj), which is unknown and has to be estimated in practice. We apply either the banding method of Bickel and Levina (2008) or a parametric bootstrap-based method to estimate covariance matrix Σ (see Remark S2 in Appendix B for details).
+
+Meanwhile, we can calculate p-values by the parametric bootstrap (see Appendix B for details). The parametric bootstrap may estimates more accurately the p-values than the asymptotics-based method, but it is highly computational extensive, especially at a high significance level. To facilitate data analyses in the wider community, we have developed an R package “aispu”, implementing both methods.
+
+Remark 7 We recommend using the asymptotic-based method when p is large and using the parametric bootstrap-based method when p is small. Our proposed asymptotic-based method may have a better performance when p is large due to two reasons. First, residual bootstrap and pairs bootstrap are known to be problematic under a high-dimensional setting (El Karoui and Purdom, 2018). We expect that parametric bootstrap may have a similar problem when p is large. Second, by Theorem 1, estimation error can be ignored as both n and p go to infinity. On the other hand, when p is small, the parametric bootstrap-based method may achieve superior performance than the asymptotic-based method because the asymptotic theory in Theorem 1 may not hold.
+
+2.5. Asymptotic power analysis
+
+We analyze the asymptotic power of the aiSPU test. Under an alternative HA:β≠0, we first derive approximations to the mean and variance of L(γ, µ0) with γ &lt; ∞, denoted by ψA(γ)=E[L(γ,μ0)|HA] and by ωA2(γ)=var[L(γ,μ0)|HA], respectively. Then we derive the asymptotic power under a local alternative. In the end, we discuss the choice of the Γ set. To save space, we put technical details into the Appendix D.
+
+First, we define some necessary notations. Let β0 be the true value of β and μ0A≡(μ01A,…,μ0nA)′ with μ0iA=E(Yi|Xi,Zi;HA)=g−1(Xiβ0+Ziϑ0) being the conditional mean of Yi under HA. We further define ψ˜(γ)=E[L(γ,μ0A)|HA] and ω˜2(γ)=var[L(γ,μ0A)|HA].
+
+The high dimensionality of Xi makes the identification of the leading order term of the test statistic L(γ) quite challenging. Here, we consider a local alternative such that for j=1,2,…,p, Δj=E[(μ01A−μ01)X1j]=O(n−1/2(logp)κ) with κ &gt; 0, which allows the identification of the leading order term. This condition restricts that ∆j is a small term, which further implies that ψA(γ)−ψ˜(γ) and ωA2(γ)−ω˜2(γ) are relatively small. Under the local alternative, we denote the set of locations of the signal variables by Sη={j:Δj≠0;1≤j≤p} and the cardinality of Sη by p1−η, where 0 ≤ η ≤ 1 is the parameter controlling the sparsity level.
+
+We now analyze the power of the proposed aiSPU test. Let pα be the critical threshold for the aiSPU test under H0 with the significance level α. Because TaiSPU=minγ∈ΓPL(γ) the statistical power under HA satisfies Pr(TaiSPU=minγ∈ΓPiSPU(γ)&lt;pα)≥Pr(PiSPU(γ)&lt;pα). Thus the asymptotic power of aiSPU is 1 if there exists a γ ∈ Γ such that Pr(PiSPU(γ)&lt;pα)→1. In other words, to study the asymptotic power of the aiSPU, we only need to discuss the power of iSPU(γ) for γ ∈ Γ. For that purpose, Theorem 2 shows the asymptotic distribution of L(γ, µ0) with any finite and fixed γ under 0 ≤ η &lt; 1/2.
+
+Theorem 2. Under the assumptions C8–C9 in Appendix A and the alternative HA with 0 ≤ η &lt; 1/2 and Δj=O(n−1/2(logp)κ) with κ &gt; 0, for any fixed and finite Γ′ set, [{L(γ,μ0)−ψA(γ)}/ωA(γ)]γ∈Γ′' converges weakly to a multivariate normal distribution with mean zero as n, p → ∞.
+
+Remark 8 Under the local alternative 0 ≤ η &lt; 1/2, by noting that (logp)cκ/pη=o(1), we have ψA(γ)−ψ˜(γ)=∑j=1p∑c=1γ(γc)ΔjcO(n−(γ−c)/2)=o(pn−γ/2). Similarly, we have ωA2(γ)−ω˜2(γ)=o(pn−γ). Then a proof similar to that of Theorem 1 for any fixed and finite Γ set (part one) yields Theorem 2.
+
+For simplicity, we assume µ0 is known under HA and derive Theorem 2 with L(γ) = L(γ, µ0). While this simplification ignores the estimation errors of μ^0 and thus induces a gap between Theorem 2 and our proposed test, Theorem 2 still provides useful insights regarding which iSPU(γ) achieves the highest power under different alternatives. These insights are in line with our simulation results. To establish Theorem 2 with estimated μ^0 is quite challenging because we need to estimate and quantify the estimation error of μ^0 under a misspecified model, which is unknown and an interesting question. We leave it for future research.
+
+Theorem 2 gives the asymptotic power of iSPU(γ) at the significance level pα as Pr(PiSPU(γ)&lt;pα)={Φ{ψA(γ)−ψ˜(γ)−zpαω˜(γ)wA(γ)},γ is even,Φ{ψA(γ)−ψ˜(γ)−zp α/2ω˜(γ)wA(γ)}+Φ{−ψA(γ)−ψ˜(γ)−zp  α/2ω˜(γ)wA(γ)},γ is odd,
+
+where Φ and zpα is the standard normal cumulative distribution function and its (1 − pα)th quantile, respectively. Because ω˜(γ)/ωA(γ) is bounded, the asymptotic power of iSPU(γ) is mainly determined by {ψA(γ)−ψ˜(γ)}/ωA(γ). Further note that ωA(γ) is of order p1/2n−γ/2 and thus the power goes to 1 if (ψA(γ)−ψ˜(γ))nγ/2p−1/2→∞. In particular, the asymptotic power of iSPU(1) and iSPU(2) goes to 1 if p−1/2n1/2∑iΔi→∞ and p−1/2n∑iΔi2→∞, respectively.
+
+Note that iSPU(∞) is expected to lose power substantially when maxj |∆j| is small, i.e., maxj|Δj|=o(log(p)1/2n−1/2)(Cai et al., 2014), while iSPU(1) and iSPU(2) are expected to be powerful under dense but weak signals (e.g., maxj|Δj|=o(n−1/2)) alternatives. Thus, we discuss dense alternatives (0 ≤ η &lt; 1/2) and sparse alternatives (η ≥ 1/2) separately.
+
+Under different dense alternatives, different iSPU(γ) tests achieve the highest power. To further study the power of different iSPU tests and gain insights about how to choose the Γ set, we consider a particular alternative where the ∆j is fixed at the same level. To be specific, we consider the local alternative such that Δ1=⋯=Δp=Δ=n−1/2r1/2, where r → 0 as n, p → ∞. As shown in the Appendix D, under this alternative, iSPU(1) is more powerful than any other iSPU(γ) tests. Similarly, we show that iSPU(2) is asymptotically more powerful than other iSPU(γ) tests under the alternative where the absolute values of the ∆j are the same but about half being positive while the other half being negative.
+
+We then briefly discuss the sparse alternatives with η &gt; 1/2. Under the sparse HA with η ≥ 1/2, any iSPU test with a finite γ loses power. For example, for any η &lt;1/2, the power of iSPU(1) converges to 1 when p−1/2n1/2∑jΔj→∞; however, Δj=O(n−1/2(logp)κ) and ∑jΔj=p1−ηO(n−1/2(logp)κ), leading to p−1/2n1/2∑jΔj~p1/2−η(logp)κ→0 when η &gt; 1/2. Thus the asymptotic power of iSPU(1) is strictly less than 1 when η ≥ 1/2. For other finite γ, we have similar results. On the other hand, a supremum-type test like iSPU(∞) is known to be powerful against sparse alternatives (Cai et al., 2014), therefore, the asymptotic power of aiSPU is 1 if that of iSPU(∞) converges to 1.
+
+Overall, we recommend including small γ values such as 1, 2 to maintain high power under dense alternatives. As to be shown in simulations, iSPU with a medium γ value is often the most powerful in a finite sample. To achieve a balance between the asymptotic and finite-sample performances, including medium γ values such as 3,…,6 in Γ is recommended. This recommendation is also supported by our previous studies (Xu et al., 2016; Wu et al., 2019). Because iSPU(∞) is powerful under the sparse alternative, we recommend including ∞ in Γ. In summary, we recommend use Γ={1,2,…,6,∞} as our default setting.
+
+3. Simulations
+
+3.1. Simulation settings
+
+To facilitate fair and unbiased comparisons, we adopted the simulation settings similar to those in Lin et al. (2013); Zhang and Cheng (2017).
+
+Simulation settings for G × E interactions.
+
+We simulated genotypes as in Wang and Elston (2007). First, a latent vector s=(s1,…,sp)′ was generated from a multivariate normal distribution N(0,V), where V=(Vkj) had a first-order autoregressive covariance structure with Vkj=ρ|k−j|. Second, a haplotype was generated by dichotomizing the latent vector s with some pre-specified minor allele frequencies (MAFs), each of which was randomly sampled from a uniform distribution between 0.1 and 0.3 for common variants (unless otherwise stated for rare variants). Third, the above two steps were repeated to generate two independent haplotypes and for subject i, the genotype value Gi=(Gi1,…,Gip)′ was the sum of the two haplotypes. We set ρ = 0 to generate independent SNPs unless otherwise stated.
+
+As in Lin et al. (2013), we generated a binary outcome by the following logistic regression model logit[P(Yi=1|Zi,Ei,Gi)]=ϑ0+ϑ1Z1i+ϑ2Z2i+ϑ3Ei+ϑ4'Gi+β′Gi×Ei,
+
+where ϑ0 = log(0.4/0.6), ϑ1 = 0.05, ϑ2 = 0.057, ϑ3 = 0.64, and ϑ4=(0.4,…,0.4︸q1,−0.4,…,−0.4︸q2,0,…,0)′︸p−q1−q2.
+
+Z1 was generated from a normal distribution while Z2 was generated from a Bernoulli distribution. Environmental variable E was generated from a Bernoulli distribution, taking on 1 and −1 with an equal probability. Gi × Ei is the gene-environmental interaction for subject i. As in a case-control study, we sampled n/2 cases and n/2 controls in each data set. We were interested in testing H0 to see whether there is any gene-environment interaction. Under HA, the gene-environmental interaction effect patterns are generally complex and unknown. For example, for xeroderma pigmentosum, there is no main genetic effect, but both environmental (ultraviolet light) effect and gene-environmental interaction effect exist (Hunter, 2005). To consider various scenarios, we randomly chose ⌊ps⌋ elements in β to be non-zero and their values were generated from a uniform distribution U (−c, c) unless otherwise stated.
+
+Simulation settings for high-dimensional linear models.
+
+We generated Xn×p and ℤn×q from a multivariate normal distribution; that is, we had independent draws Xi~N(0,Ξ1) and Zi~N(0,Ξ2) for i=1,…,n, where Ξ1 and Ξ2 were block diagonal symmetric matrices. The response Y was generated from a high-dimensional linear model: Y=ℤϑ+Xβ+ϵ,
+
+where ϑ=(ϑ1,…,ϑq)′, β=(β1,…,βp)′, and each element of ϵ followed a standard normal distribution. We set ϑ1 = ϑ2 = 0.4 and other ϑj = 0. We considered testing H0 and HA in (2).
+
+Under HA, ⌊ps⌋ elements in β were set to be non-zero, where s ∈ [0, 1] controlled the level of signal sparsity. The indices of non-zero elements of β were uniformly distributed, and their values were generated from a uniform distribution U (−c, c) unless specified otherwise. We set n = 200, q = 1000, and p = 1000.
+
+For each simulation setting, we generated 1,000 data sets to evaluate the empirical size and power at the significance level α = 0.05. The candidate set of γ for the aiSPU was taken to be Γ={1,…,6,∞} unless otherwise stated.
+
+To evaluate the effect of penalization, we further presented the results of aiSPU with two different ways of estimating the nuisance parameter ϑ under H0. First, we considered the oracle estimator, which is defined as the MLE with the knowledge/oracle about which covariates are non-informative (i.e. their effect size is 0) under H0, denoted as aiSPU(Oracle). Second, under the situation with n &gt; p, we considered using the MLE to estimate ϑ, denoted as aiSPU(Full). Note that aiSPU(Full) equals to the aSPU (Wu et al., 2019).
+
+For comparison, under G × E interaction settings, we applied GESAT (Lin et al., 2013) for common variants, and applied both iSKAT (Lin et al., 2016) and MiSTi (Su et al., 2017) for rare variants. To confirm that the theoretical null distribution of GESAT may not hold under a relatively high-dimensional situation, we calculated the p-value of GESAT by a simulation-based method, denoted as GESAT-sim. As a benchmark, we further considered the univariate minimum p-value (UminP) test, which first tests for SNP-environment interaction for each SNP, then takes their minimum p-value as the test statistic, and finally performs a corresponding Bonferroni adjustment. Under high-dimensional linear model settings, we conducted the three-step procedure with NST and ST statistics (Zhang and Cheng, 2017).
+
+3.2. Results for G × E interactions
+
+In many set-based G × E testing applications, the number of genetic variants p is relatively large but still smaller than the sample size n. Thus, we conducted two types of simulations: n &gt; p or n &lt; p.
+
+Simulations with n &gt; p.
+
+First, we conducted simulations with n = 2000, q1 = 2, q2 = 0, and varying p to evaluate Type I error rates of different tests under different scenarios, ranging from low-dimensional to relatively high-dimensional. Note that the dimension of the nuisance parameter ϑ was q = p + 4, while that of the parameter β being tested was p. Table 1 shows the empirical Type I error rates, indicating that GESAT (Lin et al., 2013) yielded an inflated Type I error rate when p was large. Of note, even though by searching a much larger upper bound for the tuning parameter (say, n instead of the default n/log(n)) somewhat alleviated the problem, GESAT still yielded an inflated Type I error rate. For example, the Type I error rate of GESAT with tuning parameter searching up to n was 0.253 for the situation with n = 2000 and p = 300. In contrast, GESAT-sim maintained the correct Type I error rate, confirming that the theoretical null distribution of GESAT was not applicable when q was relatively large. As expected, aiSPU(Full) maintained the correct Type I error rate when q was relatively small and yielded an inflated Type I error rate when q was large, indicating penalized estimation of ϑ was necessary when q was relatively large. As expected, both aiSPU(Oracle) and aiSPU(TLP) yielded well-controlled Type I error rates for all the situations considered.
+
+Next, we studied the effect of the number of non-zero nuisance parameters. Here we evaluated the performance of iSPU and aiSPU with some popular penalties, such as the Lasso and ridge. Table 2 shows the results of n = 2000, p = 300, and varying q1 = q2. When q1 = q2 was relatively large (q1 = q2 = 20 or q1 = q2 = 30), both the ridge and Lasso yielded slightly conservative Type I error rates and thus power loss (Figure 1). In contrast, aiSPU(TLP) provided results that were similar to those of aiSPU(Oracle). Again, GESAT yielded inflated Type I error rates because its theoretical null distribution was not applicable with relatively larger p and p &gt; n. The results of n = 2000, p = 200, and varying q1 = q2 show similar conclusions (Table S1 in Appendix E).
+
+To evaluate empirical power, we considered two cases: (a) under relatively low dimensional situations; (b) under relatively high-dimensional situations. Figure 1 shows the power of different methods under relatively high-dimensional situations with n = 2000, p = 300, and q1 = q2 = 20. Because both the Lasso and ridge yielded slightly conservative Type I error rates, aiSPU(Ridge) and aiSPU(Lasso) were less powerful than aiSPU(TLP). Perhaps because TLP better approximated the optimal L0 constraint (Shen et al., 2012), aiSPU(TLP) achieved higher power than aiSPU(MCP) and aiSPU(SCAD). As a benchmark, UminP performed relatively well when the signal was sparse. Figure S1 shows that iSPU with different γ was more powerful under different sparsity levels. However, due to its adaptivity, aiSPU was the overall winner (Figure S1 in Appendix E). The results for correlated SNPs (ρ = 0.3) or q1 = q2 = 50 showed similar patterns as in Figure 1 and thus were relegated to the Appendix E (Figures S2 and S3). Under relatively low-dimensional situations with n = 2000 and p = 25 or 50 (Figures S4 and S5), GESAT yielded well-controlled Type I error rates and achieved very similar power as GESAT-sim and iSPU(2). As expected, GESAT achieved higher power than iSPU(∞) under dense signal situations, but lower power than iSPU(∞) under sparse signal situations. In comparison, aiSPU achieved robustly high power under various scenarios. For the situation with n = 2000 and p = 75, while GESAT (regardless of how larger a searching region for the tuning parameter) had a slightly inflated Type I error rate, the results showed similar patterns as before (Figure S6 in Appendix E).
+
+Next, similar to that in Su et al. (2017), we considered rare variants by generating SNPs with MAFs ranging from 0.005 to 0.05 while keeping the other simulation aspects unchanged. As expected, when p was relatively high, both iSKAT and MiSTi yielded inflated Type I error rates due to the theoretical null distribution is not applicable under relatively larger p and p &gt; n situations. In contrast, aiSPU(TLP) maintained the correct Type I error rate under relatively high-dimensional situation (Tables S2 and S3 in Appendix E). Figure S7 shows the power comparison under the different low dimensional situations. Again, even though different tests may be more powerful under certain situations, aiSPU achieved robust high power across all the situations considered.
+
+Simulations with n &lt; p.
+
+We conducted simulations with n = 200, p = 1000, q1 = 2, q2 = 2, and varying sparsity level s. Since GESAT yielded incorrect Type I error rates in high dimensional settings, the results of GESAT were not shown here.
+
+First, we evaluated the performance of the asymptotic theory in Theorem 1 for finite samples. Table 3 shows the empirical Type I error rates and statistical power under s = 0.005. The iSPU and aiSPU yielded well-controlled Type I error rates. The results of the tests based on asymptotics were close to those based on the bootstrap, supporting Theorem 1. The results of other simulation settings (s = 0.001, s = 0.01,s = 0.05, s = 0.2, and informative variables in β were generated from a uniform distribution U (0, c)) showed similar patterns and were relegated into the Appendix E (Tables S4–S8). We further studied the situation when both main effects and interaction effects exist for the same set of SNPs and again showed similar patterns as expected (Table S9 in Appendix E).
+
+Next, we compared statistical power. Figure 2 shows the empirical power for the tests under different sparsity levels s. When the signal was highly sparse, iSPU(∞) was more powerful than other tests (s = 0.001 and s = 0.005). As signal became relatively sparse (s = 0.05), iSPU(4) was the most powerful, closely followed by iSPU(6) and aiSPU, demonstrating the power gain by using some iSPU(γ) test with 2 &lt; γ &lt; ∞ in a finite sample situation. When the signal became relatively dense with different association directions (s = 0.2), iSPU(2) was more powerful. For last sub-figure of Figure 2, we generated non-zero values of the parameter from a uniform distribution U (0, c) instead, and iSPU(1) was the winner. All these simulation results confirmed the previous asymptotic power analysis. By combining information from different iSPU tests, aiSPU was an overall winner, either achieving the highest power or having power close to that of the winner in any setting. In comparison, UminP achieved relatively high power when the signal was sparse (s = 0.001, s = 0.005, and s = 0.01), but lost power substantially when the signal was dense (s = 0.05 and s = 0.2).
+
+Next, we briefly discussed the sensitivity of the aiSPU test to the choice of Γ set. Figure 3 shows the results of aiSPU with different Γ sets under different sparsity levels (s = 0.01, s = 0.05, and s = 0.2), indicating that the aiSPU test was robust to the choice of Γ. The results for other settings showed similar patterns and were relegated to the Appendix E (Figure S8).
+
+Next, we briefly evaluated the robustness of the aiSPU test. Theorem 1 assumes that the effect of ℤ is sparse and strong. While this assumption is usually required by a penalized regression method, it might be violated in real applications. For example, under an omnigenic model (Liu et al., 2019), many variables in ℤ (i.e., SNPs) have weak effects, and only a few variables have strong effects. To evaluate the impact of the violation of the sparse effect assumption on ℤ, we kept the simulation setting unchanged except that we randomly selected a pre-specified number of variables in ℤ and set non-zero small effect sizes for those selected variables. Figure 4 shows that aiSPU yielded well-controlled Type I error rates and achieved high power. Perhaps because the contribution of the small-effect variables in ℤ is relatively small to the estimation of Y^, the results of the tests based on asymptotics were close to those based on the bootstrap, indicating Theorem 1 is relatively robust to the violation of sparse effect assumption on ℤ. We further varied the effect size for the randomly selected small effect variables in ℤ and obtained similar results (Figure S9 in Appendix E).
+
+Next, we investigated whether aiSPU with other non-convex penalties such as SCAD (Fan and Li, 2001) and MCP (Zhang, 2010) would yield results similar to that with TLP. Perhaps because TLP enjoys the selection consistency and optimal parameter estimation under some mild assumptions (Shen et al., 2012), aiSPU(TLP) often achieved higher power than both aiSPU(MCP) and aiSPU(SCAD) (Figure S10). Interestingly, aiSPU(SCAD) yielded inflated Type I error rates under a linear model setting (Figure S11). In Summary, aiSPU(TLP) generally achieved higher power and controlled Type I error rates. Further- more, we have provided some theoretical guarantee for aiSPU(TLP) and thus recommend using aiSPU with TLP as our default setting.
+
+3.3. Results for linear models
+
+First, the aiSPU test maintained correct Type I error rates, for which the asymptotics- and bootstrap-based methods gave similar results under different sparsity levels and association directions (Tables S10–S13 in Appendix E). Similarly, both NST and ST yielded well-controlled Type I error rates (NST: 0.055 and ST: 0.061 at the significance level α = 0.05).
+
+Next, we assess statistical power. Figure 5 shows the empirical power for the tests under different sparsity levels s. Because the TLP estimator could consistently reconstruct the oracle estimator under mild assumptions (Shen et al., 2012), aiSPU(TLP) and aiSPU(Oracle) yielded similar results. Note that both NST and ST base their test statistics on a sub-sample, while aiSPU is on the whole sample; partly due to this difference in using the sample, aiSPU and iSPU(∞) were more powerful than both NST and ST even under a highly sparse alternative (i.e., with only one nonzero component in β; s = 0.001). Under other denser alternatives, aiSPU was way more powerful than both NST and ST. As in the simulations for G × E interaction, when the signal was relatively sparse (s = 0.01), iSPU(6) was the most powerful, highlighting the power gain by using some iSPU(γ) test with 2 &lt; γ &lt; ∞. In contrast, SPU(2) was more powerful when the signal became dense (s = 0.2). Again, all these simulation results confirmed the previous asymptotic power analysis. By combining different iSPU tests, aiSPU maintained high power across a wide range of alternative scenarios.
+
+In the end, we briefly compared the computational time among some competing methods, the parametric bootstrap-based aiSPU, and the asymptotics-based aiSPU (Figure S12 in Appendix E), showing that the asymptotic-based aiSPU was generally computationally more efficient. Of note, we implemented penalized regression with TLP in R, which is not computationally efficient in high-dimensional settings. We expect that the computational time for the asymptotics-based aiSPU can be further reduced once we implement aiSPU in C or other more efficient computer languages.
+
+In summary, owing to its adaptivity, the power of aiSPU remained high, being either the winner or close to the winner in any setting. In particular, the aiSPU(TLP) test performed similarly to aiSPU(Oracle) and yielded well-controlled Type I error rates, presumably because the TLP estimator could consistently reconstruct the oracle estimator under mild conditions.
+
+4. Real data analyses
+
+Alzheimer’s disease (AD) is the most common form of dementia, affecting millions of patients worldwide. The Alzheimer’s Disease Neuroimaging Initiative (ADNI) is a longitudinal, multisite observational study of elderly subjects with normal cognitive (healthy controls), mild cognitive impairment, or AD (Jack et al., 2008). The major goal of ADNI is to better understand the underlying mechanism of mild cognitive impairment (MCI) and AD (Jack et al., 2008). ADNI1 has recruited 819 elderly subjects to participate in the research. See www.adni-info.org for the latest information.
+
+Several case-control studies suggest that AD is far more pronounced in females and gene-gender interaction may play roles in AD. Thus, we reanalyzed the ADNI1 data set to study whether the effect of genetic variants on AD risk is modified by gender.
+
+Following set-ups in Altmann et al. (2014), we used the data of the Caucasian subjects in either the healthy control or MCI group, who had complete information on the environmental factor (gender) and covariates (age, years of education, and intracranial volume measured at baseline). For the outcome of interest, we set Yi = 1 for any subject i in the MCI group, while setting Yi = 0 for the other group. For the genotype data, we ran standard quality control steps to pre-process the data. In brief, we filtered out all SNPs with a genotyping rate &lt; 0.95, those with a minor allele frequency &lt; 0.05, and those failing to pass the Hardy-Weinberg equilibrium test (p-value &lt; 10−5). Further, we imputed the missing SNPs by a Michigan Imputation Server (Das et al., 2016) with the 1000 Genomes Phase 1 v3 European samples as the reference panel. We restricted our analysis to the HapMap3 SNP subset and pruned SNPs with a criterion of linkage disequilibrium r2 &gt; 0.2 using a sliding window of size 200 SNPs and a moving step of 20. According to the human genome reference hg19, we obtained the genomic coordinates of SNPs and genes, and assigned an SNP to a gene if it is located within 5,000 base pairs upstream or downstream of the gene’s coding region. We extracted candidate pathways from the KEGG database (Kanehisa et al., 2009). As other pathway-based analyses (O’Dushlaine et al., 2015; Pan et al., 2015), we restricted our analyses to the pathways containing between 10 and 200 genes. In total, we analyzed 578 subjects and 96 KEGG pathways. To account for multiple testing, we applied the Bonferroni correction and used a slightly conservative cutoff 0.05/100 = 5 × 10−4. Because other studies have reported an APOE gene and gender interaction on AD (Altmann et al., 2014), we tested the APOE and gender interaction as well. For testing main genetic effects, we applied aSPU (Pan et al., 2014) while adjusting for the same covariates as in testing Gt × E interactions.
+
+Table 4 summarizes the results of our analysis. aiSPU identified one significant pathway “Fructose and mannose metabolism” (hsa00051, p-value = 0.0003) for G × E interaction, while GESAT failed to identify any significant pathways, showcasing possibly improved power of aiSPU over GESAT. Note that pathway “Fructose and mannose metabolism” contained 134 SNPs and thus, relative to the sample size, can be regarded as high-dimensional. The p-value of aiSPU was smaller than that of iSPU(1) and iSPU(2) but larger than iSPU(∞). Interestingly, aSPU failed to reject the null hypothesis of no main effects of the pathway (p-value = 0.54 by aSPU).
+
+Next, we tested the APOE and gender interaction. Note that APOE contained 5 SNPs and can be viewed as a low dimensional situation. aSPU yielded a p-value of 0.007, confirming the strong association of APOE on AD. Further, aiSPU yielded a p-value of 0.039 for the G × E interaction, suggesting a potential APOE and gender interaction. In contrast, GESAT yielded a p-value of 0.56, failing to detect any G × E interactions. Similarly, with a Bonferroni-adjusted p-value of 0.30, UminP also failed to detect G × E interactions. By analyzing a large, multisite, longitudinal data from National Alzheimer’s Coordinating Center, Altmann et al. (2014) discovered APOE -gender interaction. They found that healthy female APOE4 carriers had an almost 2-fold increased risk to develop MCI or AD when compared to female noncarriers (Altmann et al., 2014). By contrast, healthy male APOE4 carriers had little increase in risk (Altmann et al., 2014). These findings support a possible interaction between APOE and gender on AD. In summary, our analyses have demonstrated that aiSPU is more powerful than GESAT in identifying gene-environment interactions when analyzing the ADNI1 data set.
+
+5. Discussion
+
+In this paper, we have proposed and studied an adaptive aiSPU test for high-dimensional parameters in GLMs in the presence of high-dimensional nuisance parameters. Our proposed aiSPU test takes advantage of both the TLP estimator (Shen et al., 2012) and data adaptive testing ideas (Pan et al., 2014), and thus enjoys several theoretical and practical benefits: first, the Type I error rate is well controlled; second, it maintains high statistical power under various scenarios, ranging from highly sparse to highly dense alternatives; third, it is computationally efficient as its p-values can be calculated via its asymptotic null distribution.
+
+Several new methods (Ma et al., 2020; Shi et al., 2019; Sur and Candès, 2019; Fei and Li, 2019; Zhu et al., 2019) have recently been proposed for statistical inference with high-dimensional generalized linear models. However, they mainly focused on related but different questions with different approaches. Specifically, Ma et al. (2020) considered a global testing problem using a debiased Lasso based method with generalized low-dimensional projection. Sur and Candès (2019) quantified and corrected the bias of maximum likelihood estimators when the sample size and the dimensionality of parameters are in the same order. Fei and Li (2019) proposed a multi-sample splitting and averaging method to test a fixed subset of parameters. Shi et al. (2019) and Zhu et al. (2019) extended the score/Wald/likelihood ratio tests to (non-convex) penalized/constrained regression to test a subset of parameters of size much smaller than the sample size. In principle, due to its data-adaptive feature, aiSPU (with suitable modifications) may be a powerful tool to tackle these related problems, though rigorous investigation is warranted. We leave it for future research.
+
+We conclude with several potential extensions of our approach. First, as transcriptome-wide association studies (TWAS) (Gamazon et al., 2015; Gusev et al., 2016) that incorporate eQTL-derived weights into a weighted Sum test (Xu et al., 2017) to both improve statistical power and enhance biological interpretation, our proposed method can incorporate eQTL-derived weights into the test statistics of iSPU(γ) and aiSPU. Also, some other functional weights (He et al., 2017; Ma and Wei, 2019) can be equally applied. We expect that integrating functional genomic information will improve power and gain insights into the mechanisms of complex traits. Second, we mainly considered interactions between a genetic marker set and an environmental variable. We expect the same approach can be applied to other biological problems. For example, by replacing the environmental variable E with a treatment, we can test for interactions between a genetic marker set and the treatment, which is at the core of personalized medicine. More generally, our method can be potentially applied to other high-dimensional problems. For example, with some technical modifications, our method may be capable of simultaneous inference on submatrices of a high-dimensional precision matrix. The proposed method can also be extended to the asymptotically independent U -statistics framework as recently introduced in He et al. (2020). We leave these for future research.
+
+Supplementary Material
+
+1
+
+Acknowledgments
+
+We thank reviewers and the action editor for helpful comments. The authors thank Xianyang Zhang for sharing the R code implementing three-step procedures. This research was supported by the National Institutes of Health (NIH) grants R01GM113250, R01GM126002, R01HL105397, R01AG065636 and R01HL116720, by NSF grants DMS 1711226, DMS 1712717, DMS 1952539, SES 1659328 and SES 1846747, and by the Minnesota Supercomputing Institute. The investigators within the ADNI contributed to the design and implementation of ADNI and provided data, but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf.
+
+Appendix A. Assumptions
+
+We further decompose ϑ0 into two parts:ϑ0≡(ϑ10,…,ϑq0)′=(ϑA00,0A0c)′, where A0≡{j:ϑj0≠0} is the set of nonzero coefficients of ϑ0 with size |A0| = q0, and 0A0c is a vector of 0’s. Define ℤ˜ as the (nuisance) covariate matrix containing the variables in A0, and the oracle estimate ϑ^o as the maximum likelihood estimate (MLE) given that A0 is known priori.
+
+We need the following assumptions to establish the asymptotic null distribution.
+
+C1. The eigenvalues of Σ are bounded, that is, B−1≤λmin(Σ), λmax(Σ)≤B for some finite constant B, where λmin(Σ) and λmax(Σ) denote the minimum and maximum eigenvalues of matrix Σ, respectively. Moreover, the absolute value of any corresponding correlation element is strictly smaller than 1, i.e., max1≤i≠j≤p|σij|/σijσij&lt;1−ξ for some constant ξ &gt; 0.
+
+C2. Under H0 : β = 0, we have E[S1j3]=0 0 for 1 ≤ j ≤ p. There exist some constants q and K0 &gt; 0 such that E[exp(ϱS1j2/σjj)]≤K0 for 1 ≤ j ≤ p.
+
+C3. ℤ˜is uniformly bounded. We further assume E(X1j|ℤ˜)≠0 only holds for j∈P0⊂{1,…,p} with the size of P0, denoted by p0, satisfying p0=O(pη1) for a small positive η1.
+
+C4. We assume 1p∑j1,j2|E[S1j1S1j2]|=O(1) and 1p∑j1∉P0,j2∉P0|E[Xij1Xij2|ℤ˜]|=O(1).
+
+C5. We assume q≤exp(nCmin(ϑ0)/d0) and pq04/n2=o(1), where d0 is some constant, Cmin(ϑ0)≡inf{ϑA=(ϑA,0Ac:A≠A0,|A|≤q0}−log(1−h2(ϑA,ϑ0)/max(|A0\A|,1), and h(⋅,⋅) is the Hellinger distance. We further assume the model is sparse under the null, that is, q0=O(nη2) for a small positive η2.
+
+C6. There exist some positive constants K1 and K2 such that K1&lt;E[ϵ0i2|ℤ=z]&lt;K2, where ϵ0i=Yi−μ0i, 1 ≤ i ≤ n. We further assume liminfn→∞n−1λmin(ℤ˜′Wℤ˜)&gt;0, where W=diag{E(ϵ012|ℤ),…,E(ϵ0n2|ℤ)}.
+
+C7. −log(1−h2(ϑ,ϑ0))≥−d1log(1−h2(ϑτ+,ϑ0))−d3qτd2for some constants d1, d2, and d3, where d1 − d3 &gt; 0, ϑτ+=(ϑ1I(|ϑ1|≥τ),…,ϑqI(|ϑq|≥τ)) and h(ϑ, ϑ0) is the Hellinger distance between the two probability distributions specified by ϑ and ϑ0. For some constant c0 and any ϵ/24&lt;t&lt;ϵ≤1, H(t,BA)≤c0(logq)2|A|log(2ϵ/t), with |A| ≤ q0, where H(⋅,BA) is the bracketing Hellinger metric entropy of BA, BA=FA∩{h(ϑ,ϑ0)≤2ϵ} is a local parameter space, and FA={g1/2(ϑ,y)} is a collection of square root densities with g(ϑ, y) be a probability density for Y1.
+
+C8. Under HA:β≠0, we have E[(S˜ij)3]=0 for 1 ≤ j ≤ p.
+
+C9. W˜={W˜(j)=(S˜ij,i=1,…,n):j≥1}is α-mixing such that αW˜(s)≤Mδs, where δ ∈ (0, 1) and M is some constant.
+
+Remark S1 Assumption C1 is commonly used in the high-dimensional setting (Cai et al., 2014; Wu et al., 2019), assuming that the underlying true covariance matrix Σ is non-singular. Assumption C2 assumes sub-Gaussian-type tails of S1j, which is also common. Both assumptions C1 and C2 are only used to establish the weak convergence of L(∞, µ0) and not needed for L(γ, µ0) with a finite γ.
+
+Assumption C3 assumes the underlying true model under H0 is sparse, which is often reasonable in real data applications and penalized regression framework. Note that we assume that each Xj˙ is centered, which partially supports the assumption that E[Xij|ℤ˜]≠0 only for j ∈ P0 with the size of P0 in a small order of p, i.e., p0=O(pη1). For example, in our motivating gene-environment interaction testing problems, Xij=Gij×Ei and E[Xij|ℤ˜]≠0 holds if and only if E[Gij|ℤ˜]≠0, where ℤ˜ contains common covariates, environmental factors, and important SNPs selected by our penalized regression model. Of note, genome-wide association studies with around a hundred thousand subjects only identified from a few hundred to a few thousand significant SNPs for each of the traits, which were some tiny proportions of all the SNPs being tested (about 10 million) (Buniello et al., 2018). In other words, the majority of SNPs Gj are independent of common covariates. Furthermore, because linkage disequilibrium (LD) is often local, SNP Gj is only correlated with a small proportion of the SNPs being tested (see Figure S13 for an example). Then E[Xij|ℤ˜]≠0 only for j ∈ P0 with the size of P0, p0=O(pη1). One caveat is that even though C3 usually holds for genetic and genomic data, C3 may fail in other applications, perhaps leading to Theorem 1 invalid. We leave this interesting topic for future research.
+
+Assumption C4 is a moment assumption and assumes a weak dependence structure. Intuitively speaking, many random vectors meet this moment assumption. For example, random vectors ζ=(ζ1,ζ2,…)′, where ζi only correlates a finite number of ζj; then ζ satisfies moment condition. It also includes an α-mixing type weak dependence as a special case, which has been broadly used in time series and spatial statistics and adopted previously in high-dimensional testing problems (Xu et al., 2016; Wu et al., 2019). To account for the effects of nuisance parameters, we further assume conditionally moment assumption, which is a natural extension of the moment assumption.
+
+Assumption C5 is a relatively strong assumption needed to prove Theorem 1. It imposes some restrictions on the growth rate of p such that p=O(n2−η3) for a small positive η3. Zhang and Cheng (2017) assumed (log(pn))7/n≤N1n−N2 for some positive constants N1 and N2 to establish the theory for a bias-correction based test statistic, which is weaker than C5. A stronger condition is needed here to establish the joint asymptotic distribution of L(γ) with different γ’s. Nevertheless, C5 allows p/n → ∞. Assumption C5 imposes a weak restriction on q, allowing exponentially many nuisance parameters q=exp(nCmin(ϑ0)/d0). Shen et al. (2012) showed that this is a necessary condition for TLP to be selection consistent. C5 also assumes the sparsity on the ϑ0, which is common adopted by penalized regression and by bias correction-based methods. For example, under the nearly optimal condition q0 = o(n/(log p)2), the debiased Lasso estimator follows a Gaussian distribution asymptotically (Javanmard and Montanari, 2018). Also, the sparsity assumption regarding q0 may be relaxed. For example, the sparsity assumption is q0 = o(n/ log p) in a directed graphical model with TLP constraint (Li et al., 2019). More importantly, the sparsity assumption might not be essential for our proposed method. As shown in the simulation section (Figures 4 and S9), our proposed method still worked when the sparsity assumption was violated.
+
+The first part of Assumption C6 is common in GLMs, for example, as adopted in Fan and Song (2010); Guo and Chen (2016). By Theorem 5.39 in Vershynin (2010), we have liminfn→∞n−1λmin(ℤ˜′Wℤ˜)&gt;0 with high probability. To simplify the technical details in the proof of the weak convergence result in Theorem 1, here we assume liminfn→∞n−1λmin(ℤ˜′Wℤ˜)&gt;0.
+
+Assumption C7 is needed for feature selection consistency and optimal parameter estimation by TLP for GLMs (Shen et al., 2012). However, for linear and logistic regression, Assumption C7 can be substituted by the following C7* for verification purpose (Shen et al., 2012).
+
+C7*.γmin2minA:|A|≤q0,A≠A0λmin(ΘA0\A−ΘA0\A,AΘA−1ΘA,A0\A)≥d0logqn, where d0 is some constant independent of (n, q, q0), Θ is the covariance of ℤ with the jkth element cov(Zj, Zk), ΘA0\A is a submatrix of Θ by keeping rows and columns corresponding to a subset A0 \ A of predictors, and ΘA0\A,A is a submatrix of Θ by keeping rows corresponding to a subset A0 \ A of predictors and columns corresponding to a subset A of predictors, γmin=γmin(ϑ0)≡min{|ϑk0|:ϑk0≠0} is the resolution level of the true regression coefficients, and λmin(ΘA0\A−ΘA0\A,AΘA−1ΘA,A0\A)≥minB⊃A0:|B|≤2q0λmin(ΘB).
+
+Of note, C7 involves Hellinger distance, which is hard to verify in practice. For verification purposes, we propose a stronger than needed assumption C7*, which is sufficient for C7. C7* imposes a lower bound for coefficient strength (like a beta-min condition), which might be violated in practice. However, our proposed method might still work when assumption C7* (i.e., beta-min like assumption) is violated but C7 holds. In addition, we use this technical assumption to prove the TLP-based estimator achieves feature selection consistency, and thus the difference between µ0 and μ^0 can be well controlled. In practice, as long as we have a good estimate μ^0, our proposed method works. For example, as shown in simulations, our proposed method aiSPU still worked when the coefficient for ℤ was non-sparse but with sparse and strong signals, which violated the assumption C7* but not necessarily C7. To further illustrate this, we provide an example. Suppose the coefficient ϑ0=(1,1n,1n,⋯,1n)′, τ=122 and d1 = 1. Then log(1 − h2(ϑ, ϑ0)) equals to log(1−h2(ϑτ+,ϑ0)). This leads to the assumption C7 holds, coefficient for ℤ is non-sparse, and C7* may not hold. A similar example has been provided for TLP in the context of constrained maximum likelihood inference (Zhu et al., 2019). We leave the exciting topic on further relaxing Assumption C7 for future research.
+
+Appendix B. Calculating p-values
+
+In this subsection, we describe how to calculate p-values by both parametric bootstrap and asymptotics-based methods in details.
+
+Asymptotics-based method
+
+First, we calculate p-values for iSPU separately. We apply the Theorem 1 to approximate ψ(γ), ω(γ) and R(Γ′) = (ρst), respectively. Specifically, ψ(1)=0, ψ(γ)=γ!d!2dn−d∑j=1pσjjd+o(pn−d) if γ = 2d and ψ(γ)=o(pn−(d+1)) if γ = 2d + 1; ω2(1)=1n∑1≤i,j≤pσij+o(pn−1) and ω2(γ)=ψ(2γ)−∑j=1p{ψ(j)(γ)}2+1nγ∑i≠j∑2c1+c3=γ2c2+c3=γc3&gt;0(γ!)2c3!c1!c2!2c1+c2σiic1σjjc2σijc3+o(pn−γ)
+
+if γ ≥ 2; cov[L(t,μ0),L(s,μ0)]=ψ(t+s)−∑j=1pψ(j)(t)ψ(j)(s)+1nc∑k≠j∑2c1+c3=t2c2+c3=sc3&gt;0t!s!c3!c1!c2!2c1+c2σkkc1σjjc2σkjc3+o(pn−(t+s)/2)
+
+if s+t is even and cov[L(t,μ0),L(s,μ0)]=o(pn−(t+s)/2) if s+t is odd; ρss = 1 for s ∈ Γ′ and ρst=cov[L(s,μ0),L(t,μ0)]/(ω(s)ω(t)) for s≠t∈Γ′. Then by Theorem 1, the p-values for individual iSPU(γ) can be calculated via either a normal or an extreme value distribution.
+
+Remark S2 In practice, Σ = (σkj) is unknown and has to be estimated, which is a challenging problem under a high-dimensional setting. We discussed two situations separately: when Σ satisfies certain structures and when the structure is unknown.
+
+When the covariance matrix Σ satisfies certain structures, we can apply some existing methods, such as banding and thresholding techniques (Bickel and Levina, 2008; Cai and Liu, 2011). See Fan et al. (2016) for an excellent review. For example, we can apply the banding method of Bickel and Levina (2008) to estimate covariance matrix Σ if the following α-mixing assumption holds: W={W(j)=(Sij,i=1,…,n):j≥1} is α-mixing such that αW(s)≤M1δ1s, where δ1 ∈ (0, 1) and M1 is some constant. Specifically, we calculate the sample covariance matrix S=(skj) and then calculate the bandable covariance matrix as Σ^kn=(skjI(|k−j|≤kn)). An optimal bandwidth kn has been selected by five-fold cross- validation. For a properly chosen kn = o(n1/2), the difference induced by estimating Σ is ignorable (Xu et al., 2016; Wu et al., 2019). We further define ψ^(γ) and ω2(γ) as the corresponding estimated ψ(γ) and ω2(γ) by replacing Σ with Σ^kn. Under the mixing assumption, for any j, k, and ϵ &gt; 0, there exists some constant C such that σkj≤Cδ|k−j|ϵ/(2+ϵ), where δ ∈ (0, 1) (Guyon, 1995). Then for kn → ∞ as n → ∞, the summation of terms involving σkj with |k − j| &gt; kn in ω2(γ) is ignorable, i.e., n−γ∑k≠j;|k−j|&gt;knCσkkc1σjjc2σkjc3=o(pn−γ). Furthermore, there are O(knp) terms in ω2(γ) involving σkj with |k − j| &gt; kn. By noting that skj=σkj+Op(n−1/2), we have ω2(γ)−ω2(γ)=op(pn−γ) if kn = o(n1/2). Because ω2(γ)~O(pn−γ), we have ω2(γ) = (1 + o(1))ω2(γ). Similarly, we can derive ψ^(γ)=(1+o(1)ψ(γ)). Under our motivating gene-environmental interaction problems, the genetic variants are weakly dependent, and the dependent structure is often local. In other words, the α-mixing assumption holds and the banding method of Bickel and Levina (2008) works.
+
+On the other hand, when the structure of the covariance matrix Σ is unknown, applying the banding method of Bickel and Levina (2008) might be problematic. As an alternative, we propose a parametric bootstrap-based method to estimate ψ(γ), ω2(γ) and R(Γ′) = (ρst), which circumvents the challenging problem of estimating the covariance matrix Σ. Specifically, we first fit a penalized regression model under H0 to obtain μ^0i and then simulate a new set of responses Yi(b) based on μ^0i for b=1,2,…,B. Second, we refit the model with the same tuning parameters and calculate the corresponding score vector U(b) and null statistics L(γ)(b)=∑j=1p(1n∑i=1nUij(b))γ. In practice, we only need to repeat the above procedures for a relatively small B (say, 100) times. Then we estimate ψ(γ), ω2(γ) and R(Γ′)=(ρst) by ψ^(γ)=∑b=1BL(γ)(b)/B, ω^2(γ)=∑b=1B(L(γ)(b)−ψ^(γ))2/(B−1) and R^(Γ′)=cor(L(Γ′)(b)), where cor is the sample correlation estimated by cor() function in R.
+
+Second, we calculate the p-value for aiSPU. Because cov[L(t,μ0),L(s,μ0)]=o(pn−(t+s)/2) if s + t is odd (Theorem 1 part one), iSPU with even γ and odd γ are asymptotically un- correlated. By Theorem 1 part one, iSPU with finite γs converge jointly and weakly to a multivariate normal distribution as n, p → ∞, leading to iSPU with even γ and odd γ are asymptotically independent. Then by Theorem 1 part three, iSPU with even γ, odd γ, γ = ∞ are asymptotically independent to each other. Because for a finite γ, L(γ) − ψ(γ)/ω(γ) follows a standard normal distribution, taking the minimum p-values as test statistics equals to taking the maximum of |L(γ) − ψ(γ)|/ω(γ) as test statistics. Then we can analytically calculate the p-value for aiSPU by the following two steps. First, define tO=maxodd  γ∈Γ|(L(γ)−ψ(γ))|/ω(γ) and tE=maxeven  γ∈Γ(L(γ)−ψ(γ))/ω(γ) as the observed test statistics from the data and calculate the p-values for tO and tE as pO=Pr[maxodd  γ∈Γ|(L(γ)−ψ(γ))/ω(γ)|&gt;tO] and pE=Pr[maxeven  γ∈Γ(L(γ)−ψ(γ))/ω(γ)&gt;tE]. We use pmvnorm() in R package mvrnorm to calculate the normal tail probabilities of pO and pE. Further, let p∞ denote the p-value of iSPU(∞), which can be calculated by a extreme value distribution (Theorem 1 part 2). Second, take the minimum p-value from the above three categories, that is, pmin = min{pO, pE, p∞}. By the asymptotic independence, the asymptotic p-value for the aiSPU test is paiSPU = 1 − (1 − pmin)3.
+
+Parametric bootstrap-based method
+
+We can calculate p-values by parametric bootstrap as follows: first, we fit a penalized regression model under H0 to obtain μ^0i and then simulate a new set of responses Yi(b) based on μ^0i for b=1,2,…,B; second, we refit the model with the same tuning parameters and calculate the corresponding score vector U (b) and null statistics L(γ)(b)=∑j=1p(1n∑i=1nUij(b))γ; third, the p-value of iSPU(γ) is PL(γ)=[1+∑b=1BI(|L(γ)(b)|≥|L(γ)|)]/(B+1) and the p-value for aiSPU, PaiSPU=[1+∑b=1BI(TaiSPU(b)≤TaiSPU)]/(B+1) with TaiSPU(b)=minγ∈ΓPL(γ)(b) and PL(γ)(b1)=[∑b≠b1I(|L(γ)(b)|≥|L(γ)(b1)|)]/B.
+
+In practice, selecting a good B is important for saving computational sources. Here, we start with a smaller B, say B = 1000 to scan all the tests and then repeatedly increase B for the tests that that pass the following criterion: p-value &lt; 5/B in the previous step (Pan et al., 2014). Of note, the accuracy is bounded by the number of bootstraps B and calculating a very small p-value requires a very large B. This is different from asymptotics-based method, in which we only use a relatively small number of bootstraps (say, B = 100) to estimate mean, variance, and covariance matrix of iSPU and calculate the p-values by Theorem 1.
+
+Appendix C. Proof of Theorem 1
+
+We prove each part in Theorem 1 separately.
+
+(i) Similar to the proof of Theorem 1 in Wu et al. (2019), we can show that if the conditional mean of Y, µ0, is known, Theorem 1 holds. Specifically, by assumption C4, the order of double summation (across j1 and j2) of terms involving σj1j2 is O(p). Then by similar techniques used in Wu et al. (2019), we can calculate ψ(γ), ω(γ), and R(Γ′) as shown in Appendix B. We can further use Bernstein’s block idea (Ibragimov and Linnik, 1971) to prove iSPU with finite γs follows a multivariate normal distribution asymptotically. Of note, in our previous work (Wu et al., 2019), we derive a similar Theorem under the α-mixing assumption, which is a special case of Theorem 1.
+
+Then for any fixed and finite γ, we prove Theorem 1 holds by showing that the difference between L(γ, µ0) and L(γ,μ^0) with the TLP estimates is negligible.
+
+Note that the Hellinger distance for linear regression is h2(ϑ,ϑ0)=1−E[exp(−18‖ℤϑ−ℤϑ0‖2)]
+
+and for logistic regression is h2(ϑ,ϑ0)=12E[ν1/2((ϑ0)′ℤ)−ν1/2(ϑ′ℤ)+(1−ν((ϑ0)′ℤ))1/2−(1−ν(ϑ′ℤ))1/2],
+
+where ν(s)=(1+exp(s))−1. We decompose A≡{j:1≤j≤q} into two parts:A=Aτ+∪Aτ−, where Aτ+≡{j:|ϑj|≥τ} and Aτ−≡{j:|ϑj|&lt;τ}. Further note that |∂h2(ϑ,ϑ0)∂ϑj|≤1/2E[|Zj|] for 1 ≤ j ≤ q and ϑ∈Rq. Then |h2(ϑ,ϑ0)−h2(ϑτ+,ϑ0)|≤τ|∑j∈Aτ−∂h2(ϑ,ϑ0)∂ϑj|≤2τ∑j∈Aτ−E[|Zj|]≤2τqmaxjΣjj,
+
+where ϑτ+=(ϑ1I(|ϑ1|≥τ),…,ϑqI(|ϑq|≥τ)). Then by assumption C7*, − log(1 − x) &gt; x for any 0 &lt; x &lt; 1, and the derivative of 1 − exp(−1/8×2) and (1 + exp(x))−1/2 are bounded away from zero, the assumption C7 can be validated.
+
+By assumption C5 and C7, through tuning, Theorem 2 in Shen et al. (2012) yields P(ϑ^≠ϑ^o)≤exp(−cn+2log(q+1)+3), where c is some positive constant. Then we can apply Theorem 2 in Shen et al. (2012) and get the feature selection consistency for ϑ^, that is, E[h2(ϑ^,ϑ0)]=E[h2(ϑ^o,ϑ0)]=O(q0/n)→0 as n → ∞. Then by the consistency property of MLE‖ϑ^o−ϑ0‖=Op(q0n−1/2), we have ‖ϑ^−ϑ0‖=Op(q0n−1/2).
+
+Using Taylor expansion and the approach in Le Cessie and Van Houwelingen (1991), we have D^=(In−Wℤ˜{I(ϑ)}−1ℤ˜′)D+op(n−1/2),
+
+where D^=(Y−μ^0)={Y1−μ^01,…,Yn−μ^0n}′, D^=(Y−μ0)={Y1−μ01,…,Yn−μ0n}′, In is the n × n identity matrix, W is a diagonal matrix, which is defined as W=diag{E(ϵ012|ℤ),…,E(ϵ0n2|ℤ)}, ℤ˜ contains the variables corresponding to A0={j:ϑj0≠0}, and I(ϑ) is a q0 × q0 matrix given by I(ϑ)=ℤ˜′Wℤ˜. Since the smaller order term op(n−1/2) can be ignored, we focus on the leading term in the subsequent analysis. For notation simplicity, further define B=Wℤ˜{I(ϑ)}−1ℤ˜′=(bij)n×n. By Cauchy-Schwarz inequality, bij=WiiZ˜i{I(ϑ)}−1Z˜j≤Wii(Z˜i{I(ϑ)}−1Z˜i)1/2(Z˜j{I(ϑ)}−1Z˜j)1/2.
+
+By assumption C6, W is uniformly bounded and liminfn−1λmin(I(ϑ))&gt;0. Then by assumption C3, ℤ˜ is uniformly bounded, we have Z˜i{I{ϑ}}−1Z˜i≤O(q0)×λmin(I(ϑ))−1=O(q0n−1). This leads to bij=O(q0n−1) uniformly over i, j. By linear algebra, we have μ0i−μ^0i=∑l=1nbilϵ0l for 1 ≤ i ≤ n, where bil=O(q0n−1). To prove the difference between L(γ, µ0) and L(γ,μ^0) can be ignored, we discuss two cases: γ = 1 and 1 &lt; γ &lt; ∞ separately. To simplify the notation, we denote all the constants by C which may vary from place to place.
+
+For γ = 1: we decompose the statistic L(1,μ^0) as L(1,μ^0)=1n∑j=1p∑i=1n(Yi−μ^0i)Xij=∑j=1p∑i=1n1nSij+∑j=1p∑i=1n(μ0i−μ^0i)Xijn=T10+T11.
+
+Under the null hypothesis and proposed assumptions, Theorem 1 in Wu et al. (2019) leads to T10/ω(1)→dN(0,1)  as n→∞ and p→∞.
+
+For T11, since μ0i−μ^0i=∑l=1nbilϵ0l, we have E[(T11)2]=1n2∑j1=1p∑j2=1p∑i1=1n∑i2=1nE[(μ0i1−μ^0i1)Xi1j1(μ0i2−μ^0i2)Xi2j2]     =1n2∑j1=1p∑j2=1p∑i1=1n∑i2=1nE[Xi1j1Xi2j2∑l=1nϵ0lbi1l∑l=1nϵ0lbi2l]     =1n2∑j1=1p∑j2=1p∑i1=1n∑i2=1nE[Xi1j1Xi2j2(ϵ0i1bi1i1+ϵ0i2bi1i2+∑l≠i1,i2ϵ0lbi1l)             ×(ϵ0i1bi2i1+ϵ0i2bi2i2+∑l≠i1,i2ϵ0lbi2l)].
+
+Since i1 and i2 are symmetrical, we have   E[(T11)2]=Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1]+Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i1bi1i1ϵ0i2bi2i2]    +Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i1bi1i1∑l≠i1,i2ϵ0lbi2l]+Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2∑l≠i1,i2ϵ 0l2bi1lbi2l]=E[T111]+E[T112]+E[T113]+E[T114].
+
+We discuss the order of each term and show that |T11|=op(pn−1/2) and thus can be ignored. By assumption C3, |E[Xij|ℤ˜]|≠0 only holds for j ∈ P0, then E[T111|ℤ˜]=Cn2∑j1=1p∑j2=1p∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]      =Cn2∑j1∉P0∑j2∉P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]         +Cn2∑j1∈P0∑j2∉P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]         +Cn2∑j1∉P0∑j2∈P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]         +Cn2∑j1∈P0∑j2∈P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜].
+
+For the first term, by Assumptions C3 and C4, we have     Cn2∑j1∉P0∑j2∉P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]=O(n−2)∑j1∉P0∑j2∉P0∑i1=1nE[Xi1j1Xi1j2ϵ0i12|ℤ˜×O(q02n−2)]=O(n−2)×O(np2)×O(q02n−2)=O(pn−1)×O(pq02n−2)=o(pn−1).
+
+Of note, because bij is a function of ℤ˜, it can be taken out of the expectation when conditional on ℤ˜. For the second term, we have    Cn2∑j1∈P0∑j2∉P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]=O(n−2)∑j1∈P0∑j2∉P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12|ℤ˜]×O(q02n−2)=O(n−2)×O(pp0n2)×O(q02n−2)=O(pp0q02n−2)=o(pn−1).
+
+By noting that p0=O(pη1) for a small positive η1 and assumption C5pq04/n2=o(1), we can derive the last equation. Similar to the derivation of the second term, for the third term, we have Cn2∑j1∉P0∑j2∈P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]=o(pn−1).
+
+For the last term, we have     Cn2∑j1∈P0∑j2∈P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12bi1i1bi2i1|ℤ˜]=O(n−2)∑j1∈P0∑j2∈P0∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i12|ℤ˜]×O(q02n−2)=O(n−2)×O(p02n2)×O(q02n−2)=O(n−2q02p02)=o(pn−1).
+
+By combining the above derivations, we have E[T111|ℤ˜]=o(pn−1). Importantly, ∑j1,j2∑i1,i2E[Xi1j1Xi2j2ϵ0i12|ℤ˜]=o(pq02n2).
+
+Next, we discuss the order of E[T112|ℤ˜]. By noting that E[Xijϵ0i|ℤ˜]=0, we have E[T112|ℤ˜]=Cn2∑j1=1p∑j2=1p∑i1=1n∑i2=1nE[Xi1j1Xi2j2ϵ0i1bi1i1ϵ0i2bi2i2|ℤ˜]      =O(n−2)∑j1=1p∑j2=1p∑i1=1nE[Xi1j1ϵ0i12Xi2j2|ℤ˜]×O(q02n−2)      =O(n−2)×O(p2n)×O(q02n−2)=O(pn−1pq02n−2)=o(pn−1).
+
+Next, we discuss the order of E[T113|ℤ˜]: E[T113|ℤ˜]=Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i1bi1i1∑l≠i1,i2ϵ0lbi2l|ℤ˜]=O(n−2)∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i1bi1i1|ℤ˜]E[∑l≠i1,i2ϵ0lbi2l|ℤ˜]=O(n−2)∑j1,j2,i1,i2E[Xi1j1Xi2j2ϵ0i1bi1i1|ℤ˜]×0=0.
+
+Next, we discuss the order of E[T114|ℤ˜]. Similarly, we decompose E[T114|ℤ˜] into three parts and bound each part separately. E[T114|ℤ˜]=Cn2∑j1,j2,i1,i2E[Xi1j1Xi2j2∑l≠i1,i2ϵ0l2bi1lbi2l|ℤ˜]      =O(n−2)∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]E[∑l≠i1,i2ϵ0l2bi1lbi2l|ℤ˜]      =O(n−2)∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)      =O(n−2)∑j1∉P0,j2∉P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)      +O(n−2)∑j1∉P0,j2∈P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)      +O(n−2)∑j1∈P0,j2∈P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1).
+
+By assumption C3, E(X1j|ℤ˜)=0 for j∉P0. Then by assumption C4, for the first part, we have    O(n−2)∑j1∉P0,j2∉P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)=O(q02n−3)∑i1=1n∑j1∉P0,j2∉P0E[Xi1j1Xi1j2|ℤ˜]=O(q02n−3)×O(pn)=O(pn−1n−1q02)=o(pn−1).
+
+Similarly, we have the following for the second part:    O(n−2)∑j1∉P0,j2∈P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)=O(q02n−3)∑j1∉P0,j2∈P0∑i1=1nE[Xi1j1Xi2j2|ℤ˜]=O(q02n−3)×O(p0pn)=O(pn−1p0q02n−1)=o(pn−1).
+
+Note that by assumptions C3 and C5, p0=O(pη1) for a small positive η1 and q0=O(nη2) for a small positive η2. Then O(p0q02n−1)=O(pη1n1−2η2)=o(1) and the above last equation holds.
+
+For the last part, we have    O(n−2)∑j1∈P0,j2∈P0∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−1)=O(n−2)×O(p02n2)×O(q02n−1)=O(q02p02n−1)=o(pn−1).
+
+By Combining the above equations, we have E[T114|ℤ˜]=o(pn−1). Importantly, we have ∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]=o(pn2q0−2).
+
+In summary, we have E[(T11)2]=E[E[T111|ℤ˜]+E[T112|ℤ˜]+E[T113|ℤ˜]+E[T113|ℤ˜]]=o(pn−1), leading to |T11|=op(n−1/2p). Thus T11 can be ignored and this completes the proof for γ = 1.
+
+For 1 &lt; γ &lt; ∞: we decompose the statistic L(γ,μ^0) as L(γ,μ^0)=∑j=1p(1n∑i=1n(Yi−μ^0i)Xij)γ      =∑j=1p(1n∑i=1n((Yi−μ0i)+(μ0i−μ^0i))Xij)γ      =∑j=1p(1n∑i=1nSij)γ+∑1≤v≤γ(γv)∑j=1p(1n∑i=1nSij)γ−v(1n∑i=1n(μ0i−μ^0i)Xij)v      =Tγ0+∑v=1γTγv,     say.
+
+Under the null hypothesis and proposed assumptions, we have {Tγ0−ψ(γ)}/ω(γ)→dN(0,1) as n, p → ∞. Then we discuss two cases: v = 1 and v &gt; 1 separately for the orders of Tγv, 1 ≤ v ≤ γ.
+
+When v = 1, we have E[(Tγ1)2]=E[Cn2∑j1p∑j2p(∑i=1n1nSij1)γ−1(∑i=1n1nSij2)γ−1∑i=1n((μ0i−μ^0i)Xij1)∑i=1n((μ0i−μ^0i)Xij2)]=Cn2∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4×(∑l∈{i1,i2,i3,i4}ϵ0lXlj1n+∑l∉{i1,i2,i3,i4}ϵ0lXlj1n)γ−1      ×(∑l∈{i1,i2,i3,i4}ϵ0lXlj2n+∑l∉{i1,i2,i3,i4}ϵ0lXlj2n)γ−1].
+
+By Binomial theorem, we have (∑lϵ0lXlj1n)γ−1≤(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−1+C∑l∈{i1,…,i4}ϵ0lXlj1n(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−2+…        +C(∑l∈{i1,…,i4}ϵ0lXlj1n)γ−2∑l∉{i1,…,i4}ϵ0lXlj1n)+C(∑l∈{i1,…,i4}ϵ0lXlj1n)γ−1.
+
+Then E[(Tγ1)2]=∑k1=1γ∑k2=1γCn2∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)k1−1          ×(∑l∈{i1,…,i4}ϵ0lXlj2n)k2−1(∑l∉{i1,i2,i3,i4}ϵ0lXlj1n)γ−k1(∑l∉{i1,i2,i3,i4}ϵ0lXlj2n)γ−k2]      =∑k1=1γ∑k2=1γTγ1k1k2,     say.
+
+To prove the order of |Tγ1| is ignorable, we discuss two situations: k1+k2 ≤ 6 and k1+k2 &gt; 6. First, we focus on the situation with k1+k2 ≤ 6 and discuss the order of each term separately. For Tγ111, we have    Tγ111=Cn2∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∉{i1,i2,i3,i4}ϵ0lXlj1n)γ−1(∑l∉{i1,i2,i3,i4}ϵ0lXlj2n)γ−1]=Cn2∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−1(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−1]=O(n−2)∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4]×O(n−(γ−1))=O(n−2)∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4]×O(n−(γ−1)).
+
+Note that    ∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4|ℤ˜]×O(n−(γ−1))=∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2ϵ0i3ϵ0i4|ℤ˜]×O(q02n−(γ+1))=∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2ϵ0i32|ℤ˜]×O(q02n−(γ+))   +∑j1,j2∑i1,i2E[Xi1j1ϵ0i1Xi2j2ϵ0i2|ℤ˜]×O(q02n−(γ+1))   +∑j1,j2∑i1,i2E[Xi1j1ϵ0i12Xi2j2|ℤ˜]×O(q02n−(γ+1)).
+
+We discuss each term separately. By a similar discussion of E[T114|ℤ˜], for the first term in Tγ111, we have    ∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2ϵ0i32|ℤ˜]×O(q02n−(γ+1))=∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−γ)=o(pn2q0−2)×O(q02n−γ)=o(pn−γ+2).
+
+For the second term in Tγ111, by noting that E[Xijϵ0i|ℤ]=0, we have    ∑j1,j2∑i1,i2E[Xi1j1ϵ0i1Xi2j2ϵ0i2|ℤ˜]×O(q02n−(γ+1))=∑j1,j2∑i1E[Xi1j1Xi2j2ϵ0i12|ℤ˜]×O(q02n−(γ+1))=O(p2n)×O(q02n−(γ+1))=O(q02p2n−γ)=o(pn−γ+2).
+
+For the third term in Tγ111, similar to the discussion of T111, we have    ∑j1,j2∑i1,i2E[Xi1j1ϵ0i12Xi2j2|ℤ˜]×O(q02n−(γ+1))=o(pn2q0−2)×O(q02n−(γ+1))=o(pn−γ+1)=o(pn−γ+2).
+
+By combing the above three equations, we have Tγ111 = o(pn−γ).
+
+Similarly, Tγ121=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1n         ×(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−2(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−1]=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1n]         ×E[(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−2(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−1]=Cn2∑j1,j2∑i1,i2,i3E[Xi1j12Xi2j2ϵ0i1bi1i3bi2i3ϵ0i32+Xi1j1Xi2j2bi1i3bi2i3ϵ0i33Xi3j1]×O(n−(γ−1))=O(n−γ−2)∑j1,j2∑i1,i2,i3(E[Xi1j12Xi2j2ϵ0i1bi1i3bi2i3ϵ0i32]+E[Xi1j1Xi2j2bi1i3bi2i3ϵ0i33Xi3j1]).
+
+Again, we discuss each term separately. Note that since E[ϵ|X,ℤ˜]=0, we have E[Xij2ϵ0i|ℤ˜]=0. Thus     ∑j1,j2∑i1,i2,i3E[Xi1j12Xi2j2ϵ0i1bi1i3bi2i3ϵ0i32|ℤ˜]×O(n−γ−2)=∑j1,j2∑i1,i2E[Xi1j12Xi2j2ϵ0i13|ℤ˜]×O(q02n−γ−4)=O(p2n2)×O(q02n−γ−4)=O(pn−γpq02n−2)=o(pn−γ).
+
+Similarly, for the second term in Tγ121, we have    ∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2bi1i3bi2i3ϵ0i33Xi3j1|ℤ˜]×O(n−γ−2)=∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2|ℤ˜]E[ϵ0i33Xi3j1|ℤ˜]×O(q02n−γ−4)=∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(q02n−γ−3)=o(pn2q0−2)×O(q02n−γ−3)=o(pn−γ).
+
+Combining the above two equations, we have Tγ121 = o(pn−γ).
+
+For Tγ122, we have Tγ122=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1n∑l∈{i1,…,i4}ϵ0lXlj2n         ×(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−2(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−2]=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1n∑l∈{i1,…,i4}ϵ0lXlj2n]         ×E[(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−2(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−2]=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1∑l∈{i1,…,i4}ϵ0lXlj2]×O(n−γ+2).
+
+Note that    ∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4∑l∈{i1,…,i4}ϵ0lXlj1∑l∈{i1,…,i4}ϵ0lXlj2|ℤ˜]×O(n−γ+2)=∑j1,j2∑i1,i2E[Xi1j12Xi2j22ϵ0i12ϵ0i22+Xi1j12Xi1j2Xi2j2ϵ0i14|ℤ˜]×O(q02n−γ)   +∑j1,j2∑i1,i2,i3E[Xi1j12ϵ0i1Xi2j22ϵ0i2ϵ0i32|ℤ˜]×O(q02n−γ)   +∑j1,j2∑i1,i2,i3E[Xi1j12Xi1j2ϵ0i12Xi2j2ϵ0i32|ℤ˜]×O(q02n−γ)   +∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2ϵ0i34Xi3j1Xi3j2|ℤ˜]×O(q02n−γ)   +∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2Xi3j1ϵ0i32Xi4j2ϵ0i42|ℤ˜]×O(q02n−γ).
+
+Then we discuss each term separately. For the first term, we have    ∑j1,j2∑i1,i2E[Xi1j12Xi2j22ϵ0i12ϵ0i22+Xi1j12Xi1j2Xi2j2ϵ0i14|ℤ˜]×O(q02n−γ)=O(p2n2)×O(q02n−γ)=o(pn−γ+4).
+
+For the second term, by noting that E[Xij2ϵ0i|ℤ˜]=0, we have    ∑j1,j2∑i1,i2,i3E[Xi1j12ϵ0i1Xi2j22ϵ0i2ϵ0i32|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2,i3E[Xi1j12ϵ0i1Xi2j22ϵ0i2|ℤ˜]×E[ϵ0i32|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i3E[Xi1j12ϵ0i12Xi1j22|ℤ˜]×E[ϵ0i32|ℤ˜]×O(q02n−γ)=O(p2n)×O(n)×O(q02n−γ)=o(pn−γ+4).
+
+For the third term, we have    ∑j1,j2∑i1,i2,i3E[Xi1j12Xi1j2ϵ0i12Xi2j2ϵ0i32|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2E[Xi1j12Xi1j2ϵ0i12Xi2j2|ℤ˜]×∑i3E[ϵ0i32|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2E[Xi1j12Xi1j2ϵ0i12Xi2j2|ℤ˜]×O(q02n−γ+1)=∑j1,j2∑i1≠i2E[Xi1j12Xi1j2ϵ0i12Xi2j2|ℤ˜]×O(q02n−γ+1)+∑j1,j2∑i1E[Xi1j12Xi1j22ϵ0i12|ℤ˜]×O(q02n−γ+1).
+
+We discuss each term separately as follows. First,    ∑j1,j2∑i1≠i2E[Xi1j12Xi1j2ϵ0i12Xi2j2|ℤ˜]×O(q02n−γ+1)=∑i1≠i2∑j1∉P0,j2∉P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1) +∑i1≠i2∑j1∉P0,j2∈P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1) +∑i1≠i2∑j1∈P0,j2∉P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1) +∑i1≠i2∑j1∈P0,j2∈P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1)
+
+By noting that E[Xi2j2|ℤ˜]=0, we have    ∑j1,j2∑i1≠i2E[Xi1j12Xi1j2ϵ0i12Xi2j2|ℤ˜]×O(q02n−γ+1)=∑i1≠i2∑j1∉P0,j2∈P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1)   +∑i1≠i2∑j1∈P0,j2∈P0E[Xi1j12Xi1j2ϵ0i12|ℤ˜]×E[Xi2j2|ℤ˜]×O(q02n−γ+1)=[O(n2pp0)+[O(n2p02)]×O(q02n−γ+1)]=O(pn−γ+4)×[O(p0q02n−1)+O(p02p−1q02n−1)]=o(pn−γ+4).
+
+According to assumptions C3 and C4, p0=O(pn1) for a small positive η1 and q0=O(nη2) for a small positive η2. Then p1/2−η3/2q02n−1=o(n−1) and we can derive the last equation accordingly.
+
+Second, by the discussion of T111, we have  ∑j1,j2∑i1E[Xi1j12Xi1j22ϵ0i12|ℤ˜]×O(q02n−γ+1)=O(p2n)×O(q02n−γ+1)=O(pn−γ+4)×O(pq02n−2)=o(pn−γ+4).
+
+For the fourth term, similar to the derivation of E[T114|Z˜], we have    ∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2ϵ0i34Xi3j1Xi3j2|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2,i3E[Xi1j1Xi2j2|ℤ˜]E[ϵ0i34Xi3j1Xi3j2|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(n)×O(q02n−γ)=o(pn2q0−2)×O(q02n−γ+1)=o(pn−γ+4).
+
+For the last term, by the derivation of E[T114|ℤ˜], we have    ∑j1,j2∑i1,i2,i3,i4E[Xi1j1Xi2j2Xi3j1ϵ0i32Xi4j2ϵ0i42|ℤ˜]×O(q02n−γ)=∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]×O(n2)×O(q02n−γ)=∑j1,j2∑i1,i2E[Xi1j1Xi2j2|ℤ˜]=o(pn2q0−2)×O(q02n−γ+2)=o(pn−γ+4).
+
+Combining the above equations, we have Tγ122 = o(pn−γ).
+
+Then we discuss the order of Tγ131, we have Tγ122=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)2         ×(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−3(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−1]     =O(n−2)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)2]         ×E[(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−3(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−1]     =O(n−2)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)2]×O(n−γ+2).
+
+(∑l∈{i1,…,i4}ϵ0lXlj1/n)2 and (∑l∈{i1,…,i4}ϵ0lXlj1/n)×(∑l∈{i1,…,i4}ϵ0lXlj2/n) have the same effect to the order. Similar to the discussion of Tγ122, we have Tγ131 = o(pn−γ). Next, we discuss the order of Tγ132:    Tγ132=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)2∑l∈{i1,…,i4}ϵ0lXlj2n         ×(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−3(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−2]     =O(n−γ−3)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1)2∑l∈{i1,…,i4}ϵ0lXlj2].
+
+For a fixed j1 and j2, ∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑i∈{i1,…,i4}ϵ0lXlj1)2∑i∈{i1,…,i4}ϵ0lXlj2]
+
+contains 5 ϵ0i and E[ϵ0i|X,ℤ˜]=0. Then it at most contains n2 terms with non-zero expectation. Since bij = O(q0n−1), we have Tγ132=O(n−γ−3)×O(p2n2q02n−2)=O(p2q02n−γ−3)=O(pn−γ)×O(pq02n−3)=o(pn−γ).
+
+Similarly, we can prove Tγ141 = o(pn−γ). For Tγ133, we have    Tγ133=Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)2(∑l∈{i1,…,i4}ϵ0lXlj2n)2         ×(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−3(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−3]     =O(n−γ−3)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1)2(∑l∈{i1,…,i4}ϵ0lXlj2)2].
+
+Since ∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1)2(∑l∈{i1,…,i4}ϵ0lXlj2)2] contains 6 ϵ0i and E[ϵ0i|X,ℤ˜]=0, for a fixed j1 and j2, it at most contains n3 terms with non-zero expectation. Thus Tγ133=O(n−γ−3)×O(p2n3q02n−2)=O(q02p2n−γ−2)=O(pn−γ)×O(pq02n−2)=o(pn−γ).
+
+Similarly, we can prove Tγ1k1k2=o(pn−γ) for k1 + k2 = 6.
+
+For k1 + k2 ≥ 7, we have    Cn2∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4×(∑l∈{i1,…,i4}ϵ0lXlj1n) k1−1    ×(∑l∈{i1,…,i4}ϵ0lXlj2n)k2−1(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−k1(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−k2]=O(n−2)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n)k1−1(∑l∈{i1,…,i4}ϵ0lXlj2n)k2−1]    ×E[(∑l∉{i1,…,i4}ϵ0lXlj1n)γ−k1(∑l∉{i1,…,i4}ϵ0lXlj2n)γ−k2]=O(n−2)∑j1,j2∑i1,…,i4E[Xi1j1Xi2j2ϵ0i3bi1i3ϵ0i4bi2i4(∑l∈{i1,…,i4}ϵ0lXlj1n) k1−1(∑l∈{i1,…,i4}ϵ0lXlj2n) k2−1]    ×O(n−γ+⌊(k1+k2)/2⌋)=O(n−2)O(p2×n4×q02n−2×n−(k1+k2−2))×O(n−γ+⌊(k1+k2)/2⌋)=O(pn−γ)×O(q02pn−(k1+k2−2)+⌊(k1+k2)/2⌋)=o(pn−γ).
+
+By noting that pq02=o(n2) and for k1 + k2 ≥ 7, −(k1 + k2 − 2) +⌊(k1+k2)/2⌋≥2, we can derive the last equation. In summary, we have |Tγ1|=op(n−γ/2p).
+
+Next, we discuss 1 &lt; v ≤ γ.
+
+By Minkowski’s inequality, we have E‖Tγv‖≤C∑j=1pE[|(1n∑i=1nSij)γ−v(1n∑i=1n(μ0i−μ^0i)Xij)v|].
+
+Then by Cauchy-Schwarz inequality, E[|Tγv|]≤C∑j=1pE[(1n∑i=1nSij)2(γ−v)]1/2E[(1n∑i=1n(μ0i−μ^0i)Xij)2v]1/2            ≤O(n−(γ−v)/2)∑j=1pE[(1n∑i=1n(μ0i−μ^0i)Xij)2v]1/2.
+
+Next, we derive the order of T2v,j=(1n∑i=1n(μ0i−μ^0i)Xij)2v for any positive integer v. For j ∈ P0, we have E[T2v,j|ℤ˜]=1n2v∑i1,i2,…,i4vE[Xi1jbi1i2v+1ϵ0i2v+1Xi2jbi2i2v+2ϵ0i2v+1×⋯×Xi2vjbi2vi4vϵ0i4v|ℤ˜]        ≤Cq02vn4v∑i1,i2,…,i3vE[Xi1jXi2j×⋯×Xi2vj×ϵ0i2v+12ϵ0i2v+22×⋯×ϵ0i3v2|ℤ˜]        =O(q02vn−v).
+
+Note that for j∉P0, E[Xij|ℤ˜]=0. Then for For j∉P0, E[T2v,j|ℤ˜]=1n2v∑i1,i2,…,i4vE[Xi1jbi1i2v+1ϵ0i2v+1Xi2jbi2i2v+2ϵ0i2v+1×⋯×Xi2vjbi2vi4vϵ0i4v|ℤ˜]        ≤Cq02vn4v∑i1,i2,…,i2vE[Xi1j2Xi2j2×⋯×Xivj2×ϵ0iv+12ϵ0iv+22×⋯×ϵ0i2v2|ℤ˜]        =O(q02vn−2v).
+
+In summary, E[T2v,j]=O(q02vn−v) if j ∈ P0 and E[T2v,j]=O(q02vn−2v) if j∉P0. Then we have ∑j=1pE[(1n∑i=1n(μ0i−μ^0i)Xij)2v]1/2=O(p0q0vn−v/2+pq0vn−v). This leads to E[|Tγv|]≤O(n−(γ−v)/2)×O(p0q0vn−v/2+pq0vn−v)     =O(p0q0vn−γ/2+pn−γ/2pn−v/2q0v).
+
+Note that by assumption C5, pq04=o(n2), v ≥ 2, and by assumption C4, p0=O(pη1), q0=O(nη2) for some small positive η1 and η2, we have E[|Tγv|]=o(pn−γ/2), leading to |Tγv|=op(pn−γ/2).
+
+In summary, we have proved for any finite γ, [{L(γ,μ^0)−ψ(γ)}/ω(γ)]γ∈Γ′'=[{L(γ,μ0)−ψ(γ)}/ω(γ)]γ∈Γ′'+op(1).
+
+(ii) Asymptotic null distribution for iSPU(∞). Define V˜ij=(Yi−μ^0i)Xij/σjj,   1≤i≤n, 1≤j≤p.
+
+Let W˜j=∑i=1nV˜ij/n. We discuss two cases: j ∈ P0 and j∉P0.
+
+For case j ∈ P0: we define ϵ is a small constant. Note that      Pr(maxj∈P0W˜j2&gt;ϵlogp)≤Pr(maxj∈P0|W˜j|&gt;ϵ(logp)1/2)≤Pr(maxj∈P0|∑i=1n(Yi−μ0i+μ0i−μ^0i)Xijσjjn|&gt;(ϵlogp)1/2)≤Pr(maxj∈P0|∑i=1n(Yi−μ0i)Xijσjjn|&gt;(ϵlogp)1/22)      +Pr(maxj∈P0|∑i=1n(μ0i−μ^0i)Xijσjjn|&gt;(ϵlogp)1/22).
+
+For the first term, we have ≤Pr(maxj∈P0|∑i=1n(Yi−μ0i)Xijσjjn|&gt;(ϵlogp)1/22)≤p0≤Pr(|∑i=1nSijσjjn|&gt;(ϵlogp)1/22).
+
+Note that Sij follows a sub-Gaussian distribution (C2) and Si1j and Si2j are independent for i1≠i2. Suppose S1j,…,Snj be n independent random variables such that Sij follows sub-Gaussian distribution subG(0, σ2). Then for any a∈ℝn, using a Chernoff bound, we have Pr(|∑i=1naiSij|&gt;t)≤2exp(−t2/(2σ2‖a‖22)). Similarly, we have  Pr(maxj∈P0|∑i=1n(Yi−μ0i)Xijσjjn|&gt;(ϵlogp)1/22)≤p0×2exp(−ϵlogp/42)=2p0p−ϵ/8=o(1).
+
+By noting that p0=pη1, where η1 is a small constant, we have the last equation.
+
+For the second term, we have   Pr(maxj∈P0|∑i=1n(μ0i−μ^0i)Xijσjjn|&gt;(ϵlogp)1/22)≤Pr(maxj∈P0|∑i1,i2nXi1jϵ0i2bi1i2σjjn|&gt;(ϵlogp)1/22)≤Pr(maxj∈P0|∑i2=1nϵ0i2(∑i1Xi1jbi1i2σjjn)|&gt;(ϵlogp)1/22|maxi2∑i1Xi1jbi1i2σjjn&lt;Cσjjn)       +Pr(maxi2∑i1Xi1jbi1i2σjjn≥Cσjjn).
+
+We discuss these two terms separately. For the first term, we have   Pr(maxj∈P0|∑i2=1nϵ0i2(∑i1Xi1jbi1i2σjjn)|&gt;(ϵlogp)1/22|maxi2∑i1Xi1jbi1i2σjjn&lt;Cσjjn)≤p0Pr(|∑i2=1nϵ0i2(∑i1Xi1jbi1i2σjjn)|&gt;(ϵlogp)1/22|maxi2∑i1Xi1jbi1i2σjjn&lt;Cσjjn)≤p0E[Pr(|∑i2=1nϵ0i2(∑i1Xi1jbi1i2σjjn)|&gt;(ϵlogp)1/22|maxi2∑i1Xi1jbi1i2σjjn&lt;Cσjjn,X,ℤ˜)].
+
+By noting that ϵ0i follows a sub-Gaussian distribution, we have Pr(maxj∈P0|∑i2=1nϵ0i2(∑i1Xi1jbi1i2σjjn)|&gt;(ϵlogp)1/22|maxi2∑i1Xi1jbi1i2σjjn&lt;Cσjjn,X,ℤ˜)≤p0×2exp(−ϵlogp/42C2)=2p0p−ϵ/(8C2)=o(1).
+
+For the second term, we have Pr(maxi2∑i1Xi1jbi1i2σjjn≥Cσjjn)≤nE[Pr(∑i1Xi1jn≥C/q0|ℤ˜)].
+
+By central limit theorem and the Gaussian tail inequality, we have Pr(maxi2∑i1Xi1jbi1i2σjjn≥Cσjjn)≤n×2exp(−(Cn1/2/q0)2/2)Cn1/2/q0.
+
+By noting that q0=nη2 for a small positive η2, we have Pr(maxi2∑i1Xi1jbi1i2σjjn≥Cσjjn)≤Cn1/2+η2×exp(−n1−2η2/2)=o(1).
+
+In summary, as n, p → ∞, Pr(maxj∈P0W˜j2&gt;ϵlogp)=o(1). Then we focus on the second situation. Define Vij=(Yi−μ0i)Xij/σjj, V^ij=VijI(|Vij|≤τn) for i=1,…,n and j=1,…,p, where τn=2η−0.5log(p+n). Further define Wj=∑i=1n(Yi−μ0i)Xij/σjjn and W^j=∑i=1nV^ij/n. Then we have Pr(maxj∉P0|W˜j−Wj|≥1logp)≤npmaxj∉P0Pr(|V1j|≥τn)+Pr(maxj∉P0|∑i=1n(μ0i−μ^0i)Xijσjjn|≥1logp).
+
+From the proof of Lemma 1, the first term is O(1/p + 1/n) and thus we only need discuss the second term. By the Markov inequality and the Jensen’s inequality, Pr(maxj∉P0|∑i=1n(μ0i−μ^0i)Xijσjjn|≥1logp) ≤Pr(maxj∉P0(∑i=1n(μ0i−μ^0i)Xijσjjn)32≥1(logp)32) ≤pPr((∑i=1n(μ0i−μ^0i)Xijσjjn)32≥1(logp)32) ≤plogpE[(∑i=1n(μ0i−μ^0i)Xijσjjn)32] ≤plogp×O(n−16q016)=o(1).
+
+Thus, we have Pr(max1≤j≤p|W˜j−Wj|≥1/logp)=o(1) as n, p → ∞. Further note that |maxj∉P0Wj2−maxj∉P0W˜j2|≤2maxj∉P0|Wj|maxj∉P0|Wj−W˜j|+maxj∉P0|Wj−W˜j|2.
+
+The above two inequalities indicate that when n, p → ∞, |maxj∉P0Wj2−maxj∉P0W˜j2|→0 By Cai et al. (2014), we have Pr(maxj∉P0W˜j2−2logp+loglogp≤x)→exp{−π−1/2exp(−x/2)}.
+
+Note that max1≤j≤pW˜j2=max(maxj∈P0W˜j2,maxj∉P0W˜j2)=maxj∉P0W˜j2.
+
+Thus, Pr(max1≤j≤pW˜j2−2logp+loglogp≤x)→exp{−π−1/2exp(−x/2)}.
+
+Note that σ^jj=(1+o(1))σjj and by Slutsky’s theorem, we have Pr(max1≤j≤pn(1n∑i=1nUij)2σjj∨−2logp+loglogp≤x)→exp{−π−1/2exp(−x/2)}.
+
+(iii) By proof in (i) and (ii), we have [{L(γ,μ^0)−ψ(γ)}/ω(γ)]γ∈Γ′'=[{L(γ,μ0)−ψ(γ)}/ω(γ)]γ∉Γ′'+op(1)
+
+and L(∞,μ^0)=L(∞,μ0)+op(1). By Lemma 1, [{L(γ,μ0)−ψ(γ)}/ω(γ)]γ∈Γ′' is asymptotically independent with L(∞, µ0). Note that op(1) is asymptotic independent with L(∞, µ0) and [{L(γ,μ0)−ψ(γ)}/ω(γ)]γ∈Γ′', thus [{L(γ,μ^0)−ψ(γ)}/ω(γ)]γ∈Γ′' is asymptotically independent with L(∞,μ^0). This completes the proof.
+
+Appendix D. Details of asymptotic power analysis
+
+To derive some propositions, we define some additional notation. Under an alternative HA:β≠0, we denote the mean and variance of L(γ, µ0) with γ &lt; ∞ by ψA(γ)=∑j=1pψA(j)(γ) with ψA(j)(γ)=E[L(j)(γ,μ0)|HA] for 1 ≤ j ≤ p, and by ωA2=var[L(γ,μ0)|HA], respectively. Define S˜ij≡(Yi−μ0iA)Xij for 1 ≤ i ≤ n and 1 ≤ j ≤ p and σ˜kj=cov[S˜1k,S˜1j] for 1 ≤ k, j ≤ p.
+
+Next, we introduce Propositions 1 and 2 to calculate the ψA(γ) and ωA2(γ), respectively.
+
+Proposition 1. Under assumptions C8–C9 and HA:β≠0, we have ψA(j)(γ)~ψ˜(j)(γ)+∑c=1γ(γc)Δjcψ˜(j)(γ−c),
+
+where ∼ stands for the two sides are in the same order, ψ˜(j)(1)=0, ψ˜(j)(γ)=γ!d!2dn−dσ˜jjd+o(n−d) if γ = 2d, and ψ˜(j)(γ)=o(n−(d+1)) if γ = 2d + 1. In particular μA(j)(1)=Δj and μA(1)=∑j=1pΔj.
+
+Proof of Proposition 1. Under the HA, the true conditional mean of Yi is μ0iA. Then similarly to Theorem 1, we can calculate ψ˜(j)(γ) accordingly.
+
+Under the alternative HA, it is trivial to find μA(1)=∑i=1pΔi since ψ˜(1)=0. Next, we focus on γ ≥ 2. The mean function of L(j)(γ) under HA equals E[L(j)(γ)]=E[(1n∑i=1nUij)γ]       =E[(1n∑i=1n(Yi−μ0iA)Xij+1n∑i=1n(μ0iA−μ0i)Xij)γ]       =∑0≤a≤γ(γa)E[(1n∑i=1n(Yi−μ0iA)Xij)a]E[(1n∑i=1n(μ0iA−μ0i)Xij)γ−a].
+
+Note that under the local alternative considered here, Δj=O(n−1/2(logp)κ) with κ &gt; 0 for 1 ≤ j ≤ p. Then E[|(μ0iA−μ0i)X1j|]≤C|Δj| for any positive integer γ, where C is some constant. Thus E[(1n∑i=1n(μ0iA−μ0i)Xij)a]=Δja(1+o(1/n)). Then we have ψA(j)(γ)=ψ˜(j)+∑c=1γ(γc)Δjcψ˜(j)(γ−c)[1+o(1/n)].
+
+Then Proposition 1 follows directly from the above equation.
+
+Proposition 2. Under assumptions C8–C9 and HA:β≠0, we have ωA2(γ)~ψA(2γ)−∑j=1pψA(j)(γ)2+∑k≠j∑h=0γ∑l=0γ(γh)(γl)ΔkhΔjlrkj(γ−h,γ−l),
+
+where rkj(h,l)={1nc∑2c1+c3=h2c2+c3=lc3&gt;0h!l!c3!c1!c2!2c1+c2σ˜kkc1σ˜jjc3σ˜kjc3+o(n−c)if h+l=2c;1nc+1∑a+b=32c1+c3=h−a2c2+c3=l−bh!l!a!b!c3!c1!c2!2c1+c2σ˜kkc1σ˜jjc3σ˜kjc3mkajb+o(n−(c+1))if h+l=2c+1,
+
+with mkajb=E[((Y1−μ01A)X1k)a((Y1−μ01A)X1j)b].
+
+Proof of Proposition 2. Under the local alternative, ωA2(γ)=E[{∑j=1p(1n∑i=1n(Yi−μ0i)Xij)γ}2]−E[∑j=1p(1n∑i=1n(Yi−μ0i)Xij)γ]2      =ψA(2γ)−∑i=1p{ψA(i)(γ)}2−∑k≠jψA(k)(γ)ψA(j)(γ)           +E[∑k≠j(1n∑i=1n(Yi−μ0i)Xik)γ(1n∑i=1n(Ys−μ0i)Xij)γ]     =ψA(2γ)−∑i=1p{ψA(i)(γ)}2           −∑k≠j[∑c=0γ(γc)Δkcψ˜(k)(γ−c)(1+o(1/n))][∑c=0γ(γc)Δjcψ˜(j)(γ−c)(1+o(1/n))]           +∑k≠j∑h=0γ∑l=0γ(γh)(γl)ΔkhΔjlE[(1n∑i=1nS˜ik)γ−h(1n∑i=1nS˜ij)γ−l](1+o(1/n)).
+
+By the derivation of Proposition 3 in Wu et al. (2019), the last two terms in the above equation can be simplified as ∑k≠j∑h=0γ∑l=0γ(γh)(γl)ΔkhΔjl(E[(1n∑i=1nS˜ik)γ−h(1n∑i=1nS˜ij)γ−l]−ψ˜(k)(γ−h)ψ˜(j)(γ−l))~∑k≠j∑h=0γ∑l=0γ(γh)(γl)ΔkhΔjlrkj(γ−h,γ−l).
+
+This completes the proof.
+
+Proof of iSPU(1) is more powerful when ∆j is fixed at the same level. We further assume ∆j equals to ∆.for j∈Sη under the alternative. Note that the asymptotic power of iSPU(γ) goes to 1 if (μA(γ)−μ0(γ))nγ/2p−1/2→∞, which implies that for any finite γ, a sufficient condition for the asymptotic power of iSPU(γ) goes to 1 is Δn−1/2p(2η−1)/2γ→∞,  as p,n→∞.
+
+This sufficient condition comes from the fact that Δ=O(n−1/2(logp)κ) and μA(γ)−μ0(γ)~∑i=1p∑c=1γΔcO(n−(γ−c)/2)~p1−ηΔγ. Since 0 &lt; η &lt; 1/2, p(2η−1)/(2γ)→0 as p → ∞. Thus, to compare the asymptotic powers of different iSPU(γ), we focus on the local alternative such that n1/2Δ→0, as p, n → ∞. Equivalently, we write Δ=n−1/2r1/2, where r → 0 as p, n → ∞.
+
+Then we calculate ψA(γ)−ψ˜(γ). When γ is odd, by Proposition 1, ψA(γ)−ψ˜(γ)=∑j=1p∑c=1γ(γc)Δjcψ˜(j)(γ−c)(1+o(1/n))        ~γ∑j=1pΔjψ˜(j)(γ−1)        ~γ∑j=1pΔj(γ−1)!((γ−1)/2)!2(γ−1)/2n−(γ−1)/2        ~p1−ηΔγ!((γ−1)/2)!2(γ−1)/2n−γ/2n1/2        ~γ!((γ−1)/2)!2(γ−1)/2×r1/2p1−ηn−γ/2.
+
+Similarly, when γ is even ψA(γ)−ψ˜(γ)~γ∑j=1pΔjψ˜(j)(γ−1)+(γ2)∑j=1pΔj2ψ˜(j)(γ−2)        ~p1−ηn−1/2r1/2o(n−γ/2)+p1−ηnrO(n−(γ+2)/2)        ~o(r1/2p1−ηn−γ/2).
+
+Further, under this local alternative, ωA(γ)~ω˜(γ)~cγp1/2n−γ/2, where cγ is some constant and can be calculated by Proposition 2. Next, we study {ψA(γ)−ψ˜(γ)}/ωA(γ), which determines the power. As n, p → ∞, ψA(γ)−ψ˜(γ)ωA(γ)~γ!((γ−1)/2)!2(γ−1)/2cγ×r1/2p1/2−η,    γ is odd,
+
+ψA(γ)−ψ˜(γ)ωA(γ)~o(1)×r1/2p1/2−η,          γ is odd.
+
+The above results show that the asymptotic power of iSPU(γ) does not converge to 1 if r1/2p1/2−η&lt;∞. Thus we focus on the local alternative when r → 0 and r1/2p1/2−η→∞. Then the asymptotic power of iSPU with odd γ goes to 1 while iSPU with even γ does not, that is, under the considered alternative, iSPU with odd γ is more powerful than iSPU with even γ. Therefore, we only need to focus on odd γ’s and compare their power. To find which odd γ yields an asymptotically more powerful test, we only need to find which γ maximizes γ!/(((γ−1)/2)!2(γ−1)/2cγ). To simplify our discussion, we first consider the situation where σ˜ij=0 for i≠j. In this case γ!((γ−1)/2)2(γ−1)/2cγ=γ!((γ−1)/2)!2(γ−1)/2(2γ)!/(γ!2γ)−(γ!)2/([(γ/2)!]22γ),
+
+which has maximum value 1.66 at γ = 1. More generally, under the situation where σ˜ij≥0, a similar calculation gives that iSPU(1) is asymptotically more powerful than iSPU test with other γ. This completes the proof.
+
+Proof of iSPU(2) is more powerful when the absolute values of ∆j are the same but half being positive while the other half being negative. We assume |∆j| equals to ∆ for j∈Sη under the alternative. Like previous subsection, we consider the local alternative with Δ=n−1/2r1/2, where r → 0 as p, n → ∞. Similarly, we calculate ψA(γ)−ψ^(γ) for both odd and even γ.
+
+For γ = 1, we have ψA(1)−ψ˜(1)~∑j=1pΔj~0.
+
+When γ = 3, by noting that ψ˜(j)(1)=0 for 1 ≤ j ≤ p, we have ψA(3)−ψ˜(3)=∑j=1p∑c=13(3c)Δjcψ˜(j)(3−c)(1+o(1/n))       ~∑j=1p(Δj3+Δjψ˜(j)(2))       ~0.
+
+For odd γ &gt; 3, we have ψA(γ)−ψ˜(γ)=∑j=1p∑c=1γ(γc)Δjcψ˜(j)(γ−c)(1+o(1/n))         ~(γ2)∑j=1pΔj2ψ˜(j)(γ−2)       ~p1−ηnr×o(n−(γ−1)/2)       ~o(rp1−ηn−(γ+1)/2).
+
+Similarly, for even γ ≥ 2, we have ψA(γ)−ψ˜(γ)=∑j=1p∑c=1γ(γc)Δjcψ˜(j)(γ−c)(1+o(1/n))        ~(γ2)∑j=1pΔj2ψ˜(j)(γ−2)        ~γ(γ−1)2p1−ηΔ2(γ−2)!((γ−2)/2)!2(γ−2)/2n−(γ−2)/2        ~γ!((γ−2)/2)!2γ/2p1−ηrn−γ/2.
+
+Again, under this local alternative, ωA(γ)~ω˜(γ)~cγp1/2n−γ/2, where cγ is some constant. Next, we study {μA(γ)−μ0(γ)}/σA(γ), which determines the power. As n, p → ∞, ψA(γ)−ψ˜(γ)ωA(γ)~o(rp1/2−ηn−1/2),       γ is odd,
+
+ψA(γ)−ψ˜(γ)ωA(γ)~γ!cγ((γ−2)/2)!2γ/2rp1/2−η,    γ is even.
+
+These results show that if rp1/2−η&lt;∞, the asymptotic power of iSPU(γ) does not converge to 1. Thus we discuss the local alternative when r → 0 and rp1/2−η&lt;∞. Then the asymptotic power of iSPU with even γ goes to 1 while iSPU with odd γ does not. In other words, under the considered alternative here, iSPU with even γ is more powerful than iSPU with odd γ. Therefore, we only need to focus on iSPU with even γs and compare their power. To find which even γ yields an asymptotically more powerful test, we need to find which γ maximizes γ!/(cγ((γ−2)/2)!2γ/2). We first consider the situation where σ˜ij=0 for i≠j. In this case γ!cγ((γ−2)/2)2γ/2=γ!((γ−2)/2)!2γ/2(2γ)!/(γ!2γ)−(γ!)2/([(γ/2)!]22γ),
+
+which has maximum value 2 at γ = 2. More generally, under the situation where σ˜ij≥0, a similar calculation yields that iSPU(2) is asymptotically more powerful than iSPU test with other γ. This completes the proof.
+
+Figure 1: Power comparison for different methods in under G × E interaction simulations with n = 2000, p = 300 and q1 = q2 = 20. n, p, q1, and q2 stand for the sample size, number of terms in G × E interaction, number of the positive genetic main effects, and number of the negative genetic main effects, respectively. We varied the sparsity level s.
+
+Figure 2: Power comparison for different methods under G× E interaction simulations with n = 200, p = 1000. We varied the sparsity level s. In last sub-figure, we generated informative variables in β from a uniform distribution U (0, c).
+
+Figure 3: Empirical power of aiSPU with different Γ set under G×E interaction simulations with n = 200, p = 1000. aiSPU_1, aiSPU_2, aiSPU_3, aiSPU_4 represent aiSPU with Γ1={1,2,3,4;∞}, Γ2={1,2,…,6,∞}, Γ3={1,…,8,∞}, and Γ4={1,2,…,10,∞}, respectively. We varied the sparsity level s. In last sub-figure, we generated none-zero elements of β from a uniform distribution U (0, c).
+
+Figure 4: Empirical power of aiSPU under G × E interaction simulations with n = 200, p = 1000, and sparsity level s = 0.2. We randomly selected a pre-specified number of variables in ℤ and set the effect size followed a uniform distribution U (−0.01, 0.01). -boot and -asy stand for the results based on bootstrap and asymptotics, respectively.
+
+Figure 5: Power comparison for different tests under high-dimensional linear models simulations. We varied the sparsity level s.
+
+Table 1: Empirical Type I error rates of various tests for G × E interaction in simulations with n = 2000, q1 = 2, q2 = 0, and varying p. n, p, q1, and q2 stand for the sample size, number of terms in G × E interaction, number of the positive genetic main effects, and number of the negative genetic main effects, respectively.
+
+P	25	50	70	100	200	300	400	500	
+GESAT	0.061	0.055	0.090*	0.103*	0.277*	0.636*	0.944*	1.000*	
+GESAT-sim	0.050	0.048	0.062	0.050	0.051	0.044	0.051	0.047	
+aiSPU(Full)	0.071	0.057	0.080*	0.085*	0.199*	0.551*	0.944*	1.000*	
+aiSPU(Oracle)	0.067	0.049	0.064	0.052	0.052	0.046	0.057	0.047	
+aiSPU(TLP)	0.061	0.054	0.057	0.053	0.053	0.042	0.060	0.047	
+* Inflated Type I error rates.
+
+Table 2: Empirical Type I error rates of various tests for G × E interaction in simulations with n = 2000, p = 300 and varying q1 = q2. n, p, q1, and q2 stand for the sample size, number of terms in G × E interaction, number of the positive genetic main effects, and number of the negative genetic main effects, respectively.
+
+q1 = q2	2	5	7	10	20	30	
+GESAT	0.637*	0.636*	0.628*	0.641*	0.657*	0.633*	
+GESAT-sim	0.043	0.030	0.026	0.010**	0.004**	0.002**	
+aiSPU(Ridge)	0.058	0.046	0.045	0.027	0.023**	0.017**	
+aiSPU(Lasso)	0.048	0.039	0.035	0.028	0.023**	0.016**	
+aiSPU(Full)	0.584*	0.594*	0.598*	0.634*	0.690*	0.712*	
+aiSPU(Oracle)	0.054	0.057	0.054	0.056	0.062	0.055	
+aiSPU(TLP)	0.058	0.052	0.057	0.053	0.058	0.057	
+* Inflated Type I error rates;
+
+** Conservative Type I error rates.
+
+Table 3: Empirical Type I errors and power (in percentage) of various tests under G × E interactions with p = 1000 and n = 200. Zero signal strength c = 0 represents Type I errors, while c≠0 represents powers. The sparsity level was s = 0.005, leading to 5 non-zero elements in β. The results outside and inside parentheses were calculated from parametric bootstrap- and asymptotics-based methods, respectively.
+
+c	0	1	2	3	4	5	
+iSPU(1)	4.9 (4.8)	5.9 (5.6)	6.2 (6.1)	6.4 (6.6)	5.8 (6)	5.8 (5.7)	
+iSPU(2)	2.6 (5.2)	6.8 (11.8)	22.2 (28.5)	43.5 (47.5)	58.2 (61.3)	64.2 (67.8)	
+iSPU(3)	5.8 (5.6)	8.5 (8.1)	29.9 (28.7)	52.2 (51.4)	63.9 (62.1)	70.3 (69.2)	
+iSPU(4)	3 (3.9)	14.9 (17.1)	65.7 (67.1)	89.7 (90.4)	96 (96)	98.2 (98.4)	
+iSPU(5)	5.9 (5)	17 (15.6)	61.5 (60)	82.8 (81.3)	90.1 (88.9)	92.3 (92.5)	
+iSPU(6)	3.7 (3.2)	21.8 (19)	75.6 (74)	94.9 (93.7)	98.4 (97.9)	99.2 (99.2)	
+iSPU(∞)	8.5 (7.5)	26.8 (22.2)	85 (83.3)	97.6 (97.4)	99.6 (99.6)	100 (100)	
+aiSPU	5.8 (6.1)	20.7 (21.5)	79.4 (80.5)	95.4 (96.1)	98.8 (99.4)	99.8 (99.7)	
+
+Table 4: P-values from the association analysis of the ADNI1 data set to detect interactions between gender and genetic variants (in KEGG pathway hsa00051 or gene APOE).
+
+	iSPU(γ)	aiSPU	GESAT	
+γ = 1	γ = 2	γ = 3	γ = 4	γ = 5	γ = 6	γ = ∞	
+hsa00051	0.017	0.017	0.014	0.010	0.006	0.003	0.0001	0.0003	0.016	
+APOE	0.022	0.032	0.042	0.059	0.068	0.079	0.112	0.039	0.56	
+
+
+References
+
+Altmann Andre , Tian Lu , Henderson Victor W , and Greicius Michael D . Sex modifies the apoe-related risk of developing alzheimer disease. Annals of Neurology, 75 (4 ):563–573, 2014.24623176
+Bickel Peter J and Levina Elizaveta . Regularized estimation of large covariance matrices. The Annals of Statistics, 36 (1 ):199–227, 2008.
+Buniello Annalisa , MacArthur Jacqueline A L , Cerezo Maria , Harris Laura W , Hayhurst James , Malangone Cinzia , McMahon Aoife , Morales Joannella , Mountjoy Edward , Sollis Elliot , The NHGRI-EBI GWAS Catalog of published genome-wide association studies, targeted arrays and summary statistics 2019. Nucleic Acids Research, 47 (D1 ): D1005–D1012, 2018.
+Cai T Tony , Liu Weidong , and Xia Yin . Two-sample test of high dimensional means under dependence. Journal of the Royal Statistical Society: Series B, 76 (2 ):349–372, 2014.
+Cai Tony and Liu Weidong . Adaptive thresholding for sparse covariance matrix estimation. Journal of the American Statistical Association, 106 (494 ):672–684, 2011.
+Cordell Heather J . Detecting gene–gene interactions that underlie human diseases. Nature Reviews Genetics, 10 (6 ):392–404, 2009.
+Das Sayantan , Forer Lukas , Schönherr Sebastian , Sidore Carlo , Locke Adam E , Kwong Alan , Vrieze Scott I , Chew Emily Y , Levy Shawn , McGue Matt , Next-generation genotype imputation service and methods. Nature Genetics, 48 (10 ):1284–1287, 2016.27571263
+Dezeure Ruben , Bühlmann Peter , and Zhang Cun-Hui . High-dimensional simultaneous inference with the bootstrap. TEST, 26 (4 ):685–719, 2017.
+El Karoui Noureddine and Purdom Elizabeth . Can we trust the bootstrap in high-dimensions? The case of linear models. The Journal of Machine Learning Research, 19 (1 ):170–235, 2018.
+Fan Jianqing . Test of significance based on wavelet thresholding and neyman’s truncation. Journal of the American Statistical Association, 91 (434 ):674–688, 1996.
+Fan Jianqing and Li Runze . Variable selection via nonconcave penalized likelihood and its oracle properties. Journal of the American Statistical Association, 96 (456 ):1348–1360, 2001.
+Fan Jianqing and Song Rui . Sure independence screening in generalized linear models with np-dimensionality. The Annals of Statistics, 38 (6 ):3567–3604, 2010.
+Fan Jianqing , Liao Yuan , and Liu Han . An overview of the estimation of large covariance and precision matrices. The Econometrics Journal, 19 (1 ):C1–C32, 2016.
+Fei Zhe and Li Yi . Estimation and inference for high dimensional generalized linear models: A splitting and smoothing approach. arXiv preprint arXiv:1903.04408, 2019.
+Gamazon Eric R , Wheeler Heather E , Shah Kaanan P , Mozaffari Sahar V , Aquino-Michaels Keston , Carroll Robert J , Eyler Anne E , Denny Joshua C , Nicolae Dan L , Cox Nancy J , A gene-based association method for mapping traits using reference transcriptome data. Nature Genetics, 47 (9 ):1091–1098, 2015.26258848
+Guo Bin and Chen Song Xi . Tests for high dimensional generalized linear models. Journal of the Royal Statistical Society: Series B, 78 (5 ):1079–1102, 2016.
+Gusev Alexander , Ko Arthur , Shi Huwenbo , Bhatia Gaurav , Chung Wonil , Penninx Brenda WJH , Jansen Rick , De Geus Eco JC , Boomsma Dorret I , Wright Fred A , Integrative approaches for large-scale transcriptome-wide association studies. Nature Genetics, 48 (3 ):245–252, 2016.26854917
+Guyon Xavier . Random fields on a network: modeling, statistics, and applications. Springer Science &amp; Business Media, 1995.
+He Yinqiu , Xu Gongjun , Wu Chong , and Pan Wei . Asymptotically independent U-statistics in high-dimensional testing. Annals of Statistics, to appear, arXiv:1809.00411, 2020.
+He Zihuai , Xu Bin , Lee Seunggeun , and Ionita-Laza Iuliana . Unified sequence-based association tests allowing for multiple functional annotations and meta-analysis of noncoding variation in metabochip data. The American Journal of Human Genetics, 101 (3 ):340– 352, 2017.28844485
+Hunter David J . Gene-environment interactions in human diseases. Nature Reviews Genetics, 6 (4 ):287–298, 2005.
+Ibragimov Il’dar Abdulovich and Linnik IUrii Vladimirovich . Independent and stationary sequences of random variables. 1971.
+Jack Clifford R , Bernstein Matt A , Fox Nick C , Thompson Paul , Alexander Gene , Harvey Danielle , Borowski Bret , Britson Paula J , Whitwell Jennifer L , Ward Chadwick , The Alzheimer’s disease neuroimaging initiative (ADNI): MRI methods. Journal of Magnetic Resonance Imaging, 27 (4 ):685–691, 2008.18302232
+Javanmard Adel and Montanari Andrea . Confidence intervals and hypothesis testing for high-dimensional regression. Journal of Machine Learning Research, 15 (1 ):2869–2909, 2014.
+Javanmard Adel and Montanari Andrea . Debiasing the lasso: Optimal sample size for gaussian designs. The Annals of Statistics, 46 (6A ):2593–2622, 2018.
+Kanehisa Minoru , Goto Susumu , Furumichi Miho , Tanabe Mao , and Hirakawa Mika . KEGG for representation and analysis of molecular networks involving diseases and drugs. Nucleic Acids Research, 38 (1 ):D355–D360, 2009.19880382
+Knight Keith and Fu Wenjiang . Asymptotics for lasso-type estimators. Annals of Statistics, 28 (5 ):1356–1378, 2000.
+Le Cessie S and Van Houwelingen JC . A goodness-of-fit test for binary regression models, based on smoothing methods. Biometrics, 47 (4 ):1267–1282, 1991.
+Lee Jason D , Sun Dennis L , Sun Yuekai , and Taylor Jonathan E . Exact post-selection inference, with application to the lasso. The Annals of Statistics, 44 (3 ):907–927, 2016.
+Li Chunlin , Shen Xiaotong , and Pan Wei . Likelihood ratio tests for a large directed acyclic graph. Journal of the American Statistical Association, pages 1–36, 2019.34012183
+Lin Xinyi , Lee Seunggeun , Christiani David C , and Lin Xihong . Test for interactions between a genetic marker set and environment in generalized linear models. Biostatistics, 14 (4 ):667–681, 2013.23462021
+Lin Xinyi , Lee Seunggeun , Wu Michael C , Wang Chaolong , Chen Han , Li Zilin , and Lin Xihong . Test for rare variants by environment interactions in sequencing association studies. Biometrics, 72 (1 ):156–164, 2016.26229047
+Liu Xuanyao , Li Yang I , and Pritchard Jonathan K . Trans effects on gene expression can drive omnigenic inheritance. Cell, 177 (4 ):1022–1034, 2019.31051098
+Ma Rong , Cai T Tony , and Li Hongzhe . Global and simultaneous hypothesis testing for high-dimensional logistic regression models. Journal of the American Statistical Association, pages 1–15, 2020.
+Ma Yiding and Wei Peng . FunSPU: A versatile and adaptive multiple functional annotation-based association test of whole-genome sequencing data. PLoS Genetics, 15 (4 ):e1008081, 2019.31034468
+Manuck Stephen B and McCaffery Jeanne M . Gene-environment interaction. Annual Review of Psychology, 65 :41–70, 2014.
+Meinshausen Nicolai , Meier Lukas , and Bühlmann Peter . P-values for high-dimensional regression. Journal of the American Statistical Association, 104 (488 ):1671–1681, 2009.
+O’Dushlaine Colm , Rossin Lizzy , Lee Phil H , Duncan Laramie , Parikshak Neelroop N , Newhouse Stephen , Ripke Stephan , Neale Benjamin M , Purcell Shaun M , Posthuma Danielle , Psychiatric genome-wide association study analyses implicate neuronal, immune and histone pathways. Nature Neuroscience, 18 (2 ):199–209, 2015.25599223
+Pan Wei , Kim Junghi , Zhang Yiwei , Shen Xiaotong , and Wei Peng . A powerful and adaptive association test for rare variants. Genetics, 197 (4 ):1081–1095, 2014.24831820
+Pan Wei , Kwak Il-Youp , and Wei Peng . A powerful pathway-based adaptive test for genetic association with common or rare variants. The American Journal of Human Genetics, 97 (1 ):86–98, 2015.26119817
+Shen Xiaotong , Pan Wei , and Zhu Yunzhang . Likelihood-based selection and sharp parameter estimation. Journal of the American Statistical Association, 107 (497 ):223–232, 2012.22736876
+Shi Chengchun , Song Rui , Chen Zhao , Li Runze , Linear hypothesis testing for high dimensional generalized linear models. The Annals of Statistics, 47 (5 ):2671–2703, 2019.31534282
+Su Yu-Ru , Di Chong-Zhi , and Hsu Li . A unified powerful set-based test for sequencing data analysis of G × E interactions. Biostatistics, 18 (1 ):119–131, 2017.27474101
+Sur Pragya and Candès Emmanuel J . A modern maximum-likelihood theory for high-dimensional logistic regression. Proceedings of the National Academy of Sciences, 116 (29 ):14516–14525, 2019.
+Van de Geer Sara , Bühlmann Peter , Ritov Yaacov , and Dezeure Ruben . On asymptotically optimal confidence regions and tests for high-dimensional models. The Annals of Statistics, 42 (3 ):1166–1202, 2014.
+Vershynin Roman . Introduction to the non-asymptotic analysis of random matrices. arXiv preprint arXiv:1011.3027, 2010.
+Wainwright Martin J . Information-theoretic limits on sparsity recovery in the high-dimensional and noisy setting. IEEE Transactions on Information Theory, 55 (12 ):5728– 5741, 2009.
+Wang Kai . Boosting the power of the sequence kernel association test by properly estimating its null distribution. The American Journal of Human Genetics, 99 (1 ):104–114, 2016.27292111
+Wang Tao and Elston Robert C . Improved power by use of a weighted score test for linkage disequilibrium mapping. The American Journal of Human Genetics, 80 (2 ):353–360, 2007.17236140
+Wasserman Larry and Roeder Kathryn . High dimensional variable selection. The Annals of Statistics, 37 (5A ):2178–2201, 2009.19784398
+Wu Chong , Xu Gongjun , and Pan Wei . An adaptive test on high-dimensional parameters in generalized linear models. Statistica Sinica, 29 :2163–2186, 2019.
+Xu Gongjun , Lin Lifeng , Wei Peng , and Pan Wei . An adaptive two-sample test for high-dimensional means. Biometrika, 103 (3 ):609–624, 2016.28804142
+Xu Zhiyuan , Wu Chong , Wei Peng , and Pan Wei . A powerful framework for integrating eqtl and gwas summary data. Genetics, 207 (3 ):893–902, 2017.28893853
+Zhang Cun-Hui . Nearly unbiased variable selection under minimax concave penalty. The Annals of Statistics, 38 (2 ):894–942, 2010.
+Zhang Cun-Hui and Zhang Stephanie S . Confidence intervals for low dimensional parameters in high dimensional linear models. Journal of the Royal Statistical Society: Series B, 76 (1 ):217–242, 2014.
+Zhang Xianyang and Cheng Guang . Simultaneous inference for high-dimensional linear models. Journal of the American Statistical Association, 112 (518 ):757–768, 2017.
+Zhu Yunzhang , Shen Xiaotong , and Pan Wei . On high-dimensional constrained maximum likelihood inference. Journal of the American Statistical Association, pages 1–14, 2019.34012183

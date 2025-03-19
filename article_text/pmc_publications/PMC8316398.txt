@@ -1,0 +1,442 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9713490
+21159
+Med Image Anal
+Med Image Anal
+Medical image analysis
+1361-8415
+1361-8423
+
+34214958
+8316398
+10.1016/j.media.2021.102123
+NIHMS1712693
+Article
+Tetrahedral Spectral Feature-Based Bayesian Manifold Learning for Grey Matter Morphometry: Findings from the Alzheimer’s Disease Neuroimaging Initiative
+Fan Yonghui a
+Wang Gang ab
+Dong Qunxi a
+Liu Yuxiang a
+Lepore Natasha c
+Wang Yalin a*
+Alzheimer’s Disease Neuroimaging Initiative
+a School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, Tempe, AZ, USA
+b School of Information and Electrical Engineering, Ludong University, Yantai, China
+c CIBORG Lab, Department of Radiology, Children’s Hospital Los Angeles, Los Angeles, CA, USA
+CRediT author statement
+
+Yonghui Fan: Conceptualization, Methodology, Software, Validation, Visualization, Writing – Original Draft, Writing – Review &amp; Editing
+
+Gang Wang: Conceptualization, Methodology, Resources
+
+Qunxi Dong: Software, Validation
+
+Yuxiang Liu: Validation, Visualization
+
+Natasha Lepore: Conceptualization, Methodology, Writing – Original Draft, Writing – Review &amp; Editing, Funding acquisition
+
+Yalin Wang: Conceptualization, Methodology, Visualization, Writing – Original Draft, Writing – Review &amp; Editing, Supervision, Project administration, Funding acquisition
+
+Please address correspondence to: Dr. Yalin Wang, School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, P.O. Box 878809, Tempe, AZ 85287, USA, Phone: (480) 965-6871, Fax: (480) 965-2751, ylwang@asu.edu
+11 6 2021
+08 6 2021
+8 2021
+01 8 2022
+72 102123102123
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Structural and anatomical analyses of magnetic resonance imaging (MRI) data often require a reconstruction of the three-dimensional anatomy to a statistical shape model. Our prior work demonstrated the usefulness of tetrahedral spectral features for grey matter morphometry. However, most of the current methods provide a large number of descriptive shape features, but lack an unsupervised scheme to automatically extract a concise set of features with clear biological interpretations and that also carries strong statistical power. Here we introduce a new tetrahedral spectral feature-based Bayesian manifold learning framework for effective statistical analysis of grey matter morphology. We start by solving the technical issue of generating tetrahedral meshes which preserve the details of the grey matter geometry. We then derive explicit weak-form tetrahedral discretizations of the Hamiltonian operator (HO) and the Laplace-Beltrami operator (LBO). Next, the Schrödinger’s equation is solved for constructing the scale-invariant wave kernel signature (SIWKS) as the shape descriptor. By solving the heat equation and utilizing the SIWKS, we design a morphometric Gaussian process (M-GP) regression framework and an active learning strategy to select landmarks as concrete shape descriptors. We evaluate the proposed system on publicly available data from the Alzheimers Disease Neuroimaging Initiative (ADNI), using subjects structural MRI covering the range from cognitively unimpaired (CU) to full blown Alzheimer’s disease (AD). Our analyses suggest that the SIWKS and M-GP compare favorably with seven other baseline algorithms to obtain grey matter morphometry-based diagnoses. Our work may inspire more tetrahedral spectral feature-based Bayesian learning research in medical image analysis.
+
+Magnetic resonance imaging (MRI)
+Alzheimer’s disease
+Tetrahedral mesh
+spectral shape analysis
+Bayesian manifold learning
+
+1. Introduction
+
+Structural and anatomical analyses of magnetic resonance imaging (MRI) data often require a reconstruction of the three-dimensional anatomy to a statistical shape model (SSM) (Zheng et al., 2017). A well-reconstructed three-dimensional SSM may fully capture shape variations in both intrinsic and extrinsic shape features, and empower both visualizations and quantitative analyses (Ambellan et al., 2019). In particular, remarkable progress has been made in detecting, tracing, predicting, and quantifying brain morphological properties and changes by using SSMs for cortical morphometry (Zhang and Golland, 2016; Zheng et al., 2017; Labayru et al., 2019; Huang et al., 2020). As neurodegenerative disorders can greatly affect cortical morphological characteristics (Lin et al., 2017; Xiao et al., 2017; Mateos et al., 2019; Wolters et al., 2019; Thompson et al., 2001), cortical SSMs have become a popular tool for the analysis of conditions such as Alzheimer’s disease (AD) (Mateos et al., 2019; Cuingnet et al., 2011), autism spectrum disorder (Di Martino et al., 2014; Xiao et al., 2017), and Parkinson’s disease (Wolters et al., 2019; Kluger et al., 2019).
+
+A variety of three-dimensional SSM-based tools have been designed to understand cerebral cortex morphology, including cortical thickness (Clarkson et al., 2011; Jones et al., 2000; Fischl and Dale, 2000), grey matter density (GMD) (Wright et al., 1995; Ashburner and Friston, 2000; Thompson et al., 2001; Sowell et al., 1999), cortical surface area and volume (Fischl, 2012; Zhao et al., 2019), and grey matter morphometry signatures (Wang and Wang, 2017). However, most of them produce univariate descriptors which fail to capture neighborhood geometric information. Additionally, the majority of the current methods provide a large number of descriptive shape features, but lack an unsupervised scheme to automatically extract a more concise set of shape features with clear biological interpretations and that simultaneously carry strong statistical power.
+
+In this paper, we propose a Bayesian method, hereby called Morphometric Gaussian Process (M-GP), to realize manifold learning on a three-dimensional model of the grey matter, and to identify a concise set of tetrahedral spectral feature descriptors. Our motivation comes from the success of Gaussian process (GP) methods in making reasonable inferences in spatiotemporal data analyses (Stein, 1991; Banerjee et al., 2008; Stein, 2012). The idea here is to realize a non-linear dimensionality reduction by extracting a much smaller but representative embedding from the original massive data (Lawrence, 2005, 2012; Liang and Paisley, 2015; Gao et al., 2019; Fan et al., 2020). Furthermore, we introduce a novel tetrahedral spectral feature space, and use its metric for the GP kernel design. Specifically, diffusion maps (Coifman et al., 2005) and other spectral shape analysis methods (e.g., Sun et al., 2009; Aubry et al., 2011) rely on the spectrum of the Laplace-Beltrami operator (LBO) and the Hamiltonian operator (HO) to compare and analyze geometric shapes in their induced embedding space. They have achieved great success in machine learning, computer vision and medical imaging research (Coifman et al., 2005; Chung et al., 2005; Qiu et al., 2006; Reuter et al., 2006; Nain et al., 2007; Yu et al., 2007; Sun et al., 2009; Lombaert et al., 2013; Shi et al., 2014; Chung et al., 2015). Such spectral analysis methods induce a robust and multi-scale metric to compare different shapes and enjoy strong theoretical guarantees. In this work, we introduce a novel finite element method (FEM) scheme to define tetrahedral LBO and HO. Our results reach sub-voxel numerical accuracy when analyzing convoluted grey matter structures.
+
+Our proposed spectral feature metric and Bayesian learning are computationally efficient and robust to noise. Hence, they may provide important accurate quantitative measures of grey matter morphology for a variety of neuroimaging studies.
+
+Fig. 1 illustrates our approach. We first develop a procedure to generate tetrahedral meshes between white and pial cortical surfaces, segmented by FreeSurfer (Fischl, 2012) from brain structural MRI data. Our method automatically fixes the surface intersection problem and the generated tetrahedral meshes well-preserve surface geometric and topological features and are suitable for numerical computation. We then propose a weak-form FEM discretization which is more accurate than existing FEMs (e.g., Wang and Wang, 2017). We use it to define the tetrahedral HO, solve the time-independent Schrödinger equation on tetrahedral meshes and compute the tetrahedron-based scale-invariant wave kernel signature (SIWKS) (Aubry et al., 2011; Li et al., 2018). We further define the tetrahedral LBO, solve the heat equation and compute the heat flow entropy (HFE) (Fan et al., 2018). Combining the SIWKS together with the HFE, we propose a novel Gaussian kernel and an M-GP framework to compute uncertainty maps over the grey matter tetrahedral models. With manifold learning, we extract a simplified subset, i.e., landmarks. We hypothesize that the proposed landmarking may provide concise, robust, informative and biologically meaningful tetrahedron-based global shape descriptors and evaluate the potential of using three-dimensional SSMs for an effective and practical grey matter morphometry analysis.
+
+We test our hypothesis on the Alzheimers Disease Neuroimaging Initiative (ADNI) dataset. We study the classification of Alzheimer’s disease (AD) and its prodromal stage, i.e., mild cognitive impairment (MCI), comparing our new method to four other similar grey matter morphometry features and three other GP approaches.
+
+2. Material and Methods
+
+2.1. Subjects
+
+Data is downloaded from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database ((Mueller et al., 2005), adni.loni.usc.edu). ADNI is the result of efforts of many co-investigators from a broad range of academic institutions and private corporations. Subjects have been recruited from over 50 sites across the U.S. and Canada. The primary goal of ADNI is to test whether biological markers, such as serial MRI and positron emission tomography (PET), combined with clinical and neuropsychological assessments, can measure the progression of MCI and early AD. Subjects originally recruited for ADNI-1 and ADNI-GO had the option to be followed in ADNI-2. For up-to-date information, see www.adniinfo.org.
+
+In this work, we adopt the ADNI-2 cohort, for which subjects’ structural MRI data was collected from 16 sites across the United States and Canada. Each subject underwent whole-brain MRI scanning on 3-Tesla GE Medical Systems scanners. T1-weighted SPGR (spoiled gradient echo) sequences (256 × 256 matrix; voxel size = 1.2 × 1.0 × 1.0 mm3; TI = 400 ms; TR = 6.98 ms; TE = 2.85 ms; flip angle = 11°), were collected; more imaging details may be found at http://adni.loni.usc.edu/wp-content/uploads/2010/05/ADNI2_GE_3T_22.0_T2.pdf. In total, we downloaded MR images of 542 subjects from the baseline subset of ADNI-2 (June 2016). During processing, seven subjects were excluded by the quality control. Finally, we used the left cerebral hemisphere structural MR images of 535 subjects, including 105 AD patients, 289 MCI patients and 141 cogntively unimpaired (CU) subjects. Their demographic information is summarized in Table 1.
+
+2.2. Notations
+
+Some notations are pre-defined here: Suppose M={V,E,F,T} is a tetrahedral mesh, and V,E, F, T are its indexed sets of vertices, edges, faces, and tetrahedrons, respectively. The dimension of V is ℝ|V|×3 vertices. The ith vertex is denoted as vi; e(i, j) denotes an edge ending with vi and vj; tl stands for the lth tetrahedron and its volume is Vl.
+
+H is the heat distribution on M; h is the static heat value.
+
+L is the LBO and ℌ is the HO. λn and ϕn are the nth eigenvalue and eigenvector, respectively.
+
+Nv(·) stands for all the neighboring vertices, Nf (·) for all the neighboring faces and Nt(·) for all the neighboring tetrahedrons. For example, around the edge e(i, k), we define Nt(vi, vk) as the set of all tetrahedrons sharing e(i, k) and Nf (vi, vk) as the set of all faces sharing e(i, k).
+
+Some other notations and definitions will be introduced where they are mentioned.
+
+2.3. Grey Matter Tetrahedral Mesh Generation
+
+It is challenging to generate high-quality three-dimensional grey matter models, but accurate modeling is a prerequisite for any further numerical analysis. The cerebral cortex is shaped with highly folded sulci and gyri, which makes it particularly difficult to guarantee a geometric error-free model (Wang and Wang, 2017; Fan et al., 2018). Repeated global smoothing can simplify the structures, but may greatly change the cortical topology. As a result, although there are a few available 3D tetrahedral modeling tools (e.g., Si, 2015; Lee et al., 2020), there is currently no publicly available grey matter tetrahedral mesh generation software.
+
+Fig. 2 summarizes the procedure to generate grey matter tetrahedral meshes developed in this work. Fig. 2 (a-i) shows an example of a brain structural (T1-weighted) MRI (sMRI) image; (a-ii) segmented grey and white matter; and (a-iii) the reconstructed white and pial surfaces. The image segmentation and surface reconstruction are done with FreeSurfer (Fischl, 2012). We represent a three-dimensional cortical shape as a tetrahedral mesh in R3 by meshing the internal grey matter (GM) enclosed by white and pial surfaces (Fig. 2 (b-i)). We adopt TetGen (Si, 2015) to generate exact constrained Delaunay tetrahedralization. TetGen assumes that both boundary surfaces are clearly separated and that there is no intersection between them. In our research, even though initial single white and pial surface meshes are topologically and geometrically error free, new geometric errors, specifically the surface intersections or the mesh tangling shown in Fig. 2 (b-ii), are often observed in their initial combination due to the complexity of sulcal and gyral structures. Such errors are not only clinically meaningless but an impediment to generating the tetrahedral meshes.
+
+In our prior work (Wang et al., 2015; Wang and Wang, 2017), we employed a smoothing approach by minimizing an energy function which consists of an elastic term, a smoothness term and a fidelity term (Lederman et al., 2011). We simply smoothed each pial and white surfaces until no intersections were detected when combining them together. In practice, hundreds of iterations of smoothing were often needed to reach this goal. The price was that the topology of original mesh may have been greatly changed after that, and the original sulci and gyri structures could be smoothed away. The benefits of high-resolution dense samplings were largely wasted. We also explored a local smoothing approach and found that the local smoothing could not solve the intersection problem either. For error vertices that greatly deviate from the correct surface, a large neighborhood must be considered for smoothing the abnormality away. On the other hand, the surface intersection points can be detected by using half-ray tracing algorithm. For example, all points on the white surface are supposed to be inside the pial surface. So if one point belonging to the white surface is either on or outside the pial surface, it is a intersection point. Note that the corpus callosum area has been specially marked and removed, so as to not be included in these computations. In the current work, we mark each intersection point along with its n-ring neighbors as local error points. n is set to be 4 in our implementation. Fig. 2(b-ii) shows a simplified example of two intersection points (marked in white) and their neighbors (marked in red). We further record triangle faces that contain any one of the error points as the local targets to be treated. For faces on the pial surface, we pull them outwards along the facial normal direction by a small distance ϵ, and then do a local smoothing within this small region to avoid introducing new errors. For local targets on the white surface, we push the vertices inwards along the inverse facial normal direction by the same and also do a local smoothing. ϵ is set to be 0.1 in our implementation. One iteration is completed after all targets are fixed. Then we repeat the detecting-marking-fixing procedure until no more surface intersections are detected, and the final cortical surface mesh is generated with the updated pial and white surface meshes.
+
+Fig. 2 (b-iii) shows an example of our results. The pial surface mesh (in red) surrounds the white surface mesh (in blue) and they do not touch with each other. In our experiments on ADNI, the majority of meshes only needed to be iterated once and all the cortical surface meshes could be generated within three iterations. Our serial processes succeed in generating an anatomically correct cortical surface mesh while preserving the original topology.
+
+The final step is to generate the grey matter tetrahedral mesh from the cortical surface one, using Tetgen (Si, 2015). An example GM tetrahedral mesh is shown in Fig. 2 (c-i)–(c-iii) and is displayed in three anatomical cutting planes: sagittal, horizontal andcoronal planes, respectively.
+
+2.4. Tetrahedron-based HO, Time-independent Schrödinger’s Equation and Scale-invariant Wave Kernel Signature
+
+We employs the Schrödinger’s Equation to define a tetrahedron-based scale-invariant WKS (SIWKS) as a spectral shape descriptor. The Schrödinger’s equation describes the behavior of quantum mechanical particles, and it is the theoretical basis of the WKS (Aubry et al., 2011). In this scenario, we assume the cortex is a quantum system and every point in a cortical shape is taken as a particle according to the theory of classical mechanics. Any shape changes are simulated to be the spatial movement of particles over a period of time. Their movements are not determined beforehand but their static destination at a location x is measured by a probability distribution which is predicted by the time-independent Schrödinger’s equation: (1) ℌΦ(x)=ΛΦ(x)
+
+where Φ(x) is the wave equation, Λ is the total energy of the system, and H is the HO: (2) ℌ=−ℏ22∑d=1D1md∇d2+P
+
+where ħ is the Planck constant, m is the particle mass, dimentionality D is 3; P is a potential energy function. Eq. (1) indicates that the time-independent Schrödinger’s equation is essentially the spectra problem of the HO. Define the discrete harmonic energy S as in our prior work (Wang et al., 2004): (3) S={112∑t⊆Nt(vi,vj)L(i,j)cotθl(i,j),  if  vj⊆Nv(vi)0,  otherwise 
+
+L(i,j) is the length of the opposite edge of e(i, j), and θli,j as the dihedral angle of e(i, j). Taking the vertex 1 in a six-tetrahedron model shown in Fig. 3 (a–b) as an example, Nv(v1) is the set of green spheres, and Nt(1, 8) is the set of all six tetrahedrons. In Fig. 3 (b), two tetrahedrons sharing e(1, 8) are shown in green. In Fig. 3 (c), around e(1, 2), e(3, 8) is its opposite edge and θ is its dihedral angle. Eq. (1) defines a |V|×|V| symmetric matrix. Then, we derive a mass matrix B from the tetrahedron-based barycentric coordinate system: (4) Bi,j={∑t⊆Nt(vi)|V|35+∑k⊆Nt(t)∑t⊆Nt(vi,vk)|V|140,  if  i=j∑k⊆Nt(f)∑f⊆Nf(vi,vj)|V|420+∑k⊆Nt(t)∑t⊆Nt(vi,vj)|V|840,  if  vj⊆Nv(vi)0, otherwise 
+
+where |Vl| is the volume of the lth tetrahedron. The derivation of coefficients in Eq. 4 is given in the Appendix. Finally, the HO with Neumann boundary condition is defined as: (5) ℌ=B−1(G−S), G=diag(∑iSii),
+
+where G is a diagonal matrix of the sum of each row in S. When the potential energy is zero, we can numerically estimate the HO to be same as the LBO given the same boundary condition. Here, stressing the HO instead of LBO is because the wave kernel signature is built on the theorem of wave equation and achieved great success as an effective shape descriptor (Aubry et al., 2011). By solving Eq. (5), we obtain K smallest positive eigenvalues Λ = {λ1, λ2, …, λK}, λ &gt; 0 and the corresponding eigenfunctions Φ = {ϕ1, …, ϕK} (the first eigenvalue and its eigenvector are excluded). In Fig. 4, we can see examples of the 5th, 10th, and 30th eigenvectors on the sagittal, horizontal and coronal cutting planes of a GM tetrahedral mesh. Supposing that the mesh M has a scaled version βM, the eigenvalues and eigenvectors have the corresponding scaled values: λβM=β2λM,ϕβM=βϕM. Therefore, multiplying by an inversed eigenvalue will make the WKS scale-invariant (Li et al., 2018). The tetrahedron-based scale-invariant WKS (SIWKS) of vertex v is defined as: (6) SIWKS(v,ϵ)=1λKCϵ∑kKϕk2(v)e−(ϵ−logλk)22σ2,Cϵ=(∑kKe−(ϵ−logλk)22σ2)−1
+
+where ϵ is a evenly spaced vector of the energy scale between ϵmin = log(λ1) and ϵmax = log(λK). The length of is the length of ϵ the SIWKS feature vector. λK is the selected largest eigenvalue, hence its inverse is taken as a normalization of the SIWKS. The SIWKS distance map is defined using the accumulated absolute SIWKS differences as a feature-based metric: (7) M(vi,vj)={∑ϵminϵmax|SIWKS(vi,ϵ)−SIWKS(vj,ϵ)SIWKS(vi,ϵ)+SIWKS(vj,ϵ)|, j∈N(vi),0,i=j  or  j∉N(vi).
+
+In implementations, we use K-Nearest Neighbor (KNN) algorithm to get the N(vi), while we simply use the connection information to get N(vi) in constructing the harmonic energy and the mass matrix. It is clear that M is a |V|×|V| sparse matrix with M(vi, N(vi)) as the only nonzero entries. The sparsity is determined by the K in KNN. We demonstrate a SIWKS distance map in Fig. 5. Since we reorganize the vertex orders by placing boundary vertices ahead of internal vertices, the distance map shows a more sparse pattern in the top left region than in the other regions. We will use this SIWKS distance map in our Bayesian method to replace the Euclidean distance. This substitution emphasizes the importance of similarities in geometric features instead of the spatial positions, which helps to make reasonable posterior inferences in a Bayesian model.
+
+2.5. Morphometric Gaussian Process Landmarking
+
+GP-based landmarking is a human-perception-inspired measure of regional importance for 3D shapes (Lee et al., 2005; Liang and Paisley, 2015). Landmarks of each shape are extracted independently. They stand for the most significant and visually interesting regions on a shape (analogous to the low-frequency component of an image or the visual attention). Prior work (e.g., Gao et al., 2019) has demonstrated that landmarks detected by such GP models are consistent across similar anatomical shapes and may be used to construct shape correspondence. The core of this category of landmarking methods is the definition of the kernel. Once the kernel is determined, or the parameters in a selected kernel are determined, the landmarking criterion remains the same for all shapes within the same dataset.
+
+In our research, a GP defined on mesh M, GPM(m,K), is completely specified by a mean function m and a covariance function K (or kernel) (Rasmussen, 2004). When the mean function is zero - called zero-mean GP in many studies -, a GP is uniquely determined by the covariance function. In this paper, we use a weighted form to define the covariance function K, and use the SIWKS distance map as the kernel basis. Additionally, to strengthen shape informativeness, we introduce the concept of heat flow entropy by solving the heat equation with Dirichlet boundary condition and computing the gradient of the heat distribution.
+
+Assuming the GM is a thermodynamic equilibrium system, the tetrahedron-based heat equation solves for the heat distribution throughout the GM given proper boundary and initial conditions (Wang et al., 2004; Ern and Guermond, 2004; Shi and Chan, 2010; Delkhosh et al., 2012; Tan and Qiu, 2014; Huang et al., 2020). The heat distribution on the boundary is prescribed and static. In our settings, the pial and white surfaces have the fixed high temperature 1 and the low temperature 0, respectively. Internal points are have temperatures within the range (0, 1). Being similar to the aforementioned discretization method of the HO, we define the LBO with our Dirichlet boundary condition using the discrete harmonic energy of Eq. (3). We extract two matrices from S by categorizing all vertices of the mesh into inner and boundary vertices: (1) Wii: a square matrix with inner vertices as rows and columns; (2) Wib: a matrix with inner vertices i and boundary vertices b as rows and columns. Then, the LBO Ltet with Dirichlet boundary condition is defined as: (8) Ltet=diag(∑iWii)+diag(∑iWib)−Wii,
+
+where diag(·) transforms a vector to a matrix with its values as the diagonal entries. With LBO and the prescribed boundary heat H∂Ω, the interior heat distribution Hin under the Dirichlet boundary condition is computed by solving the linear equation: (9) LtetHin=H∂Ω
+
+Fig. 6(a-i)–(a-iii) illustrate the interior heat distribution. From the heat level set we can imaging the heat flows from the outer surface to the inner surface. The heat flow per unit area per unit time is called the heat flux (Turns and Pauley, 2020). According to Newton’s law of cooling (Burmeister, 1993), the discretized heat flux in direction s per unit time on vertex m is defined as a weighted heat transfer between m and a neighboring vertex n in direction s:−α(hns−hm), h ∈ H, where constant α is the heat conductivity set to be 1. This expression also estimates the heat gradient, with the minus sign referring to the latter’s inverse direction. To measure the amount of point-wise thermodynamics information, a heat flow entropy (HFE) is defined as: (10) HFE(vi)=−∑jJ|hj−hi|∑j|hj−hi|log(|hj−hi|∑i|hj−hi|), vj∈N(vi)
+
+where J is the total degrees of freedom (DOF) of vi, which equals to the number of edges connected to this point. The HFE is a positive scalar function inspired by the Shannon entropy and the theory of uncertainty estimation. It measures the point-wise degree of structural disorder or randomness. By adding the HFE as the kernel weight, our purpose is to give those structurally important vertices a higher priority of being selected as landmarks. Fig. 6 (b) and (c) show the normalized heat flow entropy (HFE). (c) shows the HFE in a zoomed-in region (the yellow box in (b)). In (c), we added two heat flows with two pairs points (A’, A) and (B’, B) from white (A’ and B’) and pial (A and B) surfaces. Although the geodesic distances between them are very similar, the region connecting A and A is broader than the one connecting B and B. Along the tracing lines, the HFEs along the two paths differ significantly. This property can be captured by our weighted GP kernel. Essentially, the proposed GP kernel may model the profound shape changes between pial and white matter surfaces. Biologically speaking, the proposed GP is sensitive to grey matter shape changes that are associated with macrostructural and microstructural loss in different brain regions. In particular, it may help detect the grey matter atrophy that is associated with cognitive impairment in normal aging and AD (Frisoni et al., 2010).
+
+The final GP kernel is assembled as: (11) K=M¯×H×M¯=[M(v1,⋅)−M(v1,N(vi))¯⋮M(v|V|,⋅)−M(v|V|,N(v|V|))¯][HFE(v1)⋱HFE(v|V|))][M(v1,⋅)−M(v1,N(vi))¯⋮M(v|V|,⋅)−M(v|V|,N(v|V|))¯]
+
+(12) M¯=[M(v1,⋅)−M(v1,N(vi))¯⋮M(v|V|,⋅)−M(vn,N(v|V|))¯]|V|×|V|=[M(v1,⋅)−1k1∑j=1k1M(v1,N(vi))⋮M(v|V|,⋅)−1k|ν|∑j=1k|ν|M(v|V|,N(v|V|))]
+
+(13) H=diag(HFE)=[HFE(v1)⋱HFE(v|V|))]
+
+where H is a |V|×|V| diagonal matrix with the HFE of vi at its ith diagonal entry; M¯ is the vertex-wised normalization of the SIWKS distance map; ki is the number of non-zero entries on the ith row. Therefore, a prior function of v, which satisfies a M-GP with the covariance function K (Eq. 11), is defined as : f(v)~GPM(0,K).
+
+An important property of a GP is that any finite subsets of random variables extracted from it still follow the multivariate Gaussian distribution which can be uniquely determined (Rasmussen, 2004; Gao et al., 2014; Fan et al., 2020). This property indicates that the distribution of a much smaller embedding, e.g. a set of landmarks, within the same shape model is deterministic, and the process of adding dimensions to this embedding can be understood as computing a joint distribution (Liang and Paisley, 2015; Gao et al., 2019). Taking each vertex vi∈V as a random variable with independent and identically distributed observation yi ∈ Y, searching for the next vertex vi+1 as the new landmark consists essentially of computing the conditional expectation under the condition of having previous landmarks and their observations (Gao et al., 2019): (14) Y(vi+1):=E(Y(vi+1)∣Y(v1)=y1,Y(v2)=y2,…,Y(vi)=yi)
+
+Denote the landmark as v˜ and define the uncertainty score Σ as the variance. The landmark is the vertex with the maximum uncertainty score. Suppose L landmarks {v˜1,…,v˜L} are needed. The first landmark is determined by choosing the vertex with the maximum variance in K. The uncertainty of vertex vi at the lth step after selecting (l − 1) landmarks is: (15) ∑(vi)=diag(K)(vi,vi)−Kvi,[v˜1,⋯,v˜l−1]K−1[v˜1,⋯,v˜l−1],[v˜1,⋯,v˜l−1]Kvi,[v˜i,v˜1,⋯,v˜l−1]T
+
+(16) Kvi,[v˜1,⋯,v˜l−1]=(K(vi,v˜1)⋮K(vi,v˜l−1))
+
+(17) K[v˜1,⋯,v˜l−1],[v˜1,⋯,v˜l−1]=(K(v˜1,v˜1)⋯K(v˜1,v˜l−1)⋮⋮K(v˜l−1,v˜1)⋯K(v˜l−1,v˜l−1))
+
+where diag(·) remarks the diagonal matrix. The lth landmark is selected by choosing the vertex with the maximal uncertainty score:
+
+(18) v˜l=argmaxvi∈V\{v˜1,…,v˜l−1}∑(vi)
+
+We keep iterating Eq. (15)–(18) until L landmarks are selected. It is clear that the Bayesian landmarking is a type of active learning method. At each iteration, only one vertex is selected, and it transforms from the posterior inference of the current iteration to the prior of the next one. By concatenating the SIWKS of landmarks, we obtain a simplified global shape descriptor for an individual subject. The algorithm is summarized in Algorithm 1.
+
+3. Experimental Results
+
+In this section, we test each critical step using the ADNI-2 cohort, including the GM tetrahedral mesh generation, statistical power of the proposed SIWKS features, visualization of landmarking results, and finally the statistical power of our M-GP approaches.
+
+3.1. Experiment Settings
+
+In our experiments, we use the first 30 smallest eigenvalues from the eigendecomposition of the HO operators to compute the SIWKS. The first eigenvalue λ1 is ignored because λ1 ≈ 0. We select 100 ϵ values by evenly dividing the interval (ϵmin, ϵmax), where ϵmin = log(λmin) and ϵmax = log(λmax); the increment of ϵ is (ϵmax − ϵmin)/100. In defining the GP kernel, we only consider a neighborhood of 100 vertices, which means Kvi,. of each vi has 100 nonzero entries. Selecting a limited range of neighboring vertices makes the GP kernel a sparse matrix and accelerates the computations.
+
+To validate whether the proposed spectral feature, SIWKS, and the Bayesian manifold learning can improve the statistical power on brain sMRI analysis, we apply it to study cortical volumetric differences associated with AD, MCI and CU groups on the ADNI-2 dataset. We report the classification results of a 10-fold cross validation: 90% of the inputs are randomly chosen to be the training set of the classifier and the rest is the testing set. For each training-testing set, we do the classification and evaluate the performance. We repeat this process by 50 times to test on every input and take the average of all the results as the final result. Three performance measures are used: Accuracy (AC), Sensitivity (SEN) and Specificity (SPE). In a binary “A–B” classification, AC measures the ratio between correct predictions and all the tests; SEN measures the ratio between correct predictions of A (true A) and all the A (true A + false A); SPE measures the ratio between correct predictions of B (true B) and all the B (false A + true B). The classifier is the Bootstrap aggregation (Bag). We directly use the built-in Matlab function to implement the classifier and parameter tuning.
+
+We perform two sets of experiments. In the first one, we study the classification between AD and CU classes. We compare the proposed SIWKS with four other grey matter morphometry features, including: The scale-invariant heat kernel signature (SIHKS) (Bronstein and Kokkinos, 2010). SIHKS is a well-known spectral shape descriptor. It is defined by the eigendecomposition of the LBO. Since LBO and HO are numerically equal in our cases, we use the same eigenvalues and eigenvectors to define the SIHKS in the tetrahedral domain.
+
+The lumped GMMS (Wang and Wang, 2017). Lumped GMMS is a heat kernel based shape descriptor specifically designed for tetrahedral models. In the discretization, a lumped LBO method is used to define the mass matrix, B.
+
+The tHFS (Fan et al., 2018). Being similar to the GMMS, tHFS is also based on the heat kernel but adopts the weak-form tetrahedral LBO. The major difference and advance is the FEM based discretization on tetrahedral meshes. A well-designed mass matrix expression yields a more accurate description of the three-dimensional shape.
+
+The FreeSurfer (Fischl, 2012) cortical thickness (Thickness). The cortical thickness is a widely used biomarker in brain disorder analyses. Here we take the FreeSurfer generated cortical thickness as a widely used representative surface-based method. Freesurfer computes the average thickness of each cortical parcellation in the Destrieux atlas. We concatenate them together as a vector to represent the cortical thickness feature of each individual.
+
+In the second set of experiments, we will classify between three clinical groups, AD, MCI and CU. Our M-GP will be compared with three other GP models, including: The heat kernel GP (HK-GP). We used the classical discrete heat kernel to define a GP and use the same landmarking framework to select an embedding. Heat kernel is quite similar to the fundamental squared exponential (SE) kernel, so choosing either one makes no obvious difference in our experiments. The same SIWKS features are used.
+
+The periodic GP (P-GP) (Rasmussen, 2004). Periodic GP kernel contains a sine function in the exponential term. Hence it fits well with spatial data and is a popular choice for some tasks.
+
+The spectral mixture GP (SM-GP) (Wilson, 2014). The SM kernel is a classic kernel function in Bayesian studies. It is derived from the dual Fourier transform and it shows a great performance in many regression tasks. Users are required to choose a number of mixed kernels and the default mixture number is 1.
+
+3.2. GM Tetrahedral Mesh Generation
+
+We use FreeSurfer version 5.3.0 for brain image segmentation and white/pial surface reconstruction. To balance the computational efficiency and accuracy, the surfaces are down-sampled to 120,000 faces. We run the mesh generation pipeline on an Intel(R) Core(TM) i7-4790 3.60GHz CPU and 64 GB globally addressable memory. Some quantitative statistics of the GM tetrahedral mesh generation are listed in Table 2. Specifically, Fig. 2 (c) demonstrates examples of our GM tetrahedral mesh. The results show that the geometric features of both pial and white surfaces are well preserved in the generated tetrahedral mesh. Meanwhile, we also make sure that there are layers of tetrahedra in the shallow regions. To our knowledge, our results are one of the finest tetrahedron-based 3D modelings of grey matter. Our work may provide a foundation for future brain structure modeling, and in particular, for overcoming the partial volume effects (Sattarivand et al., 2013).
+
+3.3. Classifications with Different Shape Descriptors
+
+The main purpose of our first set of experiment is to compare the classification performance among different shape descriptors. In our previous studies, the GMMS (Wang and Wang, 2017) and tHFS (Fan et al., 2018) are proven to achieve satisfied classification results, so here we consider them as candidates together with SIHKS (Bronstein and Kokkinos, 2010) and traditional cortical thickness measured by FreeSurfer (Fischl, 2012). For all four spectral features, the first smallest 31 eigenvalues and corresponding eigenvectors are used to define the feature descriptors (the eigenvector of the first smallest eigenvalue is abandoned). For each individual, we get an initial feature matrix with dimension Nvertex × Nfeature, where Nvertex is the number of vertices of one subject and Nfeature is the feature length. We apply the PCA to the transpose matrix of this initial feature matrix and select the 10 principal components for each subject. They are further concatenated as the final feature expression as the input vector to the classifier. Table 3 summarizes our experimental results. Adoption of the weak-form mass matrix B (as detailed in the Appendix) greatly improves the performance of tHFS compared to GMMS. tHFS performs comparatively to SIWKS in terms of accuracy. However, it is relatively difficult to adopt tHFS for GM tetrahedral mesh feature visualization and interpretation. Meanwhile, the FreeSurfer generated thickness is clinically meaningful and shows a good specificity performance. Overall, SIWKS performs the best among these four GM shape features. This results indicate that SIWKS is a good option to describe the differences of grey matter tetrahedral meshes.
+
+3.4. Visualization of the Landmarking Results
+
+In this experiment, we visualize the landmarks by rendering them in the tetrahedral mesh. Considering each grey matter tetrahedral mesh contains massive vertices, we adopt the following measures to enhance the visual effect: (1) 5000 landmarks are used for visualization. We select a large number of landmarks so that the targets in the mesh are more visible. (2) Instead of rendering the vertex, or the face, we render the whole tetrahedron is any one of the vertices is a landmark. TetView (Si, 2015) is used as the visualization tool. Fig. 7 shows the selected landmarks. The landmarks are illustrated from three anatomical cutting planes: coronal, sagittal, and horizontal planes. We choose slices that contain as many landmarks as possible on each cutting plane. The landmarks are colored in red. The vertices in the corpus callosum have been excluded from the candidates before the landmarking because it is excluded from the cortex. In Fig. 7, we can see some major gyri and sulci, such as the central sulcus, inferior frontal sulcus, middle temporal gyrus, postcentral gyrus etc., are all selected as landmarks, which are adopted by some landmark-based brain surface registration methods (e.g., Thompson and Toga, 1996; Shattuck and Leahy, 2002). By automatically identifying these landmarks, our work further validate their importance for cortical shape registration and analysis.
+
+We further visualize the selected landmarks by projecting them onto the pial surfaces. For each landmark, we search for its nearest vertex on the pial surface by minimizing the point-to-point Euclidean distance. After locating the surface point, we select its 5-ring neighboring points on the surface mesh and render the surface point along with its selected neighboring points in red color as shown in Fig. 8. We included neighborhood points to improve visualization. In Fig. 8, we visualize 100, 200, and 300 landmarks in (a), (b), and (c), respectively. The results further demonstrate that our selected landmarks are consistent with some major geometrically significant cortical landmarks. Thus, they may be automatically identified by our proposed GP method.
+
+3.5. Classifications with Features of Landmarks
+
+In this experiment, we aim at evaluating the statistical power of the selected landmarks by evaluating how well they perform for classification. Because of the reduced redundancies and noises, a representative subset of the vertices is expected to yield a similar or even better classification result compared with the full feature space. The pipeline for classification is illustrated in Fig. 9. For each individual, we compute the SIWKS on each selected landmark point and then concatenate them as an initial feature matrix. Similar to the feature reduction scheme for SIWKS computed on every point (as explained in Sec. 3.3), we apply PCA to compute the first 10 principal components. They are concatenated into single subject feature vector (Fig. 9 (b)). Group feature matrix is constructed by assembling each single subject feature vector together and fed to the classifiers. We test the performance of using L = 100, 200, 300 landmarks. These vertices are considered to contain the important shape information that is similar to the low-frequency information in an image. The results are given in Table 4. The ones from using global features are listed in the first column, with underlined numbers as baseline results. The best value in each category is in bold. The performance of M-GP using 300 landmarks is generally better than that of using the full feature space (&gt; 150K vertices). Using less landmarks cannot guarantee the subset has covered all the featured regions, so the statistical power is impaired. For example, in AD-CU classification, 100 landmarks cannot fully represent the whole shape well. A proper method to determine how many landmarks needed is worth further investigations. In our experiments, after using 300 landmarks, the classification performance converged, so we only report the results before 300 landmarks.
+
+Among comparison methods, HK-GP and P-GP yield unsatisfactory results. For the SM-GP, choosing the number of mixtures as 1 also generated suboptimal results. We also tested 2–10 mixtures and found that 4 gives the best performance. In the table, we only report the results of SM-GP with 4 mixtures.
+
+The numerical results prove that a well selected subset inherits or even improves the discriminability of the original data, by reducing the redundancy and noise. They also confirm the possibility of using a GP method to reduce the computation burden when constructing applications on three-dimensional shape models. Meanwhile, by using a regression framework to solve the landmarking problem, our method is totally unsupervised and easy to implement. Compared with supervised learning-based methods, our method exploits a label-free way and we believe our work will enable large scaled brain image analysis.
+
+4. Discussion
+
+Understanding brain atrophy in AD and normal aging not only helps to accurately track disease progression, but may also contribute to differentiating between AD subtypes (Pini et al., 2016). Although the cause of neuropathological lesions remains a undergoing topic of study, current research shows that synaptic loss, plasticity changes, neuronal loss and the presence of soluble microscopic oligomeric forms of Aβ and even of tau likely participate in the progressive neurodegeneration of AD (Serrano-Pozo et al., 2011; Niedowicz et al., 2011). Some proteins and amino acid peptides, such as Aβ, have been proven to be toxic to neurons, which causes damages to synapses, neurons and brain tissues (Perl, 2010). This results in irreversible morphological changes in both GM and white matter (WM) (Pini et al., 2016). The tetrahedral mesh simulates the whole GM, and the inner vertices can be regarded as a consecutive sampling process. Loss of neurons is reflected by the decreased number of sampling points when the size of one tetrahedron remains similar. In a heat field, this means the decrease of layers of level sets and quicker heat transfer. Classical registration methods only focus on the mutual positional changes of pial and white surfaces. On the contrary, a three-dimensional shape descriptor codes subtle inner changes and therefore may yield a more powerful statistical performance.
+
+In this paper, we studied manifold learning on tetrahedral models of grey matter and provided systematic analysis tools towards practical and effective grey matter morphometry analysis. With the validation experiments on the ADNI cohort, our work has two main findings. First, it provides explicit formulations of tetrahedron-based LBO and HO with weak-form FEM and uses them to solve the discrete heat equation and the time-independent Schrödinger equation on tetrahedral meshes. Compared with existing methods with the finite volume method (FVM) or the volume lumped method, our discretization formulation is more accurate. This set of formulations enables a description of both intrinsic and extrinsic properties. For the LBO, we used the Dirichlet boundary condition while the Neumann boundary condition was applied to compute the HO. With the LBO, we computed the heat flow entropy. With the HO, we defined the scale-invariant wave kernel signature as a point-wise shape descriptor on a three-dimensional manifold. Second, we further introduced a morphological Gaussian process as a Bayesian manifold learning method to learn for a simplified embedding from the original massive data. This process follows a GP regression framework and an active learning strategy (Rasmussen, 2004). The features of this embedding forms the final subject-wise global shape descriptor and may be useful for the volumetric registration. Since GPs have rarely been defined on three-dimensional manifold and used as a unsurpervised manifold learning technique on tetrahedral meshes, this work may inspire more explorations about applying tetrahedral spectral feature-based Bayesian learning methods to medical image analysis. For example, we can generate tetrahedral meshes for skulls, femoris, or teeth with the same pipeline.
+
+Measuring the spatial importance with uncertainty values on triangular meshes has been studied in previous work (Liang and Paisley, 2015; Gao et al., 2019) and proven to be effective. How to embed the tetrahedral mesh structure information into the shallow structure of the kernel is one of the core problems in designing such GP-based methods. Instead of defining the kernel as spatial similarities in Euclidean space, we defined it as similarities in a tetrahedral spectral feature space. The spectral shape analysis coupling with physically meaningful partial differential equations (PDEs) is broadly studied as effective three-dimensional shape representations (Jones et al., 2000; Reuter et al., 2006; Shi et al., 2010; Bronstein and Bronstein, 2011; Joshi et al., 2018; Reuter et al., 2009). Many previous methods are based on the heat diffusion theory and the spectra of LBO (Tan and Qiu, 2014; Gahm et al., 2018; Huang et al., 2020), such as the ShapeDNA (Reuter et al., 2006), conformal metric optimization (Shi et al., 2014), spectra-based smoothing (Chung et al., 2005), and the structural and functional maps (Qiu et al., 2006). Another acknowledged theory and the related elliptic operator are the quantum mechanics theory and the Hamiltonian operator (Aubry et al., 2011; Hall, 2013; Choukroun et al., 2020). Based on the spectral properties of these two operators and two PDEs, the heat equation and the Schrödinger’s equation, we explore distinguishable shape descriptors on three-dimensional manifolds. This idea is motivated by some remarkable work on two-dimensional manifolds, such as the heat kernel signature (HKS) (Sun et al., 2009) and the wave kernel signature (WKS) (Aubry et al., 2011). Previous attempts follow a similar methodology. In (Shi et al., 2014), the authors introduced a discretization formulation based on barycentric coordinates and weak-form FEM on two-dimensional manifold, which inspires us to derive a corresponding three-dimensional formulation in tetrahedral domain. Additionally, existing three-dimensional shape descriptors are mainly based on the heat diffusion theory, which motivates us to study another track, the HO and Schrödinger’s equation, in the tetrahedral domain. By also observing effective statistical power of SIWKS, we eventually incorporate both methods in establishing a complete system.
+
+The tetrahedral mesh construction is critical to our proposed work. We have kept refining our tetrahedral mesh construction techniques. In our initial attempt (Wang et al., 2004), we proposed a sphere carving method to build the tetrahedral mesh to model cortical structure while enforcing a correct topology on the obtained boundary surfaces. In subsequent work (Wang et al., 2015; Wang and Wang, 2017), we built a tetrahedral mesh generation module by incorporating a few existing mesh processing tools (Min, 2013; Nooruddin and Turk, 2003; CGAL Editorial Board, 2013; Lederman et al., 2011). Briefly, we first filled the MRI space with the cubic background voxels using the binvox software (Min, 2013; Nooruddin and Turk, 2003). Secondly, the cubic voxels containing the boundary surface and the internal voxels were split into tetrahedrons using smoothing modules in the computational geometry algorithms library (CGAL, (CGAL Editorial Board, 2013)). Next, we applied harmonic function minimization (CGAL Editorial Board, 2013; Lederman et al., 2011) which regularized the mesh generation by minimizing an energy function consisting of an elastic term, a smoothness term, and a fidelity term. In the current work, firstly, we adopted an integrated software suite, TetGen (Si, 2015), for the tetrahedral mesh construction and the change has significantly improved our system’s efficiency. Secondly, due to the limited MRI resolution, the two surfaces, the white and pial surfaces, may intersect with each other occasionally. In our prior system (Wang et al., 2015; Wang and Wang, 2017), this problem was solved by a smoothing operation (one can think that there are a few spike vertices in the intersection regions). However, since it is a global smoothing operation, this approach took a long running time and may lose the surface modeling accuracy. In our current system, we took an explicit updating approach. Specifically, our system first located the intersection vertices and removed the intersections by locally updating the surface vertex positions with a small step in the intersection opposite direction. We repeated this process until the two surfaces were completely separated or we reached a maximum number of iterations. The current approach maintains the global surface shapes and is much more robust and efficient than our prior work (Wang et al., 2015; Wang and Wang, 2017). Thus far, we have successfully processed thousands of grey matter tetrahedral meshes (Fan et al., 2018, 2020).
+
+Heat flow and heat diffusion theories are fundamental and have been frequently studied in medical imaging research. Our prior work (Wang et al., 2015; Wang and Wang, 2017) was based on heat flow and heat kernel research. In the current work, we have compared the proposed SIWKS with several other classical heat flow and heat kernel-based work. For example, we compared our SIWKS with the grey matter morphology signature (GMMS) (Wang and Wang, 2017), tetrahedron-based Heat Flux Signature (tHFS) (Fan et al., 2018), scale-invariant heat kernel signature (SIHKS) (Bronstein and Kokkinos, 2010). As shown in Table 3, SIWKS demonstrated stronger statistical power. It showed that SIWKS performed better in describing the local shape information. Considering that the GP-based landmarking uses neighboring information to compute the uncertainty, taking a SIWKS based kernel design may yield a more powerful statistical expressiveness than the heat kernel. We also studied heat kernel-based Gaussian processes for landmarking experiments. As shown in Table 4, the classification performance of landmarks selected by heat kernel based Gaussian processes was even worse than that of the spectral mixture kernel. The experimental results justified that by solving the HO and computing the SIWKS, we gained stronger statistical power. Furthermore, pure SIWKS feature has less consideration on the extrinsic information or the cortical thickness. We hypothesize some thickness-related measures can be added to improve the sensitivity of the Gaussian kernel to detect morphometric changes. Our previous work (Wang et al., 2015; Fan et al., 2018) has shown that heat diffusion can well define the level sets between the pial and white surfaces. Intuitively, transforming the features of heat diffusion and adding it to the GP kernel will improve the expressiveness of the GP regression with regard to the thickness. Kernel weight is a commonly used strategy to add one factor to a GP inference. By referring to the concept of informativeness in the theory of information, we define the heat flow entropy in the form of the kernel weight. Our comprehensive model absorbs the essence of both the heat equation and the Schrödinger’s equation. Therefore, our work integrated both LBO and HO into one framework and combined their advantages to maximize the statistical power of our method.
+
+The current work is a continuation of our long-term interest in the tetrahedron-based spectral shape analysis research. Based on our original volumetric harmonic map work (Wang et al., 2004), we have studied naive LBO (Shi et al., 2015; Wang et al., 2015) and volume lumped LBO (Wang and Wang, 2017). The latter one is also called direct mass lumping (DML) method (Reuter et al., 2007; Chen and Navon, 2009; Felippa et al., 2015; Chaskalovic, 2008; Zienkiewicz and Taylor, 2005). This method defines a diagonally lumped mass matrix (DLMM) for the spectra computation of either the HO or the LBO. However, the DML method only focuses on the property of single node without involving its neighborhood (Riley et al., 1999; Hand and Finch, 1998; Cook et al., 1974). A more comprehensive discretization formulation on the tetrahedral meshes would be more advantageous for morphometry analyses. Our method belongs to the class of variational mass lumping (VML) methods. Unlike the DML, VML generates two non-diagonal consistent mass matrices (NCMM) that represent the nodal kinetic energy in terms of the degrees of freedom (DOF) by using an interpolation scheme (Chaskalovic, 2008; Zienkiewicz and Taylor, 2005). This formulation provides an accurate description of the scenario in which the nodal shape changes are the consequence of its neighboring shape changes. In the current results, our empirical results also demonstrate the performance improvement between the current method and the volumetric lumped LBO-based GMMS.
+
+There are at least three main caveats when applying the proposed tetrahedral spectral feature-based Bayesian learning framework. First, we only use the SIWKS as the shape descriptor, which is inspired by the studies on two-dimensional shape analysis. We are still exploring more distinguishable global features that fit well with a three-dimensional shape. Second, additional studies are needed to clarify the ability of the proposed framework to detect and track AD, provide diagnostic or prognostic value, or assist in the evaluation of diseaseslowing treatments. However, for more reliable results, in future work, we intend to enrich our dataset and further study the performance of our proposed network measure in discriminating groups of cognitively unimpaired amyloid negative versus cognitively unimpaired amyloid positive, MCI amyloid negative versus MCI amyloid positive and dementia amyloid negative versus dementia amyloid positive (Langbaum et al., 2013; Wu et al., 2018). Finally, our current results should be viewed as exploratory and need to be further confirmed in other independent cohorts in future. Overall, this work presents our initial efforts to enrich brain sMRI analysis with tetrahedral space features and Bayesian learning models. We hope our preliminary results can inspire new ideas and further advance Bayesian manifold learningbased brain imaging analysis research.
+
+5. Conclusion
+
+In this paper, we present a systemic approach to analyze the cortical morphometry on three-dimensional manifold. An automatic GM tetrahedral mesh generation pipeline is initially proposed. It models the GM with dense high-quality tetrahedra without sacrificing data integrity. Based on the tetrahedral models, we propose explicit formulations for constructing SIWKS as a global shape descriptor. Furthermore, we define the HFE and the SIWKS distance map by solving the heat equation and the Schrödinger’s equation in tetrahedral domain. We propose the M-GP with these two concepts as a Bayesian method on manifold. We extract a representative embedding from the original massive data with the Bayesian uncertainty propagation so that the feature dimension is dramatically decreased. Our work verifies the effectiveness of applying three-dimensional shape analysis on cortical morphometry analysis and provides a practical framework for future studies. In future, we will validate our method in other independent cohorts. We will also explore its broad applications in other neurodegenerative diseases or mental disorders, such as posterior cortical atrophy(PCA) (Crutch et al., 2012; Lehmann et al., 2011), schizophrenia (Yoon et al., 2007), and Huntington’s disease (Rosas et al., 2008).
+
+Acknowledgement
+
+This work was partially supported by National Institutes of Health (RF1AG051710, R01EB025032 and R21AG065942), the Arizona Alzheimer’s Consortium, and Natural Science Foundation of China (61772253).
+
+Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen Idec Inc.; Bristol-Myers Squibb Company; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Medpace, Inc.; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Synarc Inc.; and Takeda Pharmaceutical Company. The Canadian Institutes of Rev December 5, 2013 Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Disease Cooperative Study at the University of California, San Diego. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: https://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+Appendix
+
+A. Discretization of Mass Matrix B
+
+Defining mass matrix B based on finite element analysis is implemented through the barycentric coordinate integral formulation (Cook et al., 2007). More exactly, defining mass matrix B is to solve a coefficient function at each entry in the matrix and this coefficient function is the integrands in a simplex region. For convenience, we start from a fundamental case, a typical triangle on 2-dimensional manifold as illustrated in Fig. 10. Suppose P(x, y) is an arbitrary point in this triangle and it is expressed as (λ1, λ2, λ3) in a barycentric coordinate system. λ1, λ2 and λ3 stand for the area ratio between the splited triangle and the whole region, for example, λ1 is the area of Δ(PAB) divided by the area of Δ(ABC). Clearly, the sum of three coordinates is 1, so any barycentric coordinate can be expressed as the residual of 1 minus the sum of other two coordinates, such as: λ3 = 1 − λ1 − λ2. The relationship between the barycentric coordinates and the spatial coordinates is: (19) {x=λ1x1+λ2x2+λ3x3y=λ1y1+λ2y2+λ3y3⇒{x=λ1x1+λ2x2+(1−λ1−λ2)x3y=λ1y1+λ2y2+(1−λ1−λ2)y3
+
+The coefficient function is expressed as the integral over all triangular elements: (20) I=∫μλ1mλ1nλ1qdμ
+
+where μ remarks the area of the triangle; m, n, q is the order of each coordinate, the maximum order is the number of vertices. According to Eqs. 19 and 20, (21) {∫μλ1mλ1nλ1qdμ=∫μλ1mλ1n(1−λ1−λ2)qdμdμ=det(∂(x,y)∂(λ1,λ2))dλ1dλ2.
+
+The area of the triangle can be expressed by using the determinant of the Jacobian matrix. (22) det(∂x∂λ1∂x∂λ2∂y∂λ1∂y∂λ2)=[x1−x3x2−x3y1−y3y2−y3]=2A(μ)
+
+We can rewrite the integral as: (23) ∫μλ1mλ1nλ1qdμ=2A∫01dλ2∫01−λ2λ1mλ2n(1−λ1−λ2)qdλ1
+
+Define t as: (24) t=λ11−λ2→λ1=t(1−λ2)
+
+Further derive the integral: (25) ∫μλ1mλ1nλ1qdμ=2A∫01dλ2∫01λ1mλ2n(1−λ1−λ2)q(1−λ2)dt=2A∫01dλ2∫01tm(1−λ2)mλ2n(1−t)q(1−λ2)q(1−λ2)dt=2A∫01λ2n(1−λ2)m+q+1dλ2∫01tm(1−t)qdt
+
+According to Euler formula: (26) ∫01sα(1−s)βds=α!β!(α+β+1)!
+
+The integral can be further derived: (27) ∫μλ1mλ1nλ1qdμ=2An!(m+q+1)!(m+n+q+2)!m!q!(m+q+1)!=2Am!n!q!(m+n+q+2)!
+
+The coefficients are computed by considering the orders under certain scenerios. An example of implementing this method on triangle meshes is provided in (Shi et al., 2014). The tetrahedron is on 3-dimensional manifold, therefore, a simplex region contains 4 vertices as illustrated in Fig. 10(b). The integral over tetrahedral elements is defined as ∫Ωλ1iλ2jλ3kλ4ldΩ, where Ω is the volume of the tetrahedron. Similarly, i, j, k, l is the order of the barycentric coordinates λ1, λ2, λ3, λ4, respectively and their maximum is 4. By adding one more dimension and repeating above derivations in the same way, the integral over all tetrahedral elements is computed as: (28) ∫Ωλ1iλ2jλ3kλ4ldΩ=i!j!k!l!(i+j+k+l+3)!6V
+
+Now considering the explicit coefficient on each entry of the matrix. The matrix reflects the adjacent relationship among vertices, thus, the type of connections to a target vertex includes: non-adjacency, edge and vertex itself. For non-adjacent vertices, the coefficient is set to be zero. There are two cases when the entry stands for the vertex itself (this is actually the diagonal of the matrix). The first case is that the arbitrary point only falls on the target vertex. Then one vertex reaches the highest order 4, and the other three vertices are not involved. In this case, only tetrahedrons around the vertex are considered. The coefficient is computed as: (29) ∫Ωλ14dΩ=4!7!⋅6V=V35
+
+The second case is that the arbitrary point falls on the vertex that connects to the target vertex. In this case, we traverse all the tetrahedrons that connect with edges involving the target vertex. The coefficient under such situation is computed as: (30) ∫Ωλ13λ1dΩ=3!7!⋅6V=V140
+
+When one vertex forms an edge with the target vertex, there are also two cases. The first case is that one more vertex connecting to this edge is considered. In this case, the target vertex has an order 2 and these three vertices form a face. We consider all faces with the target vertex as one endpoint and accumulate all tetrahedrons that share with each face. The coefficient under this situation is computed as: (31) ∫Ωλ12λ21λ31dΩ=2!7!⋅6V=V420
+
+Finally, all coordinates have order one. In this case, we consider all tetrahedrons involving this edge and accumulate all tetrahedrons neighboring with each tetrahedron. The coefficient is computed as: (32) ∫Ωλ11λ21λ31λ41dΩ=1!7!⋅6V=V840
+
+We also note that another method for finite element analysis is the unit coordinate integration. It has one less dimension comparing with the barycentric coordinate integration: (33) ∫Ωλ1iλ2jλ3kdΩ=i!j!k!(i+j+k+3)!6V
+
+An example of this method on triangle meshes is shown in (Reuter et al., 2009). We tested both methods and found the barycentric coordinate integration is slightly better than the unit coordinate integration regarding to the classification performance though the computation of the mass matrix B is easier. Therefore, we do not provide further explanations about the unit coordinate integration and its implementations here.
+
+Figure 1: Our approach consists of 3 main steps: tetrahedral mesh generation (left panel), solving Schrödinger’s equation (middle panel) and landmarking with morphometric Gaussian process to select a representative subset (right panel).
+
+Figure 2: The pipeline for GM tetrahedral mesh generation. A structural 3D brain MRI scan as in (a–i) is taken as the input to FreeSurfer for segmentation and surface mesh generation. (a–ii) shows the segmented grey matter (upper) and white matter (bottom). (a–iii) displays the generated pial surface (left) and white surface (right). The white and pial surfaces are the inputs to step (b). An initial combination of both surfaces are shown in (b–i). This initially combined mesh contains numerous surface intersections (marked by the red color). A zoom-in visualization of the mesh is shown in the upper figure of (b–ii). The bottom figure shows an example of two intersection points (rendered in white) and their neighborhoods (rendered in red). A local mesh fixing is applied on the associated triangles. (b–iii) shows the error-free cortical surface mesh. The one for the pial surface is in red while that of the white surface is in blue. The corpus callosum is rendered in black. This error-free cortical surface mesh is used to generate the grey matter tetrahedral mesh with TetGen (Si, 2015). (c–i) to (c–iii) show the same tetrahedral mesh from three anatomical cutting planes: the sagittal, horizontal and coronal planes, respectively.
+
+Figure 3: A discretization example on a six-tetrahedron model.
+
+Figure 4: Visualizations of the 5th, 10th, and 30th eigenvectors on three anatomical cutting planes.
+
+Figure 5: A SIWKS distance map is a sparse matrix. Two regions are zoomed in.
+
+Figure 6: Computation of the heat distribution and heat flow entropy (HFE) on a GM tetrahedral mesh: (a) The heat distribution on the GM tetrahedral mesh visualized in (a-i) the sagittal, (a–ii) horizontal, and (a–iii) the coronal anatomical cutting planes, clearly showing the heat level sets. The corpus callosum region is rendered in black. (b) The normalized HFE. The zoomed-in regions are marked by yellow boxes. (c) In the zoomed-in HFE regions, we added two heat flows with two pairs of points (A’, A) and (B’, B) from white (A’ and B’) and pial (A and B) surfaces. Although the geodesic distances between them are very similar, the region connecting A and A is broader than the one connecting B and B. Along the tracing lines, the HFEs along the two paths differ significantly. This property can be captured by our weighted GP kernel. Essentially, the proposed GP kernel may model the profound shape changes between pial and white matter surfaces.
+
+Figure 7: Visualization of landmarks on a GM tetrahedral mesh. (a) Sagittal plane; (b) Coronal plane; (c) Horizontal plane. The landmarks are identified by the red spots. Some regions of interest are marked by red circles with annotations on the side.
+
+Figure 8: Mapping landmarks on the pial surface mesh, with 100 selected landmarks in (a), with 200 selected landmarks in (b), and with 300 selected landmarks in (c). Each landmark is mapped to the nearest point on the pial surface. To improve visualization, we render the landmark and its 5-ring neighborhood in red. Some ROIs are circled and denoted in (a).
+
+Figure 9: Pipeline of using features of landmarks to construct final single subject feature vector for classifications. (a) Tetrahedral mesh landmarking and SIWKS computation; (b) Processing features of landmarks to generate the feature of each single subject and group feature matrix.
+
+Figure 10: Barycentric coordinates example.
+
+Table 1: Demographic characteristics of the baseline ADNI-2 used in this work.
+
+	AD (n=105)	MCI (n=289)	CU (n=141)	
+Male/Female	58/47	154/135	69/72	
+Age	74.6±7.8	71.6±7.6	73.4±6.5	
+Education	15.8±2.7	16.4±2.6	16.6±2.5	
+MMSE	23±2.1	28.0±1.7	29.1±1.2	
+
+Table 2: GM tetrahedral mesh Generation Information
+
+Average Vertices Number	Average Tetrahedron Number	
+154040	600970	
+Average One Iteration Time(s)	Min/Max One Iteration Time(s)	
+1042.51	883.93/1217.73	
+Success Rate After One Iteration(%)	Success Rate After Three Iterations(%)	
+80.7	98.7 (547/554)	
+
+Table 3: Classification performance between AD vs. CU groups with various grey matter shape descriptors. The global features are used.
+
+AD-CU	GMMS	tHFS	SIHKS	Thickness	SIWKS	
+ACC	0.847	0.899	0.526	0.783	0.912	
+SEN	0.857	0.914	0.538	0.692	0.984	
+SPE	0.833	0.808	0.513	0.900	0.892	
+
+Table 4: Classification results of using landmarks. 300 landmarks are used for all comparison methods. Results of using global SIWKS are underlined. The best result of each category is marked in bold.
+
+AD-CU	Global	HK-GP	P-GP	SM-GP	M-GP, L=100	M-GP, L=200	M-GP, L=300	
+ADD	0.912	0.906	0.821	0.908	0.912	0.912	0.912	
+SEN	0.984	0.984	0.947	0.956	0.984	0.985	0.995	
+SPE	0.892	0.750	0.799	0.892	0.892	0.892	0.892	
+AD-MCI								
+ADD	0.829	0.787	0.789	0.806	0.827	0.830	0.835	
+SEN	0.896	0.864	0.808	0.866	0.893	0.893	0.895	
+SPE	0.807	0.730	0.750	0.781	0.807	0.807	0.807	
+MCI-CU								
+ADD	0.884	0.821	0.796	0.890	0.892	0.894	0.894	
+SEN	0.892	0.890	0.885	0.907	0.906	0.904	0.906	
+SPE	0.878	0.751	0.863	0.870	0.867	0.874	0.874	
+
+Highlights
+
+A systematic cortical morphometry analysis on three-dimensional manifold.
+
+Explicit weak-form formulations for Laplace-Beltrami and Hamiltonian operators.
+
+Solving heat equation and Schrdinger’s equation for tetrahedral spectral analysis.
+
+A novel morphometric Gaussian process regression framework for landmarking.
+
+A series of AD diagnosis experiments and visualizations in the ADNI cohort.
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service to our customers we are providing this early version of the manuscript. The manuscript will undergo copyediting, typesetting, and review of the resulting proof before it is published in its final form. Please note that during the production process errors may be discovered which could affect the content, and all legal disclaimers that apply to the journal pertain.
+
+* To be submitted to Medical Image Analysis.
+
+Declaration of interests
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+
+References
+
+Ambellan F , Lamecker H , von Tycowicz C , Zachow S , 2019. Statistical shape models: understanding and mastering variation in anatomy, in: Biomedical Visualisation. Springer, pp. 67–84.
+Ashburner J , Friston KJ , 2000. Voxel-based morphometry–the methods. Neuroimage 11 , 805–821.10860804
+Aubry M , Schlickewei U , Cremers D , 2011. The wave kernel signature: A quantum mechanical approach to shape analysis, in: IEEE International Conference on Computer Vision Workshops, pp. 1626–1633.
+Banerjee S , Gelfand AE , Finley AO , Sang H , 2008. Gaussian predictive process models for large spatial data sets. Journal of the Royal Statistical Society: Series B (Statistical Methodology) 70 , 825–848.19750209
+Bronstein MM , Bronstein AM , 2011. Shape recognition with spectral distances. IEEE Transactions on Pattern Analysis and Machine Intelligence 33 , 1065–1071.21135442
+Bronstein MM , Kokkinos I , 2010. Scale-invariant heat kernel signatures for non-rigid shape recognition, in: 2010 IEEE Computer Society Conference on Computer Vision and Pattern Recognition, IEEE. pp. 1704–1711.
+Burmeister LC , 1993. Convective heat transfer. John Wiley &amp; Sons.
+CGAL Editorial Board, 2013. Cgal, Computational Geometry Algorithms Library. Http://www.cgal.org.
+Chaskalovic J , 2008. Finite element methods for engineering sciences: theoretical approach and problem solving techniques. Springer Science &amp; Business Media.
+Chen X , Navon I , 2009. Optimal control of a finite-element limited-area shallow-water equations model. Studies in Informatics and Control 18 , 41–62.
+Choukroun Y , Shtern A , Bronstein A , Kimmel R , 2020. Hamiltonian operator for spectral shape analysis. IEEE Transactions on Visualization and Computer Graphics 26 , 1320–1331.30176599
+Chung MK , Qiu A , Seo S , Vorperian HK , 2015. Unified heat kernel regression for diffusion, kernel smoothing and wavelets on manifolds and its application to mandible growth modeling in CT images. Med Image Anal 22 , 63–76.25791435
+Chung MK , Robbins SM , Dalton KM , Davidson RJ , Alexander AL , Evans AC , 2005. Cortical thickness analysis in autism with heat kernel smoothing. NeuroImage 25 , 1256–1265.15850743
+Clarkson MJ , Cardoso MJ , Ridgway GR , Modat M , Leung KK , Rohrer JD , Fox NC , Ourselin S , 2011. A comparison of voxel and surface based cortical thickness estimation methods. Neuroimage 57 , 856–865.21640841
+Coifman RR , Lafon S , Lee AB , Maggioni M , Nadler B , Warner F , Zucker SW , 2005. Geometric diffusions as a tool for harmonic analysis and structure definition of data: multiscale methods. Proc. Natl. Acad. Sci. U.S.A 102 , 7432–7437.15899969
+Cook RD , Malkus DS , Plesha ME , Witt RJ , 1974. Concepts and applications of finite element analysis. volume 4 . Wiley New York.
+Cook RD , , 2007. Concepts and applications of finite element analysis. John wiley &amp; sons.
+Crutch SJ , Lehmann M , Schott JM , Rabinovici GD , Rossor MN , Fox NC , 2012. Posterior cortical atrophy. Lancet Neurol 11 , 170–178.22265212
+Cuingnet R , Gerardin E , Tessieras J , Auzias G , Lehericy S , Habert MO , Chupin M , Benali H , Colliot O , 2011. Automatic classification of patients with Alzheimer’s disease from structural MRI: a comparison of ten methods using the ADNI database. Neuroimage 56 , 766–781.20542124
+Delkhosh M , Delkhosh M , Jamali M , 2012. Greens function and its applications. J. Basic. Appl. Sci. Res 2 , 8865–76.
+Di Martino A , Yan CG , Li Q , Denio E , Castellanos FX , Alaerts K , Anderson JS , Assaf M , Bookheimer SY , Dapretto M , Deen B , Delmonte S , Dinstein I , Ertl-Wagner B , Fair DA , Gallagher L , Kennedy DP , Keown CL , Keysers C , Lainhart JE , Lord C , Luna B , Menon V , Minshew NJ , Monk CS , Mueller S , Muller RA , Nebel MB , Nigg JT , O’Hearn K , Pelphrey KA , Peltier SJ , Rudie JD , Sunaert S , Thioux M , Tyszka JM , Uddin LQ , Verhoeven JS , Wenderoth N , Wiggins JL , Mostofsky SH , Milham MP , 2014. The autism brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain architecture in autism. Mol. Psychiatry 19 , 659–667.23774715
+Ern A , Guermond JL , 2004. Theory and practice of finite elements. Springer, New York.
+Fan Y , Lepore N , Wang Y , 2020. Morphometric gaussian process for landmarking on grey matter tetrahedral models, in: 15th International Symposium on Medical Information Processing and Analysis, International Society for Optics and Photonics. p. 113300H.
+Fan Y , Wang G , Lepore N , Wang Y , 2018. A Tetrahedron-based Heat Flux Signature for Cortical Thickness Morphometry Analysis. Med Image Comput Comput Assist Interv 11072 , 420–428.30338317
+Felippa CA , Guo Q , Park K , 2015. Mass matrix templates: general description and 1D examples. Archives of Computational Methods in Engineering 22 , 1–65.
+Fischl B , 2012. FreeSurfer. Neuroimage 62 , 774–781.22248573
+Fischl B , Dale AM , 2000. Measuring the thickness of the human cerebral cortex from magnetic resonance images. Proc. Natl. Acad. Sci. U.S.A 97 , 11050–11055.10984517
+Frisoni GB , Fox NC , Jack CR , Scheltens P , Thompson PM , 2010. The clinical use of structural MRI in Alzheimer disease. Nat Rev Neurol 6 , 67–77.20139996
+Gahm JK , Shi Y , Initiative ADN , , 2018. Riemannian metric optimization on surfaces (rmos) for intrinsic brain mapping in the laplace–beltrami embedding space. Medical image analysis 46 , 189–201.29574399
+Gao T , Kovalsky SZ , Daubechies I , 2019. Gaussian process landmarking on manifolds. SIAM Journal on Mathematics of Data Science 1 , 208–236.
+Gao Y , Riklin-Raviv T , Bouix S , 2014. Shape analysis, a field in need of careful validation. Human brain mapping 35 , 4965–4978.24753006
+Hall BC , 2013. Quantum theory for mathematicians. volume 267 . Springer.
+Hand LN , Finch JD , 1998. Analytical mechanics. Cambridge University Press.
+Huang SG , Lyu I , Qiu A , Chung MK , 2020. Fast polynomial approximation of heat kernel convolution on manifolds and its application to brain sulcal and gyral graph pattern analysis. IEEE Transactions on Medical Imaging.
+Jones SE , Buchbinder BR , Aharon I , 2000. Three-dimensional mapping of cortical thickness using laplace’s equation. Human brain mapping 11 , 12–32.10997850
+Joshi AA , Bhushan C , Salloum R , Wisnowski J , Shattuck DW , Leahy RM , 2018. Using the Anisotropic Laplace Equation to Compute Cortical Thickness. Med Image Comput Comput Assist Interv 11072 , 549–556.30734031
+Kluger BM , Zhao Q , Tanner JJ , Schwab NA , Levy SA , Burke SE , Huang H , Ding M , Price C , 2019. Structural brain correlates of fatigue in older adults with and without Parkinson’s disease. Neuroimage Clin 22 , 101730.30818269
+Labayru G , Diez I , Sepulcre J , Fernandez E , Zulaica M , Cortes JM , Lopez de Munain A , Sistiaga A , 2019. Regional brain atrophy in gray and white matter is associated with cognitive impairment in Myotonic Dystrophy type 1. Neuroimage Clin 24 , 102078.31795042
+Langbaum JB , Fleisher AS , Chen K , Ayutyanont N , Lopera F , Quiroz YT , Caselli RJ , Tariot PN , Reiman EM , 2013. Ushering in the study and treatment of preclinical Alzheimer disease. Nat Rev Neurol 9 , 371–381.23752908
+Lawrence N , 2005. Probabilistic non-linear principal component analysis with Gaussian process latent variable models. Journal of machine learning research 6 , 1783–1816.
+Lawrence ND , 2012. A unifying probabilistic perspective for spectral dimensionality reduction: Insights and new models. Journal of Machine Learning Research 13 , 1609–1638.
+Lederman C , Joshi A , Dinov I , Vese L , Toga A , Van Horn JD , 2011. The generation of tetrahedral mesh models for neuroanatomical MRI. Neuroimage 55 , 153–164.21073968
+Lee CH , Varshney A , Jacobs DW , 2005. Mesh saliency. ACM transactions on graphics (TOG) 24 , 659–666.
+Lee CT , Laughlin JG , Angliviel de La Beaumelle N , Amaro RE , McCammon JA , Ramamoorthi R , Holst M , Rangamani P , 2020. 3D mesh processing using GAMer 2 to enable reaction-diffusion simulations in realistic cellular geometries. PLoS Comput. Biol 16 , e1007756.32251448
+Lehmann M , Crutch SJ , Ridgway GR , Ridha BH , Barnes J , Warrington EK , Rossor MN , Fox NC , 2011. Cortical thickness and voxel-based morphometry in posterior cortical atrophy and typical Alzheimer’s disease. Neurobiol. Aging 32 , 1466–1476.19781814
+Li H , Sun L , Wu X , Cai Q , 2018. Scale-invariant wave kernel signature for non-rigid 3D shape retrieval, in: 2018 IEEE International Conference on Big Data and Smart Computing (BigComp), IEEE. pp. 448–454.
+Liang D , Paisley J , 2015. Landmarking manifolds with Gaussian processes, in: International Conference on Machine Learning, pp. 466–474.
+Lin A , Ching CRK , Vajdi A , Sun D , Jonas RK , Jalbrzikowski M , Kushan-Wells L , Pacheco Hansen L , Krikorian E , Gutman B , Dokoru D , Helleman G , Thompson PM , Bearden CE , 2017. Mapping 22q11.2 Gene Dosage Effects on Brain Morphometry. J. Neurosci 37 , 6183–6199.28536274
+Lombaert H , Grady L , Polimeni JR , Cheriet F , 2013. FOCUSR: feature oriented correspondence using spectral regularization–a method for precise surface matching. IEEE Trans Pattern Anal Mach Intell 35 , 2143–2160.23868776
+Mateos MJ , Gastelum-Strozzi A , Barrios FA , Bribiesca E , Alcauter S , Marquez-Flores JA , 2019. A novel voxel-based method to estimate cortical sulci width and its application to compare patients with Alzheimer’s disease to controls. Neuroimage, 116343 .
+Min P , 2013. [binvox] 3d mesh voxelizer. http://www.google.com/search?q=binvox.
+Mueller SG , Weiner MW , Thal LJ , Petersen RC , Jack C , Jagust W , Trojanowski JQ , Toga AW , Beckett L , 2005. The Alzheimer’s disease neuroimaging initiative. Neuroimaging Clinics 15 , 869–877.16443497
+Nain D , Haker S , Bobick A , Tannenbaum A , 2007. Multiscale 3-D shape representation and segmentation using spherical wavelets. IEEE Trans Med Imaging 26 , 598–618.17427745
+Niedowicz DM , Nelson PT , Murphy MP , 2011. Alzheimer’s disease: pathological mechanisms and recent insights. Curr Neuropharmacol 9 , 674–684.22654725
+Nooruddin FS , Turk G , 2003. Simplification and repair of polygonal models using volumetric techniques. IEEE Trans on Vis and Comput Graph 9 , 191–205.
+Perl DP , 2010. Neuropathology of Alzheimer’s disease. Mt. Sinai J. Med 77 , 32–42.20101720
+Pini L , Pievani M , Bocchetta M , Altomare D , Bosco P , Cavedo E , Galluzzi S , Marizzoni M , Frisoni GB , 2016. Brain atrophy in Alzheimer’s Disease and aging. Ageing Res. Rev 30 , 25–48.26827786
+Qiu A , Bitouk D , Miller MI , 2006. Smooth functional and structural maps on the neocortex via orthonormal bases of the Laplace-Beltrami operator. IEEE Transactions on Medical Imaging 25 , 1296–1306.17024833
+Rasmussen CE , 2004. Gaussian processes in machine learning, in: Advanced lectures on machine learning. Springer, pp. 63–71.
+Reuter M , Niethammer M , Wolter FE , Bouix S , Shenton M , 2007. Global medical shape analysis using the volumetric laplace spectrum, in: Cyberworlds, 2007. CW’07. International Conference on, IEEE. pp. 417–426.
+Reuter M , Wolter FE , Peinecke N , 2006. Laplace–beltrami spectra as Shape-DNAof surfaces and solids. Computer-Aided Design 38 , 342–366.
+Reuter M , Wolter FE , Shenton M , Niethammer M , 2009. Laplace–Beltrami eigenvalues and topological features of eigenfunctions for statistical shape analysis. Computer-Aided Design 41 , 739–755.20161035
+Riley K , Hobson M , Bence S , 1999. Mathematical methods for physics and engineering.
+Rosas HD , Salat DH , Lee SY , Zaleta AK , Pappu V , Fischl B , Greve D , Hevelone N , Hersch SM , 2008. Cerebral cortex and the clinical expression of Huntington’s disease: complexity and heterogeneity. Brain 131 , 1057–1068.18337273
+Sattarivand M , Armstrong J , Szilagyi GM , Kusano M , Poon I , Caldwell C , 2013. Region-Based Partial Volume Correction Techniques for PET Imaging: Sinogram Implementation and Robustness. Int J Mol Imaging 2013 , 435959.24455241
+Serrano-Pozo A , Frosch MP , Masliah E , Hyman BT , 2011. Neuropathological alterations in Alzheimer disease. Cold Spring Harb Perspect Med 1 , a006189.22229116
+Shattuck DW , Leahy RM , 2002. BrainSuite: an automated cortical surface identification tool. Med Image Anal 6 , 129–142.12045000
+Shi J , Collignon O , Xu L , Wang G , Kang Y , Lepore F , Lao Y , Joshi AA , Lepore N , Wang Y , 2015. Impact of Early and Late Visual Deprivation on the Structure of the Corpus Callosum: A Study Combining Thickness Profile with Surface Tensor-Based Morphometry. Neuroinformatics 13 , 321–336.25649876
+Shi Y , Chan CH , 2010. Multilevel Green’s function interpolation method for analysis of 3-D frequency selective structures using volume/surface integral equation. JOSA A 27 , 308–318.20126243
+Shi Y , Lai R , Morra JH , Dinov I , Thompson PM , Toga AW , 2010. Robust surface reconstruction via Laplace-Beltrami eigen-projection and boundary deformation. IEEE Trans Med Imaging 29 , 2009–2022.20624704
+Shi Y , Lai R , Wang DJ , Pelletier D , Mohr D , Sicotte N , Toga AW , 2014. Metric optimization for surface analysis in the Laplace-Beltrami embedding space. IEEE transactions on medical imaging 33 , 1447–1463.24686245
+Si H , 2015. Tetgen, a Delaunay-based quality tetrahedral mesh generator. ACM Transactions on Mathematical Software (TOMS) 41 , 11.
+Sowell ER , Thompson PM , Holmes CJ , Jernigan TL , Toga AW , 1999. In vivo evidence for post-adolescent brain maturation in frontal and striatal regions. Nat. Neurosci 2 , 859–861.10491602
+Stein ML , 1991. A kernel approximation to the kriging predictor of a spatial process. Annals of the Institute of Statistical Mathematics 43 , 61–75.
+Stein ML , 2012. Interpolation of spatial data: some theory for kriging. Springer Science &amp; Business Media.
+Sun J , Ovsjanikov M , Guibas L , 2009. A concise and provably informative multi-scale signature based on heat diffusion, in: Computer graphics forum, Wiley Online Library. pp. 1383–1392.
+Tan M , Qiu A , 2014. Spectral Laplace-Beltrami wavelets with applications in medical images. IEEE transactions on medical imaging 34 , 1005–1017.25343758
+Thompson P , Toga AW , 1996. A surface-based technique for warping three-dimensional images of the brain. IEEE Trans Med Imaging 15 , 402–417.18215923
+Thompson PM , Mega MS , Woods RP , Zoumalan CI , Lindshield CJ , Blanton RE , Moussai J , Holmes CJ , Cummings JL , Toga AW , 2001. Cortical change in Alzheimer’s disease detected with a disease-specific population-based brain atlas. Cerebral Cortex 11 , 1–16.11113031
+Turns SR , Pauley LL , 2020. Thermodynamics: concepts and applications. Cambridge University Press.
+Wang G , Wang Y , 2017. Towards a holistic cortical thickness descriptor: Heat kernel-based grey matter morphology signatures. Neuroimage 147 , 360–380.28033566
+Wang G , Zhang X , Su Q , Shi J , Caselli RJ , Wang Y , 2015. A novel cortical thickness estimation method based on volumetric Laplace-Beltrami operator and heat kernel. Med Image Anal 22 , 1–20.25700360
+Wang Y , Gu X , Yau ST , 2004. Volumetric harmonic map. Communications in Information &amp; Systems 3 , 191–202.
+Wilson AG , 2014. Covariance kernels for fast automatic pattern discovery and extrapolation with Gaussian processes. Ph.D. thesis. University of Cambridge.
+Wolters AF , Moonen AJH , Lopes R , Leentjens AFG , Duits AA , Defebvre L , Delmaire C , Hofman PA , van Bussel FC , Dujardin K , 2019. Grey matter abnormalities are associated only with severe cognitive decline in early stages of Parkinson’s disease. Cortex 123 , 1–11.31733342
+Wright IC , McGuire PK , Poline JB , Travere JM , Murray RM , Frith CD , Frackowiak RS , Friston KJ , 1995. A voxel-based method for the statistical analysis of gray and white matter density applied to schizophrenia. Neuroimage 2 , 244–252.9343609
+Wu J , Zhang J , Shi J , Chen K , Caselli RJ , Reiman EM , Wang Y , 2018. Hippocampus morphometry study on pathology-confirmed Alzheimer’s disease patients with surface multivariate morphometry statistics. Proc IEEE Int Symp Biomed Imaging 2018 , 1555–1559.30123414
+Xiao X , Fang H , Wu J , Xiao C , Xiao T , Qian L , Liang F , Xiao Z , Chu KK , Ke X , 2017. Diagnostic model generated by MRI-derived brain features in toddlers with autism spectrum disorder. Autism Res 10 , 620–630.27874271
+Yoon U , Lee JM , Im K , Shin YW , Cho BH , Kim IY , Kwon JS , Kim SI , 2007. Pattern classification using principal components of cortical thickness and its discriminative pattern in schizophrenia. Neuroimage 34 , 1405–1415.17188902
+Yu P , Grant PE , Qi Y , Han X , Segonne F , Pienaar R , Busa E , Pacheco J , Makris N , Buckner RL , Golland P , Fischl B , 2007. Cortical surface shape analysis based on spherical wavelets. IEEE Trans Med Imaging 26 , 582–597.17427744
+Zhang M , Golland P , 2016. Statistical shape analysis: From landmarks to diffeomorphisms.
+Zhao B , Luo T , Li T , Li Y , Zhang J , Shan Y , Wang X , Yang L , Zhou F , Zhu Z , Zhu H , 2019. Genome-wide association analysis of 19,629 individuals identifies variants influencing regional brain volumes and refines their genetic co-architecture with cognitive and mental health traits. Nat. Genet 51 , 1637–1644.31676860
+Zheng G , Li S , Szekely G , 2017. Statistical shape and deformation analysis: methods, implementation and applications. Academic Press.
+Zienkiewicz OC , Taylor RL , 2005. The finite element method for solid and structural mechanics. Elsevier.

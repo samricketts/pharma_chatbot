@@ -1,0 +1,321 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+0370625
+1170
+Biometrics
+Biometrics
+Biometrics
+0006-341X
+1541-0420
+
+33687064
+8426413
+10.1111/biom.13451
+NIHMS1712276
+Article
+Cox Regression Model under Dependent Truncation
+Rennert Lior a
+Xie Sharon X. b*
+a Department of Public Health Sciences, Clemson University
+b Department of Biostatistics, Epidemiology, and Informatics, University of Pennsylvania
+* Corresponding author: sxie@pennmedicine.upenn.edu
+23 6 2021
+6 2022
+22 3 2021
+06 7 2022
+78 2 460473
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Summary
+
+Truncation is a statistical phenomenon that occurs in many time to event studies. For example, autopsy-confirmed studies of neurodegenerative diseases are subject to an inherent left and right truncation, also known as double truncation. When the goal is to study the effect of risk factors on survival, the standard Cox regression model cannot be used when the survival time is subject to truncation. Existing methods which adjust for both left and right truncation in the Cox regression model require independence between the survival times and truncation times, which may not be a reasonable assumption in practice. We propose an expectation-maximization algorithm to relax the independence assumption in the Cox regression model under left, right, or double truncation to an assumption of conditional independence on the observed covariates. The resulting regression coefficient estimators are consistent and asymptotically normal. We demonstrate through extensive simulations that the proposed estimator has little bias and has a similar or lower mean-squared error compared to existing estimators. We implement our approach to assess the effect of occupation on survival in subjects with autopsy-confirmed Alzheimer’s disease.
+
+Cox regression
+Dependence
+Double truncation
+Left truncation
+Right truncation
+Survival
+
+pmc1. Introduction
+
+Truncation is a statistical phenomenon that has been shown to occur in a wide range of applications, including epidemiology, economics, astronomy, and survival analysis (Bilker and Wang, 1996; Efron and Petrosian, 1999; Ye and Tang, 2016; Dörre, 2020; Rennert and Xie, 2019). Individuals whose survival times are truncated provide no information to the investigator. Left truncation occurs when data is only recorded for individuals whose event time exceeds a random time (i.e. left truncation time). Under left truncation, individuals with smaller event times are less likely to be observed, resulting in a study sample that is biased towards larger event times and risk factors associated with larger event times (Klein and Moeschberger, 2003). Right truncation occurs when data is only recorded for individuals whose event time precedes a random time (i.e. right truncation time). Under right truncation, individuals with larger event times are less likely to be observed, resulting in a study sample that is biased towards smaller event times and risk factors associated with smaller event times (Klein and Moeschberger, 2003). When both left and right truncation are present, this is known as double truncation.
+
+Double truncation is inherent in autopsy-confirmed studies of neurodegenerative diseases (Rennert and Xie, 2019). Left truncation occurs because individuals enter the study after the onset of the disease, and therefore those who succumb to the disease before they enter the study are unobserved. The right truncation occurs because individuals who live past the end of the study date do not receive a pathological diagnosis of the disease. Since these subjects cannot be definitively diagnosed with a particular disease, they are excluded from the autopsy-confirmed study sample and therefore provide no information to the investigator. This is contrary to censored individuals, who provide partial information about their survival time. We note, however, that right censoring is not possible in autopsy-confirmed studies, since any individual who has an autopsy performed will also have a known survival time. This truncation scheme is illustrated in Figure 1, where only individuals whose time of death falls between the study entry time and end of study time are observed.
+
+If double truncation is not accounted for, then the regression coefficient estimators from the standard Cox regression model will be biased (Rennert and Xie, 2018b). Methods to handle double truncation have been gaining attraction in the literature. Recently, three methods were published to adjust the Cox model under double truncation (Mandel et al., 2018; Rennert and Xie, 2018b; Shen and Liu, 2019). The estimation procedure for all three methods rely on estimating the selection probabilities; the probability that a subject is observed in the sample (i.e. not truncated). These probabilities are then inserted into the estimating equations for the regression coefficient estimators. However, the estimation of the selection probabilities relies on the assumption of independence between the observed survival and truncation times, which may not be a reasonable assumption in practice. For example, according to the Alzheimer’s association and discussions with our clinical investigators, factors such as lower age of symptom onset, depression, and stress are associated with delayed study entry. Since these factors are associated with survival, this induces a dependence between the left truncation times and survival times. As shown in the simulation studies in Section 3, the existing methods to estimate the regression coefficients from the Cox model under double truncation are sensitive to violations of this independence assumption. Therefore, the existing literature is unable to address the unique challenges in the clinical example described above (see Section 4 for further details).
+
+There are several methods for survival analysis under dependent left truncation. Copula-based approaches (Chaieb et al., 2006; Emura et al., 2011; Emura and Murotani, 2015; Emura and Pan, 2020) rely on the copula assumption. Structural transformation models (Efron and Petrosian, 1994; Chiou et al., 2019) apply a monotone transformation on the observed failure time and left truncation time. These approaches cannot be directly applied to dependent double truncation. Alternatively, dependence can be accounted for through incorporation of the left-truncation time as a covariate besides observed covariates in the accelerated failure time regression model (Emura and Wang, 2016). This approach considers additional dependence after accounting for the dependence explained by observed covariates. In our context, we focus on the Cox model and the simultaneous presence of dependent left and right truncation. Therefore, the estimating equations of Emura and Wang (2016) cannot be directly applied in this situation. Emura and Wang (2012) developed a nonparametric maximum likelihood estimator for dependent right truncation based on copulas, which also relies on the copula assumption. However, the literature on estimation in the presence of dependent double truncation is scarce (Dörre and Emura, 2019).
+
+Motivated by the above challenges and the need to develop an approach to account for dependently double-truncated data under a Cox model, we propose a novel method to estimate the Cox regression coefficients under double truncation, by relaxing the assumption of independence between the observed survival and truncation times to an assumption of conditional independence given the observed covariates. Our method uses a conditional likelihood approach under a conditional independence assumption between the survival and truncation time given covariates, which allows us to bypass the estimation of the truncation distribution. We use an expectation-maximization (EM) algorithm to obtain consistent and asymptotically normal regression coefficient estimators and baseline hazard functions. We show through extensive simulation studies that our proposed estimators have little bias in small samples, while existing estimators for the Cox model under double truncation can be heavily biased under violations of the independence assumption. We show that even if the independence assumption is satisfied, our proposed method performs as well as existing methods. We illustrate our approach by analyzing the effect of occupation on survival in an autopsy-confirmed Alzheimer’s disease (AD) cohort.
+
+The remainder of this paper is organized as follows. In Section 2 we introduce the proposed EM method, including the estimation procedure and large sample properties of the resulting estimators. In Section 3, we conduct a simulation study to assess the finite sample performance of the proposed estimators under dependent truncation. In Section 4, we apply the proposed method to estimate the effect of occupation on survival in individuals with autopsy-confirmed AD. Discussion and concluding remarks are given in Section 5.
+
+2. Methods
+
+We first introduce notation and assumptions. Let T denote the survival time of interest (e.g. survival time from disease symptom onset), L denote the left truncation time (e.g. time from disease symptom onset to entry into the study), R denote the right truncation time (e.g. time from disease symptom onset to the end of study date), and Z denote a p×1 vector of covariates. Let N denote the size of the target population – the population that would have been observed had there been no truncation present in the study. Due to double truncation, we only observe (Ti, Li, Ri, Zi) for i = 1, ..., n ⩽ N individuals who live long enough to enter the study (i.e. T ⩾ L) and do not live past the end of the study (i.e. T ⩽ R). Here we have denoted the population random variables from the target population without subscripts, and the sampling random variables from the observed sample with subscripts.
+
+The proportional hazards model (Cox, 1972) is considered the standard regression model for analyzing traditional right-censored survival data. The model assumes that the covariate-specific hazard function is given by λZ(t) = λ(t) exp(β′Z), where β is a p × 1 regression parameter vector, and λ(t) is the baseline hazard function and is unspecified. We sometimes omit t in λ(t) throughout the paper when it does not cause ambiguity. When the survival data are subject to selection bias, Cox’s partial likelihood approach (Cox, 1975) cannot be directly applied. This is because the observed data are not a representative sample of the target population, and therefore the observed, biased data do not follow the model that is assumed for the unbiased data from the target population. When the data is biased due to double truncation, the distribution of the observed survival time Ti is given by: P(Ti⩽t∣Zi)=P(T⩽t∣Zi,L⩽T⩽R)=P(T⩽t,L⩽T⩽R∣Zi)P(L⩽T⩽R∣Zi)≠P(T⩽t∣Zi),
+
+which differs from the distribution of the survival time T from the target population. Therefore the resulting estimates of the regression coefficients based on data from the observed sample will be biased estimators of the regression coefficients from the target population.
+
+Under the assumption of independence between the survival and truncation times, existing methods to adjust for double truncation use a two-stage estimation procedure (Shen and Liu, 2019; Mandel et al., 2018; Rennert and Xie, 2018b). The first stage estimates the probability that a subject with survival time Ti is observed; denoted by π^i=P^(L⩽T⩽R∣T=Ti), i = 1 , ..., n. These selection probabilities, π^=(π^1,…,π^n), are then inserted into the estimating equation for β in the second stage. For example, Rennert and Xie (2018b) consistently estimate the true p×1 regression coefficient vector β0 by β^w, the solution to (2.1) Uw(β,π^)=∑i=1n∫0τπ^i−1{Zi(t)−∑j=1nπ^j−1Yj(t)exp{β′Zj(t)}Zj(t)∑j=1nπ^j−1Yj(t)exp{β′Zj(t)}}dNi(t)=0,
+
+where Yi(t) = I(Ti ⩾ t), Ni(t) = I(Ti ⩽ t), and I is the indicator function. Here τ is the maximum of the observed event times. The standard Cox regression estimator (Cox, 1975) which ignores double truncation, β^s, is the solution to Uw(β, 1) = 0, where Uw(β, 1) is the score equation from the standard Cox model.
+
+The caveat of these approaches is that when the assumption of independence is violated, the estimated selection probabilities, π^, will be biased. In this case, estimators which depend on π^ will also be biased. Rennert and Xie (2019) explore this bias in the context of the survival distribution function estimator under double truncation. The severity of this bias in existing regression coefficient estimators for double truncation is explored in the simulation studies in the next section.
+
+The estimation procedure for these selection probabilities makes no assumptions about the survival time distribution in the first stage. In the second stage, however, it is assumed the survival times have the Cox model density, given by fT|Z(t|z) = λ(t) exp(β′z) exp{−Λ(t) exp(β′z)}, where Λ(t)=∫0tλ(u)du. We can therefore use this information to bypass the estimation of the selection probabilities in the first stage and directly estimate the regression coefficients β.
+
+2.1 Proposed Method
+
+If we assume the survival times are conditionally independent of the truncation times given the covariate Z, then the conditional density of the observed survival times is given by fT∣Z,L,R,D(t∣z,l,r,d)=fT∣Z(t∣z)×I(l⩽t⩽r)P(l⩽T⩽r∣z),
+
+where D = {L ⩽ T ⩽ R} is the event that a random subject is observed.
+
+When T assumes the Cox proportional hazards density function, the likelihood of the observed survival times conditional on the observed truncation times and covariates is given by Ln(β,λ)=∏i=1nλ(Ti)exp(β′Zi)exp{−Λ(Ti)exp(β′Zi)}αi(β,λ),
+
+where αi(β, λ) = exp{−Λ(Li) exp(β′Zi)}−exp{−Λ(Ri) exp(β′Zi)} = P(L ⩽ T ⩽ R|Zi, Li, Ri; β, λ). That is, αi(β, λ) is the probability of observing a random subject from the target sample with covariate vector Zi and truncation times Li and Ri.
+
+The log-likelihood function, log Ln(β, λ), can be expressed as (2.2) ln(β,λ)=n−1∑i=1n[∫0τ{logλ(t)+β′Zi−Λ(t)exp(β′Zi)}dNi(t)−logαi(β,λ)].
+
+Due to the difficulties of maximizing the log-likelihood (2.2) over all absolutely continuous cumulative hazard functions, we allow the estimator of λ to be discrete. Because the maximum likelihood estimation (MLE) of β and λ may be computationally intractable if directly solving the score equations for (2.2), we estimate β and λ using an EM algorithm. This has the advantage that its maximization step (M-step) only involves the complete-data likelihood. Based on the EM algorithm, we provide a convenient estimation approach to obtain estimators of the regression coefficients and baseline hazard function under left, right, or double truncation. This approach allows the survival and truncation times to be dependent through the covariate vector Z. The estimation approach given here can easily be implemented using standard software for the Cox regression model.
+
+2.1.1 Proposed EM Algorithm
+
+Motivated by the approach in (Qin et al., 2011), who proposed EM algorithms for length-biased and right-censored data, Shen and Liu (2019) proposed an EM algorithm to obtain pseudo MLEs of the regression coefficients from the Cox model under the assumption of independent survival, left, and right truncation times. They referred to their MLEs as pseudo because their proposed likelihood included the plug-in value of the estimator of the selection probabilities π^. However, as the authors point out, the estimated selection probabilities will be biased if the truncation times depend on the covariates Z. Hence, the resulting pseudo MLEs of the regression coefficients from the Cox model will also be biased.
+
+We propose an EM algorithm for obtaining the MLE of (β, λ) based on (2.2). Our estimation procedure is similar to that of Qin et al. (2011) and Shen and Liu (2019). We let t1 &lt; ... &lt; td denote the ordered, distinct failure times for {T1, ..., Tn}, and redefine Λ as a step function only taking jumps at t1, ..., td. Specifically, we set Λ(t)=∑tj⩽tλj, where λj is the positive jump at time tj for j = 1, ..., d. We set λ = (λ1, ..., λd).
+
+Our observed data consists of O = {O1, ..., On}, where Oi ≡ (Ti, Li, Ri,Zi) for i = 1, ..., n. We denote the truncated latent data by O*={Tir*;i=1,…,n,r=1,…,mi}, where Tir* is the missing survival time for a subject with truncation times (Li, Ri) and covariate vector Zi for i = 1, ..., n and r = 1, ..., mi. That is, we assume that for every subject in our observed sample with covariate vector Zi and truncation times Li and Ri, there are mi subjects in the target population with survival times Tir*, r = 1, ..., mi, who are unobserved due to truncation.
+
+For notational convenience, we set θ = (β,λ) and define the density of T at time tj, given Zi, as fi(tj;θ)=λjexp(β′Zi)exp{−∑s=1jλsexp(β′Zi)}. Assuming the latent survival times Tir* take their values in {t1, ..., td}, the complete data log-likelihood is given by lfull(θ;O,O*)=∑j=1d∑i=1n[I(Ti=tj)+∑r=1miI(Tir*=tj)]logfi(tj;β,λ).
+
+To estimate the parameter θ, the EM algorithm begins by choosing an initial value for θ, say θ(0). In our setting, we can choose θ(0) = (βs,λs), which are the estimates from the standard Cox model. For k = 0,1,2, ..., the expectation step (E-step) consists of calculating the expected value of the complete data log likelihood function lfull(θ;O,O∗) conditional on the observed data (Ti, Li, Ri,Zi), i = 1, ..., n, under the current estimate θ(k). That is, we compute: Q(θ;θ(k))=Eθ(k)[lfull(θ;O,O*)∣O].
+
+In the maximization step (M-step), we choose θ(k+1) to maximize Q(θ; θ(k)). That is, we set θ(k+1)=argmaxθQ(θ;θ(k)).
+
+The E- and M-steps are carried out again, but this time with θ(k) replaced by θ(k+1). The E- and M-steps are then alternated repeatedly until ‖θ(k+1) − θ(k)‖ &lt; ϵ for some prespecified error ϵ &gt; 0. These steps are detailed in Sections 2.1.2 and 2.1.3.
+
+2.1.2 E-step
+
+At the kth iteration, define θ(k) = (β(k),λ(k)). Then, Q(θ;θ(k))=Eθ(k)[∑j=1d∑i=1n[I(Ti=tj)+∑r=1miI(Tir*=tj)]logfi(tj;θ)∣O]=∑j=1d∑i=1n{I(Ti=tj)+∑j=1d∑i=1nEθ(k)[∑r=1miI(Tir*=tj)∣Oi]}logfi(tj;θ)=∑j=1d∑i=1n{I(Ti=tj)+∑j=1d∑i=1nEmi[mi×Eθ(k)[I(Tir*=tj)∣Oi]]}logfi(tj;θ),
+
+where Eθ(k)[I(Tir*=tj)∣Oi]=Pθ(k)(Tir*=tj∣Li,Ri,Zi)=Pθ(k)(T=tj∣Li,Ri,Zi,{T&lt;L}∪{T&gt;R})=Pθ(k)(T=tj,{T&lt;L}∪{T&gt;R}∣Li,Ri,Zi)Pθ(k)({T&lt;L}∪{T&gt;R}∣Li,Ri,Zi)=fi(tj;θ(k))×[I(tj&lt;Li)+I(tj&gt;Ri)]1−αi(θ(k)).
+
+Since mi is the number of missing/truncated subjects with covariate values Zi and truncation times Li and Ri, mi follows a geometric distribution with success rate αi(θ). Therefore when θ = θ(k), E[mi∣Oi]=1−αi(θ(k))αi(θ(k)).
+
+The expected complete data log likelihood, conditional on the observed data, is given by Q(θ;θ(k))=∑j=1d∑i=1n{I(Ti=tj)+I(tj&lt;Li)+I(tj&gt;Ri)αi(θ(k))fi(tj;θ(k))}logfi(tj;θ).
+
+2.1.3 M-step
+
+Let wij(k)=I(Ti=tj)+I(tj&lt;Li)+I(tj&gt;Ri)αi(θ(k))fi(tj;θ(k)). The expected complete data conditional log likelihood can be written as Q(θ;θ(k))=∑j=1d∑i=1nwij(k)logfi(tjθ)=∑j=1dw+j(k)λj+∑i=1nwi+(k)β′Zi+∑i=1n∑j=1d∑s=1jwij(k)exp(β′Zi)λs,
+
+where w+j(k)=∑i=1nwij(k) and wi+(k)=∑j=1dwij(k).
+
+Treating wij(k) as constant, we set ∂Q(θ;θ(k))∂λj=0 to get a closed form solution to λj as a function of β: (2.3) λj=w+j(k)∑s=jd∑i=1nwis(k)exp(β′Zi),j=1,…,d.
+
+Differentiating Q(θ; θ(k)) with respect to β yields ∂Q(θ;θ(k))∂β=∑i=1nwi+(k)Zi+∑i=1n∑j=1d∑s=1jwij(k)Ziexp(β′Zi)λs.
+
+Setting the equation above equal to 0 and inserting the equation for λj yields (2.4) ∑i=1nwi+(k)Zi−∑s=1dw+s(k){∑i=1n∑j=sdwij(k)Ziexp(β′Zi)∑i=1n∑j=sdwij(k)exp(β′Zi)}=0.
+
+The estimating equation (2.4) can be solved by specifying the “weights” option in the “coxph” function in R. First, a weight vector of length nd must be created: wnd(k)=(w11(k),…,w1d(k),…wn1(k),…,wnd(k)). The corresponding failure time data and covariate vectors are also created with length nd as follows: Tnd = (t1, ..., td, ..., t1, ..., td) and Znd = (Z1, ..., Z1, ..., Zn, ..., Zn). Letting 1nd denote a vector of ones of length nd, the solution to (2.4), which we denote by β(k+1), can be obtained with the following command: coxph(Surv(Tnd,1nd)~Znd,weights=wnd(k),subset=which(wnd(k)&gt;0)).
+
+Plugging β(k+1) into (2.3) yields an updated estimator for λ, λ(k+1). We then set θ(k+1) = (β(k+1),λ(k+1)), and repeat the E- and M-steps. We continue to alternate between the E- and-M steps until ‖θ(k+1) − θ(k)‖ &lt; ϵ, for some prespecified error ϵ &gt; 0. The MLE of the hazard ratio is then given by β^em=β(k+1). We denote the corresponding baseline hazard by λ^em=λ(k+1), and the cumulative baseline hazard function by Λ^em(t)=∑tj⩽tλj(k+1).
+
+The EM algorithm presented here falls into the general scheme of the Expectation Conditional Maximization (ECM) algorithm, and therefore its convergence to the local maximizer is guaranteed by the same conditions required for convergence of the ECM algorithm (Qin et al., 2011). The uniqueness of the resulting estimators are guaranteed by the regularity conditions in Section 2.1.4.
+
+Our approach is aimed at estimating regression coefficients in the Cox model under dependent double truncation, which can also be used to estimate the covariate-adjusted survival function. In the absence of covariates, no parametric or semi-parametric assumptions are made for the density of the survival time. In this case, the proposed EM algorithm can be adapted to produce a nonparametric estimate of λ. This is accomplished by setting β = 0 in the above E-step and following the procedure detailed in Section 2 of Qin et al. (2011) for the M-step. However, because there is no conditioning on covariates, the resulting estimator assumes complete independence between the survival and truncation times. Several estimators exist for this scenario (Shen, 2010).
+
+The algorithm described here is under the double truncation setting. If only left truncation is present, the algorithm is easily adjusted by setting Ri = ∞ for i = 1, ..., n. When only right truncation is present, we set Li = −∞ for i = 1, ..., n. Note that when only left truncation is present, the standard Cox regression estimator can account for dependent left truncation by adjusting the risk set at a given time point to include all individuals who are alive and in the study at that time (Klein and Moeschberger, 2003). We denote this estimator by β^sL. We show through simulations in the Web Appendix that when only left truncation is present, our proposed estimator and β^sL yield nearly identical results.
+
+We note that Shen and Hsu (2020) recently extended our method, initially deposited in a preprint server (Rennert and Xie, 2018a), to semiparametric transformation models in the setting of dependent double truncation. Specifically, they consider the class of models Λ(t|z) = G{R0(t) × exp(β′z)}, where G is a prespecified transformation function and R0(t) is an arbitrary baseline cumulative hazard function. The Cox proportional hazards model is a special case, with G(t) = t. However, their iterative algorithm for maximizing the conditional likelihood differs from our EM algorithm. Based on a reviewer’s suggestion, we compared the computational performance of the EM method to the iterative approach implemented by Shen and Hsu (2020), which concluded that the EM approach was 235.64 times faster. Additional detail is provided in Web Appendix 4.
+
+2.1.4 Asymptotic Properties
+
+Here we state the strong consistency and asymptotic normality of the proposed EM estimators. We denote the proposed estimators by θ^n=(β^em,Λ^em), and denote the true regression coefficients and cumulative baseline hazard function θ0 = (β0,Λ0). The asymptotic properties of the proposed estimators refer to the situation when the total number of observed (non-truncated) subjects n → ∞. We assume the following regularity conditions hold. The true baseline hazard function λ0(·) is continuously differentiable, Λ0(0) = 0, and Λ0(τ) &lt; ∞.
+
+The true parameter vector β0 lies in a compact set B.
+
+E‖Z‖ and E‖exp(β′Z)‖ are bounded, where ‖z‖≡z12+…+zp2.
+
+The information matrix −∂2E[ln(β,λ^(β))]/∂β2|β=β0 is positive definite. Here λ^(β)=λem is used to emphasize the dependence on β.
+
+If P(b′Z = c) = 1 for some constant c, then b = 0.
+
+The identifiability constraints aGL|Z&lt;aFT|Z⩽aGR|Z and bGL|Z⩽bFT|Z&lt;bGR|Z hold, where GL|Z, FT|Z, and GR|Z denote the (conditional) marginal distributions for the left truncation, survival, and right truncation times given the covariate vector Z, respectively. The left and right endpoints of the support for any cumulative distribution function G are given by aG = inf{x : G(x) &gt; 0} and bG = inf{x : G(x) = 1}.
+
+Assumptions 1 and 2 are required for stochastic approximation. Assumptions 3 and 4 are needed to establish the asymptotic properties of the regression parameter estimates from the Cox model Andersen et al. (1997). Assumption 5 implies no covariate colinearity and thus ensures that the model is identifiable.
+
+Assumption 6 is needed for identifiability of β and λ (Woodroofe, 1985), and implies that left truncation may occur before T and right truncation may occur after T. These conditions imply that αi(β, λ) &gt; 0 and thus all survival times have a positive probability of being observed. A near violation of this positivity assumption may give undue influence to the ith observation in the score equation (2.2). In practice, this situation can be remedied by truncating extremely small values of αi(β, λ) (Seaman and White, 2013). The justification of assumption 6 for our data example is provided elsewhere (Rennert and Xie, 2018b).
+
+Theorem 1:
+
+Under regularity assumptions and as n → ∞, β^em converges to β0, and Λ^em(t) converges to Λ0(t) almost surely and uniformly in t for t ∈ [0, τ].
+
+Theorem 1 can then be proved by applying the classical Kullback-Leibler information approach as in (Qin et al., 2011). The proof is outlined in Web Appendix 1.
+
+Theorem 2:
+
+Under the regularity assumptions and as n → ∞, n(θ^n−θ0) converges weakly to a tight mean-zero Gaussian process −U˙θ0−1(W) in the metric space l∞(ℝp×A), where θ^n=(β^em,Λ^em), θ0 = (β0, Λ0), and A consists of all nondecreasing functions in the space of functions with bounded variation.
+
+The Fréchet derivative −U˙θ0−1(W) and W, along with the covariance matrix for W, are defined in Web Appendix 2. Theorem 2 is proved using the Z-theorem for infinite dimensional equations (Vaart and Wellner, 2000). The proof is outlined in Web Appendix 2.
+
+The asymptotic variance of β^em, along with its computation, is complicated because of the variation associated with the estimator Λ^em (Qin et al., 2011). We therefore apply the simple bootstrap technique to obtain a variance estimate of β^em, which is valid given asymptotic normality is established. In our setting, the bootstrap sample is obtained by drawing n independent vectors (Tjb, Ljb, Rjb, Zjb), j = 1, ..., n, from the observed data vectors (Ti, Li, Ri,Zi), i = 1, ..., n, with replacement. These data vectors are then used to obtain an estimate of regression coefficients, denoted by β^em(b). This process is repeated B times to obtain the B estimators β^em(1),…,β^em(B). The estimate of the standard error of β^em is computed by taking the standard deviation of the β^em(b), b = 1, ..., B. We denote this estimate by σ^β^em. We show through simulation studies in the next section that the standard error of β^em is accurately estimated by σ^β^em.
+
+3. Simulations
+
+In this section we examine the performance of the proposed estimator under dependent truncation. We compare our proposed estimator to the weighted estimators of Rennert and Xie (2018b) and Mandel et al. (2018), which adjust for double truncation but assume independence between the survival and truncation times. We also compare the proposed estimator to the estimator from the standard Cox regression model. The survival times were generated from a Cox-Weibull model and multiplied by the constant cT = 7. That is, T~cT×(−log(U)κexp(β1Z1+β2Z2))1/ν, where U follows a Unif[0, 1] distribution (Bender et al., 2005). In all simulations, the shape parameter is set at ν = 5 and the scale parameter is set at κ = 0.001. We set the regression coefficients β1 = 1 and β2 = 2, and generated the risk factors Z1 and Z2 from independent Unif[0,5] distributions. The left truncation times were simulated from the linear model :L=cL1×(βL1Z1+βL2ZL+cL2). The right truncation times were simulated from the linear model: R=cR1×(βR1Z1+βR2ZR+cR2). Here ZL and ZR were generated from independent Unif[0, 1] distributions, with βL2 = βR2 = 1. We vary the value of βL1 and βR1 to control the magnitude of dependence between truncation times and survival times. To adjust the proportion of missing data due to left and right truncation while ensuring that the truncation times satisfied the identifiability constraints (regularity assumption 6 in Section 2.1.4), the truncation times were adjusted by the constants cL1, cL2, cR1, and cR2. Higher values of cL1 and cL2 induced a higher proportion of missing data due to left truncation, while lower values of cR1 and cR2 induced a higher proportion of missing data due to right truncation. The survival, left, and right truncation times are dependent through the risk factor Z1 when β1 ≠ 0, βL1 ≠ 0, and βR1 ≠ 0.
+
+We conducted 500 simulation repetitions with sample sizes of n = 100 and 250 and estimated β = (β1, β2) using the proposed EM estimator β^em=(β^em,1,β^em,2), the weighted Cox regression estimator of Rennert and Xie (2018b), denoted by β^w=(β^w,1,β^w,2), the weighted Cox regression estimator of Mandel et al. (2018), denoted by β^wo=(β^wo,1,β^wo,2), which incorporates the weights π^ as offsets in the standard Cox regression model, and the standard Cox regression estimator β^s=(β^s,1,β^s,2). For each estimator, we calculated the estimated bias, observed sample standard deviations (SD), estimated standard errors (SE^), and the average empirical coverage probability of the 95% confidence intervals (Cov). To compare the mean squared error (MSE) of the estimators which adjust for double truncation to the MSE of the standard estimator, we calculated the relative MSE of β^j to β^s,j, j = 1, 2. That is, we computed rMSE(β^j)=MSE(β^j)MSE(β^s,j) for β^j=β^em,j, β^j=β^w,j, and β^j=β^wo,j. We used 100 bootstrap resamples to estimate the standard error of β^em,j, β^w,j, and β^wo,j, j = 1, 2. To obtain n observations after truncation, we simulated N=n1−q observations, where q is the proportion of truncated data.
+
+We run three sets of models under different levels of dependence between the survival and truncation times. We let ρLT and ρRT denote the correlation between the survival and left and right truncation times prior to truncation, and let ρLT* and ρRT* denote the correlation between the observed survival and left and right truncation times (i.e., post-truncation). The parameters βR1, cR1, and cR2 are kept constant in all three models, and set to −1, 5.25, and 5, respectively. This fixes the correlation ρRT at 0.48 prior to truncation, and fixes the proportion of missing data due to right truncation at 18%.
+
+In the first model, we set βL1 = 1 to induce strong negative dependence between the survival times and left truncation times, which resulted in a correlation ρLT = −0.48 prior to truncation and in correlations of ρLT*=−0.27 and ρRT*=0.30 post-truncation. The constants cL1 and cL2 were set at 1.75 and 0, respectively. In the second model, we set βL1 = 0.05 to induce weak dependence between the survival and left truncation times, which resulted in a correlation ρLT = −0.12 prior to truncation and in correlations of ρLT*=0.24 and ρRT*=0.49 post-truncation. The constants cL1 and cL2 were set at 9.5 and 0, respectively. In the third model, we set βL1 = −1 to induce a strong positive dependence between the survival times and left truncation times, which resulted in a correlation ρLT = 0.48 prior to truncation and in correlations of ρLT*=0.84 and ρRT*=0.84 post-truncation. The constants cL1 and cL2 were set at 5 and 2.25, respectively. The choice of the constants cL1 and cL2 set the proportion of missing data due to left truncation at 33%.
+
+The simulation results are presented in Table 1. In all models, the proposed EM estimators β^em,1 and β^em,2 had little bias. The weighted estimators for β1, β^w,1 and β^wo,1, and the standard estimator for β1, β^s,1, were heavily biased. The magnitude of this bias was largest when the survival times were positively correlated with both the left and right truncation times (ρLT = ρRT = 0.48 and ρLT*=ρRT*=0.84). The weighted estimators for β2, β^w,2 and β^wo,2, and the standard estimator for β2, β^s,2, were also biased in most settings. However, the magnitude of the bias for these estimators was smaller compared to the bias of β^w,1, β^wo,1, and β^s,1.
+
+The observed sample standard deviations of the proposed estimators were accurately estimated by the bootstrap technique, and the coverage probabilities of the proposed estimators were all close to the nominal level of 0.95. The coverage probabilities of β^w,j, β^wo,j, and β^s,j (j = 1,2) were well below the nominal level in most settings. Furthermore, the mean-squared errors of the proposed estimators were lower than those of the weighted and standard estimators in almost all settings.
+
+We further explored the bias and MSE of these estimators as a function of the dependence between the left truncation and survival times, and right truncation and survival times (Figure 2). Left truncation times were simulated as L=cL1×(βL1×Z1+βL2×ZL+cL2), where βL1 ranged from 0 to −1 and βL2=−4−5×βL1;ZL~Unif[0, 1]. The proportion of missing data due to left truncation varied between 63% and 70% for these settings. Right truncation times were simulated as R=cR1×(βR1Z1+βR2ZR+cR2), where βR1 ranged from 0 to −1 and βR2=−4−5×βR1; ZR ~ Unif[0, 1]. The proportion of missing data due to right truncation varied between 79% and 86% for these settings. The constants cL1, cL2, cR1, and cR2 were set to 3.25, 4, 5.25, and 5 in order to satisfy identifiability constraints. These settings induced a positive dependency between the survival times and both left and right truncation times. The sample size was set to n = 250 across 500 simulations. In these settings, higher values of the correlation prior to truncation generally corresponded to higher values of the correlation post-truncation (see Web Table 1 for the corresponding post-truncation correlations).
+
+The proposed EM estimators had little bias, regardless of the dependence between the left truncation and survival time. The weighted estimators for β1, β^w,1, and β^wo,1, and the standard estimator for β1, β^s,1, were heavily biased. This bias increased drastically as the level of dependence between the survival times and truncation times increased. The weighted estimators for β2, β^w,2 and β^wo,2, and the standard estimator for β2, β^s,2 were also biased. The magnitude of these biases were smaller in magnitude compared to those of β^w,1, β^wo,1, and β^s,1. The MSE of the proposed EM estimator was smaller than the MSEs of the weighted estimators in all settings, and slightly above or well below the MSE of the standard estimator.
+
+In Web Appendix 3, we conduct additional simulations to examine the performance of the proposed EM estimator under different truncation proportions, truncation time distributions, independent double truncation, and dependent left truncation only. As demonstrated by Figure 2, the two weighted estimators perform similarly. We thus chose only one of the weighted estimators (Rennert and Xie, 2018b) in Web Appendix 3 for the purposes of clarity.
+
+In Web Figure 1, we explored the bias and MSE of these estimators as a function of left and right truncation proportion, setting βL1 = βR1 = −1 and n = 250 which corresponds to the setting of the last model in Table 1. The proposed EM estimators had little bias in all settings, while the bias in the weighted and standard estimators increased as the proportion of missing data due to truncation increased. Conclusions regarding MSE were similar to those described in the preceding paragraph.
+
+The simulation set up for Web Figure 2 is similar to that of Web Figure 1, with the main difference being that the truncation times are simulated from proportional hazards models; the conclusions are similar. In Web Figure 3, we repeated the simulations when the assumption of independence holds (i.e. βL1 = βR1 = 0). The proposed EM estimators β^em,j and weighted estimators β^w,j had little bias, while the standard estimators β^s,j were biased for j = 1, 2. We also compared the rMSE of β^em,j and β^w,j to β^s,j j = 1, 2. As indicated by the bottom row of Web Figure 3, the proposed EM estimators had similar MSE to the weighted estimators when the independence assumption held.
+
+The standard Cox regression model can be adjusted to accommodate left truncation when the left truncation time is conditionally independent of the survival times given the observed risk factors by appropriately defining the risk set (Klein and Moeschberger, 2003). Under dependent left truncation only, we compared our proposed method to the weighted method (Rennert and Xie, 2018b) and the standard method which accounts for dependent left truncation. As shown in Web Figure 4, the proposed EM estimators and the adjusted standard Cox estimator had little bias, while the weighted estimators were biased. Furthermore, the proposed EM estimators had similar MSE to the adjusted standard estimators which accounted for dependent left truncation, and both estimators had smaller MSE than the weighted estimators.
+
+4. Application to Survival Study in Alzheimer’s Disease
+
+We illustrate our method by considering an autopsy-confirmed AD study conducted by the Alzheimer’s Disease Core Center at the University of Pennsylvania. The target population for the research purposes of this study consists of all subjects with AD symptom onset that met the study criteria and therefore would have been eligible to enter the center. Our observed sample contains all subjects who entered the center between 1995 and 2018, and had an autopsy performed before January 25, 2018. Thus one criterion for a subject to be included in our sample is that they did not succumb to AD before they entered the study, yielding left truncated data. In addition, our sample only contains subjects who had an autopsy-confirmed diagnosis of AD, and therefore we have no knowledge of subjects who live past the end of the study. Thus our data is also right truncated. Our data consists of n=224 subjects, all of whom have event times. The event time of interest is the survival time (T) from AD symptom onset to death. The left truncation time (L) is the time between the onset of AD symptoms and entry into the study (i.e. initial clinic visit). The right truncation time (R) is the time between the onset of AD symptoms and the end of the study, which is taken to be January 25, 2018. Due to double truncation, we only observe subjects with L ⩽ T ⩽ R.
+
+We are interested in assessing the effect of cognitive reserve (CR) on survival in AD. CR is a widely used hypothetical construct intended to account for individual differences in cognitive decline and clinical manifestations of dementia among individuals with AD (Stern, 2012; Meng and D’Arcy, 2012). Occupation, often used as a proxy for CR, has been shown to lengthen survival in healthy aging and AD (Massimo et al., 2015). However, other studies have shown that AD individuals with a higher occupational attainment had a higher mortality rate compared to those with a lower occupational attainment (Stern et al., 1995, 1999). One limitation of these studies is that they consisted of populations with clinically diagnosed AD subjects, which can be unreliable (Beach et al., 2012). Due to the inaccuracy of clinical diagnosis of AD, autopsy-confirmation is used for a definitive diagnosis (Grossman and Irwin, 2016). Without an accurate diagnosis of AD, estimates of factors affecting survival are not reliable.
+
+Here we are interested in obtaining improved estimates of the effect of occupation on survival from an autopsy-confirmed cohort of individuals with AD who have a known age of disease symptom onset. We use the highest occupational attainment for a given subject as a proxy for their CR. Primary occupation was classified and ranked based on the US census categories, and then dichotomized as non-professional or professional (Massimo et al., 2018). The professional group consisted of managers, administrators, clerical, sales, professional, and technical workers. The non-professional group consisted of foreman, craftsmen, operative, and service workers. Age at AD symptom onset was estimated based on a family report at first contact with the individual.
+
+We first check the assumption of independence between the observed survival and truncation times using the conditional Kendall’s tau proposed by Martin and Betensky (2005). The resulting p-value is 0.001, and therefore we reject this independence assumption. The corresponding Kendall’s tau statistic is τK = (0.15, 0.11), indicating positive dependence between the survival times and truncation times. The positive dependence between the left truncation times and survival times is clinically plausible because doctors often attribution the symptoms of early onset AD (onset of AD before 65 years of age) to other causes such as depression and stress, hence delaying the study entry time. Since younger age at onset is also associated with higher survival, this induces a positive dependence between the left truncation times and survival times. We check for the validity of the conditional independence assumption by stratifying the data based on the quartiles of age at symptom onset and compute the conditional Kendall’s tau under double truncation for each stratum. The resulting p-values were .07, .40, .27, and .08, and therefore we do not have enough evidence against conditional independence between the survival and truncation times given age at symptom onset.
+
+We proceed to apply the proposed method to estimate the effect of occupation on survival, adjusting for age at AD symptom onset, gender, and the baseline score on the mini-mental state examination (MMSE). Table 2 displays the results from the Cox regression model using the proposed EM estimators, weighted estimators of Rennert and Xie (2018b) and Mandel et al. (2018), and the standard Cox regression estimators. All methods concluded that later age at AD symptom onset is significantly associated with shortened survival times, while gender=female and higher MMSE scores are significantly associated with longer survival.
+
+Occupation is associated with decreased survival in all models. Under the proposed method, the resulting estimator is β^em=0.21. Under the weighted methods which account for double truncation but assume independence, the resulting estimators are β^w=0.39 and β^wo=0.37. Under the standard method, the resulting estimator is β^s=0.20. However, the 95% confidence intervals for all methods contain 0, indicating the effect of occupation on survival is not statistically significant at the α = .05 level.
+
+5. Discussion
+
+We proposed a novel method which relaxes the independence assumption between the observed survival and truncation times in the Cox model under double truncation to an assumption of conditional independence between the observed survival and truncation times. We obtained consistent and asymptotically normal estimators of the regression coefficients and baseline hazard function by maximizing the conditional likelihood of the observed survival times using an EM algorithm. The simulation studies confirmed that the proposed estimators had little bias in small samples, while existing methods which assume independence resulted in biased estimators of regression coefficients.
+
+We applied our proposed method to a doubly truncated sample of individuals with Alzheimer’s disease (AD). Existing regression methods which account for double truncation assume that the observed survival and truncation times are independent. This assumption may not be reasonable for studies of neurodegenerative diseases. In our data example, this independence assumption was rejected, and there is a clinically plausible explanation for this. Therefore, previous methods are not appropriate for our setting.
+
+A limitation of our estimation procedure is that in its current form, it cannot accommodate time-varing covariates. Additionally, there is no closed form for the asymptotic covariance of the proposed estimators. Instead, we applied the bootstrap technique to obtain valid standard errors and confidence intervals. Another limitation of our approach is the assumption of conditional independence between the survival and truncation times given covariates; this assumption may not always be reasonable. In our data example, we tested the conditional independence assumption through stratification on a predefined and clinically plausible variable of interest based on study design and our scientific knowledge, and applied Martin and Betensky (2005) test for independence within each stratum. However, this approach was applied to a single variable that was selected a priori. In practice, it may be required to condition on several covariates which may not be predefined; stratification in this scenario could result in small sample sizes in each stratum and reduce the power of the test. Further development of testing for conditional independence between survival and truncation times given covariates is therefore needed. Alternatively, the development of methods to relax the conditional independence assumption to that of full dependence would circumvent this issue. Emura and Wang (2016) account for dependence in semiparameteric accelerated failure time regression models under left truncation through inclusion of the left truncation time in the regression model. Future work may explore extending this approach to the case of double truncation under the Cox model.
+
+The proposed method has useful implications for observational studies. Double truncation has been shown to be present in a variety of studies, such as studies of clinically diagnosed Parkinson’s disease (Mandel et al., 2018), childhood cancer (Moreira and de Una-Alvarez, 2010), astronomy data Efron and Petrosian (1999), and studies based on registry data (Shen and Liu, 2019; Bilker and Wang, 1996). In fact, any data pulled from a disease registry will be subject to inherent right truncation, since data is only recorded for subjects who have the disease and are entered in the registry by the time the data is extracted (Bilker and Wang, 1996). In certain cases, this data will also be subject to left truncation (Shen and Liu, 2019; Bilker and Wang, 1996). In a similar fashion, studies which only include data from individuals whose event times fall within the time course of the study are subject to double truncation (Moreira and de Una-Alvarez, 2010). Therefore careful consideration of the study design must be taken into account when fitting the Cox proportional hazards model. Furthermore, the assumption of independence should always be tested, given the high sensitivity of existing methods to this assumption. We therefore recommend using the proposed estimator when the data is subject to truncation (assuming no time-varying predictors), since the proposed estimator has little bias and can have a lower mean-squared error compared to existing estimators under left, right, or double truncation, under a wide range of dependence structures.
+
+Supplementary Material
+
+Supporting Information
+
+R Code
+
+Acknowledgements
+
+We would like to thank the Reviewers for their valuable comments and suggestions to this manuscript. We would also like to thank Dr. Murray Grossman for his contribution to the clinical aspect of this paper. Dr. Rennert received support from NIH National Institute of Mental Health grant T32MH065218 and Dr. Xie from NIH grant R01-NS102324, AG10124, AG066597, and AG062418.
+
+Data Availability Statement
+
+The Alzheimer’s disease data set used in this paper to illustrate our findings is not shared due to patient confidentiality requirements.
+
+Fig. 1. In this hypothetical example, we assume subjects 1, 2, and 3 all have similar times of disease symptom onset. For illustrative purposes, we also assume that subjects 1, 2, and 3 have the same study entry time, however this need not be the case. Here the x-axis represents time, and the circles represent the terminating events. Subject 1 is left truncated because their survival time T1 is before the study entry time. Subject 2 is right truncated because their survival time T2 is past the study end time, and therefore do not have an autopsy performed. Subject 3 is observed because their survival time T3 is between the study entry and study end time.
+
+Fig. 2. Comparing the proposed EM estimators β^em,j (black), weighted estimators β^w,j (green) and β^wo,j (dark green), and standard estimators β^s,j (red) for j = 1, 2, on bias and MSE (mean-squared error) across different levels of dependence between truncation and survival times. For an estimator β^j, %bias(β^j)=100%×(β^j−βj)/βj and MSE(β^j)=bias(β^j)2+SD(β^j)2, where SD is the empirical standard deviation of the estimates across 500 simulations (sample size n = 250). True regression coefficients set to β1 = 1 and β2 = 2. Top row: bias(β^1) (top left) and bias(β^2) (top right). Gray grid overlaid on z-axis (%bias = 0) represents unbiased estimates. Bottom row: rMSE(β^1) (bottom left) and rMSE(β^2) (bottom right), where rMSE(β^)=MSE(β^j)MSE(β^s,j) is the relative MSE of the estimator β^j to the standard estimator β^s,j. Red grid overlaid on z-axis (rMSE = 1) represents equivalent MSEs between β^j and β^s,j. Here ρLT and ρRT are the correlations between the observed survival and left and right truncation times (prior to truncation). In these settings, higher values of the correlation prior to truncation generally correspond to higher values of the correlation post-truncation (see Web Table 1 for corresponding post-truncation correlations). Survival times generated from a proportional hazards model with hazard function λ(t) exp(β1Z1+β2Z2), where Z1 and Z2 generated from independent Unif[0,5] distributions. Left truncation times simulated as L=cL1×(βL1Z1+βL2ZL+cL2), where βL1 ranges from 0 to −1 and βL2=−4−5×βL1; ZL ~ Unif[0, 1]. The proportion of missing data due to left truncation varied between 63% and 70% for these settings. Right truncation times simulated as R=cR1×(βR1Z1+βR2ZR+cR2), where βR1 ranges from 0 to −1 and βR2=−4−5×βR1; ZR ~ Unif[0, 1]. The proportion of missing data due to right truncation varied between 79% and 86% for these settings. The constants cL1, cL2, cR1, and cR2 were set to 3.25, 4, 5.25, and 5 in order to satisfy identifiability constraints and keep the proportion of missing data due to truncation at relatively equal levels. Survival times conditionally independent of left and right truncation times given Z1.
+
+Table 1. Simulation results: Here cor is the correlation between the left truncation and survival times. Letting ρLT, ρRT denote the correlation between the survival and truncation times prior to truncation and ρLT*, ρRT* denote the correlation between the observed survival times and left and right truncation times (i.e., post-truncation), the first setting (cor=cor1) corresponds to ρLT=−0.48, ρRT=0.48, ρLT*=−0.27 and ρRT*=0.30, the second setting (cor=cor2) corresponds to ρLT=−0.12, ρRT=0.48, ρLT*=0.24 and ρRT*=0.49, and the third setting (cor=cor3) corresponds to ρLT=0.48, ρRT=0.48, ρLT*=0.84 and  ρRT*=0.84. The EM method produces the proposed estimator β^em, which adjusts for double truncation and dependence. The weighted estimators, which adjust for double truncation but assume independence between the survival and truncation times, are denoted by β^w (Rennert and Xie, 2018b) and β^wo (Mandel et al., 2018). The standard method assumes no truncation and produces the estimator β^s, the solution to the standard Cox score equation. Here SD is the empirical standard deviation of estimates across simulations, SE^ is the average of the estimated standard errors. For an estimator β^, rMSE=MSE(β^)MSE(β^s), where MSE is the mean-squared error. Cov is the coverage of 95% confidence intervals. Survival times generated from hazard function λ(t) exp(β1Z1+β2Z2), with β1 = 1 and β2 = 2. Survival times conditionally independent of left and right truncation times given Z1.
+
+cor	Estimator	n	Bias(β^1)	SD(β^1)	SE^(β^1)	rMSE(β^1)	Cov(β^1)	Bias(β^2)	SD(β^2)	SE^(β^2)	rMSE(β^2)	Cov(β^2)	
+	β^em	100	0.01	0.14	0.13	0.98	0.96	0.04	0.19	0.20	0.89	0.96	
+	β^w	100	0.21	0.16	0.16	3.65	0.74	0.11	0.21	0.22	1.40	0.95	
+	β^wo	100	0.22	0.13	0.13	3.30	0.63	0.10	0.18	0.19	1.02	0.96	
+cor 1	β^s	100	0.08	0.11	0.11	1.00	0.91	−0.12	0.16	0.17	1.00	0.86	
+	β^em	250	−0.01	0.09	0.09	1.26	0.95	0.01	0.13	0.13	1.00	0.95	
+	β^w	250	0.13	0.10	0.11	4.16	0.83	0.14	0.15	0.15	2.49	0.86	
+	β^wo	250	0.16	0.09	0.10	5.06	0.67	0.12	0.13	0.13	1.97	0.85	
+	β^s	250	0.01	0.08	0.08	1.00	0.96	−0.05	0.12	0.12	1.00	0.92	
+	
+	β^em	100	0.02	0.13	0.13	0.92	0.96	0.03	0.18	0.19	0.86	0.96	
+	β^w	100	0.23	0.16	0.15	3.97	0.71	0.09	0.21	0.22	1.29	0.97	
+	β^wo	100	0.22	0.12	0.13	3.28	0.61	0.09	0.17	0.19	0.93	0.95	
+cor 2	β^s	100	0.09	0.11	0.11	1.00	0.88	−0.12	0.16	0.16	1.00	0.87	
+	β^em	250	0.02	0.09	0.09	0.38	0.94	0.02	0.13	0.13	1.09	0.94	
+	β^w	250	0.22	0.11	0.11	2.41	0.44	0.09	0.15	0.15	1.86	0.91	
+	β^wo	250	0.24	0.09	0.09	2.65	0.26	0.09	0.13	0.13	1.55	0.89	
+	β^s	250	0.13	0.08	0.08	1.00	0.64	−0.05	0.12	0.12	1.00	0.92	
+	
+	β^em	100	0.04	0.14	0.13	0.72	0.95	0.03	0.19	0.19	0.97	0.94	
+	β^w	100	0.30	0.13	0.15	3.85	0.47	0.02	0.24	0.27	1.47	0.98	
+	β^wo	100	0.24	0.11	0.12	2.47	0.54	0.06	0.17	0.18	0.90	0.95	
+cor 3	β^s	100	0.13	0.10	0.10	1.00	0.78	−0.11	0.16	0.16	1.00	0.87	
+	β^em	250	0.04	0.10	0.10	0.10	0.93	0.03	0.13	0.14	0.61	0.96	
+	β^w	250	0.48	0.09	0.10	2.20	0.00	−0.15	0.19	0.19	2.12	0.92	
+	β^wo	250	0.38	0.09	0.09	1.37	0.01	−0.03	0.13	0.14	0.65	0.94	
+	β^s	250	0.32	0.08	0.08	1.00	0.01	−0.12	0.12	0.12	1.00	0.82	
+
+Table 2. Application results of Cox model. Event time is years from AD symptom onset to death. The proposed EM estimator, which adjusts for double truncation and dependence is denoted by β^em. The weighted methods of Rennert and Xie (2018b) and Mandel et al. (2018) adjust for double truncation but assume independence, and are denoted by β^w and β^wo, respectively. The standard method, denoted by β^s, does not account for truncation or dependence.
+
+	Estimator	
+Variable	Standard	Weighted	Weighted (offset)	EM	
+		
+	β^s(SE^)	95% CI	β^w(SE^)	95% CI	β^w0(SE^)	95% CI	β^em(SE^)	95% CI	
+	
+Age onset	0.04 (0.01)	(0.03,0.06)	0.06 (0.01)	(0.03,0.08)	0.05 (0.01)	(0.03,0.07)	0.06 (0.01)	(0.03,0.08)	
+Female	−0.48 (0.15)	(−0.70,−0.16)	−0.57 (0.22)	(−0.91,−0.12)	−0.55 (0.20)	(−0.87,−0.15)	−0.61 (0.17)	(−0.82,−0.23)	
+MMSE	−0.03 (0.01)	(−0.04,−0.01)	−0.03 (0.01)	(−0.06,−0.01)	−0.03 (0.01)	(−0.05,−0.01)	−0.05 (0.01)	(−0.07,−0.03)	
+Occupation	0.20 (0.28)	(−0.37,0.75)	0.39 (0.41)	(−0.35,1.26)	0.37 (0.40)	(−0.38,1.11)	0.21 (0.29)	(−0.41,0.76)	
+
+Supporting Information
+
+Web Appendices, Tables, and Figures referenced in Sections 2 and 3, and R code for implementing the proposed method, are available with this paper at the Biometrics website on the Wiley Online Library.
+
+
+References
+
+Andersen P , Borgan O , Gill R , and Keiding N (1997). Statistical models based on counting processes. Springer, New York.
+Beach TG , Monsell SE , Phillips LE , and Kukull W (2012). Accuracy of the clinical diagnosis of Alzheimer Disease at National Institute on Aging Alzheimer’s Disease Centers, 2005–2010. J Neuropathol Exp Neurol 71 , 266–273.22437338
+Bender R , Augustin T , and Blettner M (2005). Generating survival times to simulate Cox proportional hazards models. Statistics in Medicine 24 , 1713–1723.15724232
+Bilker WB and Wang MC (1996). A semiparametric extension of the Mann-Whitney test for randomly truncated data. Biometrics 52 , 10–20.8934583
+Chaieb LL , Rivest L-P , and Abdous B (2006). Estimating survival under a dependent truncation. Biometrika 93 , 655–669.
+Chiou SH , Austin MD , Qian J , and Betensky RA (2019). Transformation model estimation of survival under dependent truncation and independent censoring. Statistical Methods in Medical Research 28 , 3785–3798.30543153
+Cox D (1972). Regression models and life-tables. JRSSB 34 , 187–220.
+Cox D (1975). Partial likelihood. Biometrika 62 , 269–276.
+Dörre A (2020). Bayesian estimation of a lifetime distribution under double truncation caused by time-restricted data collection. Statistical Papers 61 , 945–965.
+Dörre A and Emura T (2019). Analysis of Doubly Truncated Data: An Introduction. Springer-Briefs in Statistics. Springer Singapore, Singapore.
+Efron B and Petrosian V (1994). Survival analysis of the gamma-ray burst data. Journal of the American Statistical Association 89 , 452–462. Publisher: Taylor &amp; Francis.
+Efron B and Petrosian V (1999). Nonparametric methods for doubly truncated data. Journal of the American Statistical Association 94 , 824–834.
+Emura T and Murotani K (2015). An algorithm for estimating survival under a copula-based dependent truncation model. TEST 24 , 734–751.
+Emura T and Pan C-H (2020). Parametric likelihood inference and goodness-of-fit for dependently left-truncated data, a copula-based approach. Statistical Papers 61 , 479–501.
+Emura T and Wang W (2012). Nonparametric maximum likelihood estimation for dependent truncation data based on copulas. Journal of Multivariate Analysis 110 , 171–188.
+Emura T and Wang W (2016). Semiparametric inference for an accelerated failure time model with dependent truncation. Annals of the Institute of Statistical Mathematics 68 , 1073–1094.
+Emura T , Wang W , and Hung H-N (2011). Semi-parametric inference for copula models for truncated data. Statistica Sinica 21 , 349–367.
+Grossman M and Irwin DJ (2016). The mental status examination in patients with suspected dementia. CONTINUUM: Lifelong Learning in Neurology 22 , 385.27042900
+Klein JP and Moeschberger ML (2003). Survival analysis: techniques for censored and truncated data. Statistics for biology and health. Springer, New York, 2nd edition.
+Mandel M , de Una-Alvarez J , Simon DK , and Betensky RA (2018). Inverse probability weighted Cox regression for doubly truncated data. Biometrics 74 , 481–487.28886206
+Martin EC and Betensky RA (2005). Testing quasi-independence of failure and truncation times via conditional Kendall’s tau. Journal of the American Statistical Association 100 , 484–492.
+Massimo L , Xie SX , Rennert L , Fick DM , Halpin A , Placek K , Williams A , Rascovsky K , Irwin DJ , Grossman M , and McMillan CT (2018). Occupational attainment influences longitudinal decline in behavioral variant frontotemporal degeneration. Brain Imaging and Behavior pages 1–9.28070745
+Massimo L , Zee J , Xie SX , McMillan CT , Rascovsky K , Irwin DJ , Kolanowski A , and Grossman M (2015). Occupational attainment influences survival in autopsy-confirmed frontotemporal degeneration. Neurology 84 , 2070–2075.25904687
+Meng X and D’Arcy C (2012). Education and dementia in the context of the cognitive reserve hypothesis: A systematic review with meta-analyses and qualitative analyses. PLoS ONE 7 , e38268.22675535
+Moreira C and de Una-Alvarez J (2010). A semiparametric estimator of survival for doubly truncated data. Statistics in Medicine 74 , 3147–3159.
+Qin J , Ning J , Liu H , and Shen Y (2011). Maximum likelihood estimations and EM algorithms with length-biased data. Journal of the American Statistical Association 106 , 1434–1449.22323840
+Rennert L and Xie SX (2018a). Cox regression model under dependent truncation. arXiv:1803.09830 [stat] http://arxiv.org/abs/1803.09830.
+Rennert L and Xie SX (2018b). Cox regression model with doubly truncated data. Biometrics 74 , 725–733.29073330
+Rennert L and Xie SX (2019). Bias induced by ignoring double truncation inherent in autopsy-confirmed survival studies of neurodegenerative diseases. Statistics in Medicine 38 , 3599–3613.31062392
+Seaman SR and White IR (2013). Review of inverse probability weighting for dealing with missing data. Stat Methods in Medical Research 22 , 278–295.
+Shen PS (2010). Nonparametric analysis of doubly truncated data. Annals of the Institute of Statistical Mathematics 62 , 835–853.
+Shen P-S and Hsu H (2020). Conditional maximum likelihood estimation for semiparametric transformation models with doubly truncated data. Computational Statistics &amp; Data Analysis 144 , 106862.
+Shen P-S and Liu Y (2019). Pseudo maximum likelihood estimation for the Cox model with doubly truncated data. Statistical Papers 60 , 1207–1224.
+Stern Y (2012). Cognitive reserve in ageing and Alzheimer’s disease. The Lancet Neurology 11 , 1006–1012.23079557
+Stern Y , Albert S , Tang MX , and Tsai WY (1999). Rate of memory decline in AD is related to education and occupation: cognitive reserve? Neurology 53 , 1942–1947.10599762
+Stern Y , Tang MX , Denaro J , and Mayeux R (1995). Increased risk of mortality in alzheimer’s disease patients with more advanced educational and occupational attainment. Annals of Neurology 37 , 590–595.7755353
+Vaart A. W. v. d. and Wellner JA (2000). Weak convergence and empirical processes: with applications to statistics. Springer, New York.
+Woodroofe M (1985). Estimating a distribution function with truncated data. Annals of Statistics 13 , 163–177.
+Ye Z-S and Tang L-C (2016). Augmenting the unreturned for field data with information on returned failures only. Technometrics 58 , 513–523. Publisher: Taylor &amp; Francis -eprint: 10.1080/00401706.2015.1093033.

@@ -1,0 +1,458 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101492446
+35637
+Proc IEEE Comput Soc Conf Comput Vis Pattern Recognit
+Proc IEEE Comput Soc Conf Comput Vis Pattern Recognit
+Proceedings. IEEE Computer Society Conference on Computer Vision and Pattern Recognition
+1063-6919
+2575-7075
+
+36268536
+9581465
+10.1109/cvpr52688.2022.01018
+NIHMS1834390
+Article
+Equivariance Allows Handling Multiple Nuisance Variables When Analyzing Pooled Neuroimaging Datasets
+Lokhande Vishnu Suresh University of Wisconsin-Madison
+
+Ravi Sathya N. University of Illinois at Chicago
+
+Chakraborty Rudrasis Butlr
+
+Singh Vikas University of Wisconsin-Madison
+
+30 9 2022
+6 2022
+27 9 2022
+19 10 2022
+2022 1042210431
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Pooling multiple neuroimaging datasets across institutions often enables improvements in statistical power when evaluating associations (e.g., between risk factors and disease outcomes) that may otherwise be too weak to detect. When there is only a single source of variability (e.g., different scanners), domain adaptation and matching the distributions of representations may suffice in many scenarios. But in the presence of more than one nuisance variable which concurrently influence the measurements, pooling datasets poses unique challenges, e.g., variations in the data can come from both the acquisition method as well as the demographics of participants (gender, age). Invariant representation learning, by itself, is ill-suited to fully model the data generation process. In this paper, we show how bringing recent results on equivariant representation learning (for studying symmetries in neural networks) instantiated on structured spaces together with simple use of classical results on causal inference provides an effective practical solution. In particular, we demonstrate how our model allows dealing with more than one nuisance variable under some assumptions and can enable analysis of pooled scientific datasets in scenarios that would otherwise entail removing a large portion of the samples. Our code is available on https://github.com/vsingh-group/DatasetPooling
+
+
+pmc1. Introduction
+
+Observational studies in many disciplines acquire cross-sectional/longitudinal clinical and imaging data to understand diseases such as neurodegeneration and dementia [44]. Typically, these studies are sufficiently powered for the primary scientific hypotheses of interest. However, secondary analyses to investigate weaker but potentially interesting associations between risk factors (such as genetics) and disease outcomes are often difficult when using common statistical significance thresholds, due to the small/medium sample sizes.
+
+Over the last decade, there are coordinated large scale multi-institutional imaging studies (e.g., ADNI [26], NIH All of Us and HCP [19]) but the types of data collected or the project’s scope (e.g., demographic pool of participants) may not be suited for studying specific secondary scientific questions. A “pooled” imaging dataset obtained from combining roughly similar studies across different institutions/sites, when possible, is an attractive alternative. The pooled datasets provide much larger sample sizes and improved statistical power to identify early disease biomarkers – analyses which would not otherwise be possible [16,30]. But even when study participants are consistent across sites, pooling poses challenges. This is true even for linear regression [56] – improvement in statistical power is not always guaranteed. Partly due to these as well as other reasons, high visibility projects such as ENIGMA [47] have reported findings using meta-analysis methods.
+
+Data pooling and fairness.
+
+Even under ideal conditions, pooling imaging datasets across sites requires care. Assume that the participants across two sites, say site1 and site2, are perfectly gender matched with the same proportion of male/female and the age distribution (as well as the proportion of diseased/health controls) is also identical. In this idealized setting, the only difference between sites may come from variations in scanners or acquisition (e.g., pulse sequences). When training modern neural networks for a regression/classification task with imaging data obtained in this scenario, we may ask that the representations learned by the model be invariant to the categorical variable denoting “site”. While this is not a “solved” problem, this strategy has been successfully deployed based on results in invariant representation learning [3, 5, 34] (see Fig. 1). One may alternatively view this task via the lens of fairness – we want the model’s performance to be fair with respect to the site variable. This approach is effective, via constraints [52] or using adversarial modules [17,53]. This setting also permits re-purposing tools from domain adaptation [35, 50, 55] or transfer learning [12] as a pre-processing step, before analysis of the pooled data proceeds.
+
+Nuisance variables/confounds.
+
+Data pooling problems one often encounters in scientific research typically violates many of the conditions in the aforementioned example. The measured data X at each site is influenced not only by the scanner properties but also by a number of other covariates / nuisance variables. For instance, if the age distribution of participants is not identical across sites, comparison of the site-wise distributions is challenging because it is influenced both by age and the scanner. An example of the differences introduced due to age and scanner biases is shown in Figures 2b, 2c. With multiple nuisance variables, even effective tools for invariant representation learning, when used directly, can provide limited help. The data generation process, and the role of covariates/nuisance variables, available via a causal diagram (Figure 2a), can inform how the formulation is designed [6, 45]. Indeed, concepts from causality have benefited various deep learning models [37,41]. Specially, recent work [31] has shown the value of integrating structural causal models for domain generalization, which is related to dataset pooling.
+
+Causal Diagram.
+
+Dataset pooling under completely arbitrary settings is challenging to study systematically. So, we assume that the site-specific imaging datasets are not significantly different to begin with, although the distributions for covariates such as age/disease prevalence may not be perfectly matched and each of these factors will influence the data. We assume access to a causal diagram describing how these variables influence the measurements. We show how the distribution matching criteria provided by a causal diagram can be nicely handled for some ordinal covariates that are not perfectly matched across sites by adapting ideas from equivariant representation learning.
+
+Contributions.
+
+We propose a method to pool multiple neuroimaging datasets by learning representations that are robust to site (scanner) and covariate (age) values (see Fig. 1 for visualization). We show that continuous nuisance covariates which do not have the same support and are not identically distributed across sites, can be effectively handled when learning invariant representations. We do not require finding “closest match” participants across sites – a strategy loosely based on covariate matching [39] from statistics which is less feasible if the distributions for a covariate (e.g., age) do not closely overlap. Our model is based on adapting recent results on equivariance together with known concepts from group theory. When tied with common invariant representation learners, our formulation allows far improved analysis of pooled imaging datasets. We first perform evaluations on common fairness datasets and then show its applicability on two separate neuroimaging tasks with multiple nuisance variables.
+
+2. Reducing Multi-site Pooling to Infinite Dimensional Optimization
+
+Let X denote an image of a participant and let Y be the corresponding (continuous or discrete) response variable or target label (such as cognitive score or disease status). For simplicity, consider only two sites – site1 and site2. Let D represent the site-specific shifts, biases or covariates that we want to take into account. One possible data generation process relating these variables is shown in Figure 2a.
+
+Site-specific biases/confounds.
+
+Observe that Y is, in fact, influenced by high-level (or latent) features X𝓒 specific to the participant. The images (or image-based disease biomarkers) X are simply our (lossy) measurement of the participant’s brain X𝓒 [14]. Further, X also includes an (unknown) confound: contribution from the scanner (or acquisition protocol). Figure 2a also lists covariates C, such as age and other factors which impact X𝓒 (and therefore, X). A few common site-specific biases D are shown in Fig. 2a. These include (i) population bias Dpopul that leads to differences in age or gender distributions of the cohort [9]; (ii) we must also account for acquisition shift Dacqui resulting from different scanners or imaging protocols – this affects X but not X𝓒; (iii) data are also influenced by a class prevalence bias Dpreval, e.g., healthier individuals over-represented in site2 will impact the distribution of cognitive scores across sites.
+
+For imaging data, in principle, site-invariance can be achieved via an encoder-decoder style architecture to map the images X into a “site invariant” latent space Φ(X). Here, Φ(X) in the idealized setting, corresponds to the true “causal” features X𝓒 that is comparable across sites. In practice, we know that images cannot fully capture the disease – so, Φ(X) is simply a surrogate, limited by the measurements we have on hand. Given these caveats, an architecture is shown in Fig. 1. Ideally, the encoder will minimize Maximum Mean Discrepancy (MMD) [20] or another discrepancy between the distributions of latent representations Φ⋅ of the data from site1 and site2.
+
+The site-specific attributes D are often unobserved or otherwise unavailable. For instance, we may not have full access to Dpopul from which our participants are drawn. To tackle these issues, we use a causal diagram, see Fig. 2a, similar to existing works [31,55] with minimal changes. For dealing with unobserved D’s, some standard approaches are known [22]. Let us see how it can help here. Applying d-separation (see [22, 36] ) on Fig. 2a, we see that the nodes Dpopul,C,X𝓒 form a so-called “head-to-tail” branch and the nodes Dacqui,X,X𝓒, Dpreval,Y,X𝓒 form a “head-to-head” branch. This implies that X𝓒ᚇD|C. This is exactly an invariance condition: X𝓒 should not change across different sites for samples with the same value of C. To enforce this using Φ(·), we must optimize a discrepancy between site-wise Φ(X)’s at a given value of C, (1) minΦ𝓜𝓜𝓓Psite 1(Φ(X)∣C),Psite 2(Φ(X)∣C)
+
+Provably solving (1)?
+
+A brief comment on the difficulty of the distributional optimization in (1) is useful. Generic tools for (worst case) convergence rates for such problems are actively being developed [51]. For the average case, [38] presents an online method for a specific class of (finite dimensional) distributionally robust optimization problems that can be defined using standard divergence measures. Observe that even these convergence guarantees are local in nature, i.e., they output a point that satisfies necessary conditions and may not be sufficient.
+
+In practice, the outlook is a little better. Intuitively, an optimal matching of the conditional distributions P (Φ(X) | C) across the two sites corresponds to a (globally) optimal solution to the probabilistic optimization task in (1). Existing works show that it is indeed possible to approach this computationally via sub-sampling methods [55] or by learning elaborate matching functions to identify image or object pairs across sites that are “similar” [31] or have the same value for C. Sub-sampling, by definition, reduces the number of samples from the two sites by discarding samples outside of the common support. This impacts the quality of the estimator – for instance, [55] must restrict the analysis only to that age range of C which overlaps or is shared across sites. Such discarding of samples is clearly undesirable when each image acquisition is expensive. Matching functions also do not work if the support of C is not identical across the sites, as briefly described next.
+
+Example 2.1. Let C denote an observed covariate, e.g., age. Consider Xi at site1 with C = c1 and Xj at site2 with C = c2. If c1≈c2, a matching will seek ΦXi≈ΦXj in X𝓒 space. If c1 falls outside the support of c’s acquired at site2, one must not only estimate Φ(·) but also a transport expression Γc2→c1(⋅) on X𝓒 such that ΦXi≈Γc2→c1ΦXj. The “transportation” involves estimating what a latent image acquired at age c2 would look like at age c1. This means that matching would need a solution to the key difficulty, obtained further upstream.
+
+2.1. Improved Distribution Matching via Equivariant Mappings may be possible
+
+Ignoring Y for the moment, recall that matching here corresponds to a bijection between unlabeled (finite) conditional distributions. Indeed, if the conditional distributions take specific forms such as a Poisson process, it is indeed possible to use simple matching algorithms that only require access to pairwise ranking information on the corresponding empirical distributions [43], for example, the well-known Gale-Shapley algorithm [46]. Unfortunately, in applications that we consider here, such distributional assumptions may not be fully faithful with respect to site specific covariates C. In essence, we want representations Φ (when viewed as a function of C) that vary in a predictable (or say deterministic) manner – if so, we can avoid matching altogether and instead match a suitable property of the site-wise distributions of the representation Φ(X). We can make this criterion more specific. We want the site-wise distributions to vary in a manner where the “trend” is consistent across the sites. Assume that this were not true, say P(Φ(X) | C) is continuous and monotonically increases with C for site1 but monotonically decreases for site2. A match of P(Φ(X) | C) across the sites at a particular value of C = c implies at least one C = c′ where P(Φ(X) | C) do not match. The monotonicity argument is weak for high dimensional Φ. Plus, we have multiple nuisance variables. It turns out that our requirement for P(Φ(X) | C) to vary in a predictable manner across sites can be handled using the idea of equivariant mappings, i.e., P(Φ(X) | C) must be equivariant with respect to C for both sites. In addition, we will also seek invariance to scanner attributes.
+
+While we are familiar with the well-studied notion of invariance through the MMD criterion [29], we will briefly formalize our idea behind an equivariant mapping which is less common in this setting.
+
+Definition 1. A mapping f:𝓧→𝓨 defined over measurable Borel spaces 𝓧 and 𝓨 is said to be G–equivariant under the action of group G iff f(g⋅x)=g⋅f(x), g∈G
+
+We refer the reader to two recent surveys, Section 2.1 of [7] and Section 3.1 of [8], which provide a detailed review.
+
+Equivariance is often understood in the context of a group action (say, a matrix group) [24, 28]. While the covariates C is a vector (and every vector space is an abelian group), since this group will eventually act on the latent space of our images, imposing additional structure will be beneficial. To do so, we will utilize a mapping between C’s and a group suitable for our setting. Once this is accomplished, we will derive an equivariant encoder. We discuss these steps next.
+
+3. Methods
+
+The dual goals of (i) equivariance to covariates (such as age) and (ii) invariance to site, involves learning multiple mappings. For simplicity, and to keep the computational effort manageable, we divide our method into two stages. Briefly, our stages are (a) Stage one: Equivariance to Covariates. We learn a mapping to a space that provides the essential flexibility to characterize changes in covariate C as a group action. This enables us to construct a space satisfying the equivariance condition as per Def. 1 (b) Stage two: Invariance to Site. We learn a second encoding to a generic vector space by apriori ensuring that the equivariance properties from Stage one are preserved. Such an encoding is then tuned to optimize the MMD criterion, thus generating a latent space that is invariant to site while remaining equivariant to covariates. We describe these stages one by one in the following sections.
+
+3.1. Stage one: Equivariance to Covariates
+
+Given the space of images, 𝓧, with the covariates C, first, we want to characterize the effect of C on 𝓧 as a group action for some group G. Here, an element g ∈ G characterizes the change from covariate ci ∈ C to cj ∈ C (for short, we will use i and j). The change in C corresponds to a translation action which is difficult to instantiate in 𝓧 without invoking expensive conditional generative models. Instead, we propose to learn a mapping to a latent space 𝓛 such that the change in C can be characterized by a group action pertaining to G in the space 𝓛 (the latent space of 𝓧). As an example, let us say Xi goes to Xj in 𝓧 as (Xi → Xj). This means that (Xi → Xj) is caused due to the covariate change (ci → cj) in C. Let 𝔈 be a mapping between the image space 𝓧 and the latent space 𝓛. In the latent space 𝓛, for the moment, we want that 𝔈Xi→𝔈Xj should correspond to the change in covariate (ci → cj).
+
+Remark 2. We are mostly interested in normalized covariates for example, in ℓp norm, while other volume based deterministic normalization functions may also be applicable. In the simplest case of p = 2 norm, the corresponding group action is naturally induced by the matrix group of rotations.
+
+Based on this choice of group, we will learn an autoencoder (𝔈,𝔇) with an encoder 𝔈:𝓧→𝓛 and a decoder 𝔇:𝓛→𝓧, here 𝓛 is the encoding space. Due to Remark 2, we can choose 𝓛 to be a hypersphere, Sn−1, and (𝔈,𝔇) as a hyperspherical autoencoder [54]. Then, we can characterize the “action of C on 𝓧” as the action of G on Sn−1. That is to say that a covariate change (translation in C) is a change in angles on 𝓛. This corresponds to a rotation due to the choice of our group G. Note that for 𝓛=Sn−1, G is the space of n×n rotation matrices, denoted by SO(n), and the action of G is well-defined. What remains is to encourage the latent space 𝓛 to be G-equivariant. We start with some group theoretic properties that will be useful.
+
+3.1.1 Review: Group theoretic properties of SO(n)
+
+Let SO(n)=X∈Rn×n∣XTX=In,det(X)=1 be the group of n × n special orthogonal matrices. The group SO(n) acts on Sn−1 with the group action “·” given by g⋅ℓ↦gℓ, for g ∈ SO(n) and ℓ ∈ Sn−1. Here we use gℓ to denote the multiplication of matrix g with ℓ. Under this group action, we can identify Sn−1 with the quotient space G/H with G = SO(n) and H = SO(n−1) (see Ch. 3 of [13] for more details). Let τ : Sn−1 → G/H be such an identification, i.e., τ (ℓ) = gH for some g ∈ G. The identification τ is equivariant to G in the following sense.
+
+Fact 3. Given τ : Sn−1 → G/H as defined above, τ is equivariant with the action of G, i.e., τ (g · ℓ) = gτ (ℓ).
+
+Next, we see that given two points ℓi, ℓj on Sn−1 there is a unique group element in G to move from τ (ℓi) to τ (ℓj).
+
+Lemma 4. Given two latent space representations ℓi, ℓj ∈ Sn−1, and the corresponding cosets giH = τ (ℓi) and gjH = τ (ℓj), ∃!gij = gjgi−1 ∈ G such that ℓj = gij · ℓi.
+
+Thanks to Fact 3 and Lemma A.1, simply identifying a suitable τ will provide us the necessary equivariance property. To do so, next, we parameterize τ by a neural network and describe a loss function to learn such a τ and (𝔈,𝔇).
+
+3.1.2 Learning a G-equivariant τ with DNNs
+
+Now that we established the key components: (a) an autoencoder (𝔈,𝔇) to map from 𝓧 to the latent space Sn−1 (b) a mapping τ : Sn−1 → SO(n) which is G = SO(n)-equivariant, see Figure 3, we discuss how to learn such a (𝔈,𝔇) and a G-equivariant τ.
+
+Let Xi, Xj∈𝓧 be two images with the corresponding covariates i, j ∈ C with i ≠ j. Let ℓi=𝔈Xi, ℓj=𝔈Xj. Using Lemma A.1, we can see that a gij ∈ G to move from ℓi to ℓj does exist and is unique. Now, to learn a τ that satisfies the equivariance property (Fact 3), we will need τ to satisfy two conditions, τgji⋅ℓi=gijτℓi and τgji⋅ℓj=gjiτℓj∀g∈G. The two conditions are captured in the following loss function, (2) ℓi=𝔈Xi ℓj=𝔈Xj
+
+(3) Lstage 1=∑Xi,i,Xj,j⊂𝓧×C𝓖(i,j)⋅τℓi−τℓj2+𝓖−1(i,j)⋅τℓj−τℓi2
+
+Here, 𝓖:C×C→G will be a table lookup given by (i,j)↦gij is the function that takes two values for the covariate c, say, i, j corresponding to Xi, Xj∈𝓧 and simply returns the group element (rotation) gij needed to move from 𝔈Xi to 𝔈Xj. Choice of 𝓖: In general, learning 𝓖 is difficult since C may not be continuous. In this work, we fix 𝓖 and learn τ by minimizing (3). We will simplify the choice of 𝓖 as follows: assuming that C is a numerical/ordinal random variable, we define 𝓖 by (i,j)↦expm(i−j)1m. Here m=n2 is the dimension of G and expm is the matrix exponential, i.e., expm:𝔰𝔬(n)→SO(n), where 𝔰𝔬(n) is the Lie algebra [21] of SO(n). Since 𝔰𝔬(n) is a vector space, hence (i−j)1m∈𝔰𝔬(n). To reduce the runtime of expm, we replace expm by a Cayley map [32, 42] defined by: 𝔰𝔬(n)∋A↦(I−A)(I+A)−1∈SO(n). Here we used expm for parameterization (other choices also suitable).
+
+Algorithm 1 Learning representations that are Equivariantto Covariates and Invariant to Site Input: Training Sets from multiple sites X,Ysite 1, X,Ysite 2. Nuisance covariates C.  Stage one: Equivariance to Covariates 1 : Parameterize Encoder-Decoder pairs (𝔈,𝔇) and τ mapping with neural networks 2 : Optimize over ( 𝔈,𝔇) and τ to minimize,      Lstage 1+∑iXi−𝔇𝔈Xi2 Output: First latent space mapping 𝔈 and a supporting mapping function τ. Here, τ is G-equivariant to the co- variates C (see Lemma (A.1) and (3)). Stage two: Invariance to Site 1 : Parameterize encoder b, predictor h and decoder Ψ with neural networks 2 : Preserve equivariance from stage one with an equiv- ariant mapping Φ, (see Lemma (A.1)) 3 : Optimize Φ,  b, h and Ψ to minimize Lstage 2+𝓜𝓜𝓓 Output: Second latent space mapping Φ. Here, Φ is equivariant to the covariates and invariant to site.¯¯¯
+
+Finally, we learn the encoder-decoder (𝔈,𝔇) by using a reconstruction loss constraint with Lstage1 in (3). This can also be thought of as a combined loss for this stage as Lstage 1+∑iXi−𝔇𝔈Xi2 where the second term is the reconstruction loss. The loss balances two terms and requires a scaling factor (see appendix § A.7). A flowchart of all steps in this stage can be seen in Fig 3.
+
+3.2. Stage two: Invariance to Site
+
+Having constructed a latent space 𝓛 that is equivariant to changes in the covariates C, we must now handle the site attribute, i.e., invariance with respect to site. Here, it will be convenient to project 𝓛 onto a space that simultaneously preserves the equivariant structure from 𝓛 and offers the flexibility to enforce site-invariance. The following lemma, inspired from the functional representations of probabilistic symmetries (§4.2 of [7]), provides us strategies to achieve this goal. Here, consider Φ:𝓛→𝓩 to be the projection.
+
+Lemma 5. For a τ:𝓛→G/H as defined above, and for any arbitrary mapping b:𝓛→𝓩, the function Φ:𝓛→𝓩 defined by (4) Φ(ℓ)=τ(ℓ)⋅bτ(ℓ)−1⋅ℓ
+
+is G-equivariant, i.e., Φ(g · ℓ) = gΦ(ℓ).
+
+Proof is available in the appendix § A.1. Note that Φ remains equivariant for any mapping b. This provides us the option to parameterize b as a neural network and train the entirety of Φ for the desired site invariance where equivariance will be preserved due to (9). In this work, we learn such a Φ:𝓛→𝓩 with the help of a decoder Ψ:𝓩→𝓛 by minimizing the following loss, (5) Lstage 2∑ℓ=𝔈(X)∈𝓛X∈𝓧,Y∈𝓨∥ℓ−Ψ(Φ(ℓ))∥2︷ Reconstruction loss +∥Y−h(Φ(ℓ))∥2︷ Prediction loss 
+
+(6)  subject to Φ(ℓ)=τ(ℓ)⋅bτ(ℓ)−1⋅ℓ︸G-equivariant map 
+
+Minimizing the loss (5) with the constraint (6) allows learning the network b:𝓛→𝓩 and the decoder Ψ:𝓩→𝓛. We are now left with asking that Z∈𝓩 be such that the representations are invariant across the sites. We simply use the following MMD criterion although other statistical distance measures can also be utilized.
+
+(7) 𝓜𝓜𝓓=EZ1~P(Φ(ℓ))site 1𝓚Z1,⋅−EZ2~P(Φ(ℓ))site 2𝓚Z2,⋅𝓗
+
+The criterion is defined using a Reproducing Kernel Hilbert Space with norm ∥·∥𝓗 and kernel 𝓚. We combine (5), (6) and (7) as the objective function to ensure site invariance. Thus, the combined loss function Lstage 2+𝓜𝓜𝓓 is minimized to learn (Φ, Ψ). Scaling factor details are available in the appendix § A.7.
+
+Summary of the two stages.
+
+Our overall method comprises of two stages. The first stage, Section 3.1, involves learning the τ function. The function learned in this stage is G-equivariant by the choice of the loss Lstage1, see (3). Our next stage, Section 3.2, employs the learned τ function and a trainable mapping b to generate invariant representations. This stage preserves G-equivariance due to the Φ mapping in (9). The loss for the second step is Lstage 2+𝓜𝓜𝓓, see (5). Our method is summarized in Algorithm 1. Convergence behavior of the proposed optimization (of τ, Φ) still seems challenging to characterize exactly, but recent papers provide some hope, and opportunities. For example, if the networks are linear, then results from [18] maybe applicable which explain the our superior empirical performance.
+
+4. Experiments
+
+We evaluate our proposed encoder for site-invariance and robustness to changes in the covariate values C. Evaluations are performed on two multi-site neuroimaging datasets, where algorithmic developments are likely to be most impactful. Prior to neuroimaging datasets, we also conduct experiments on two standard fairness datasets, German and Adult. The inclusion of fairness datasets in our analysis, provides us a means for sanity tests and optimization feasibility on an established problem. Here, the goal of achieving fair representations is treated as pooling multiple subsets of data indexed by separate sensitive attributes. We begin our analysis by first describing our measures of evaluation and then reporting baselines for comparisons.
+
+Measures of Evaluation.
+
+Recall that our method involves learning τ as in (3) to satisfy the equivariance property. Moreover, we need to learn Φ as in (9)–(5) to achieve site invariance. Our measures assess the structure of the latent space τ (ℓ) and Φ(ℓ). The measures are: (a) ∆Eq : This metric evaluates the ℓ2 distance between τ (ℓi) and τ (ℓj) for all pairs i, j. Formally, it is computed as (8) ΔEq=∑Xi,i,Xj,j⊂𝓧×Cℓi=𝔈eXi,ℓj=𝔈eXj|i−j|τℓi−τℓj2
+
+A higher value of this metric indicates that τ (ℓi) and τ (ℓj) are related by the group action gij. Additionally, we use t-SNE [48] to qualitatively visualize the effect of τ. (b) Adv : This metric quantifies the site-invariance achieved by the encoder Φ. We evaluate if Φ(ℓ) for a learned ℓ∈𝓛 has any information about the site. A three layered fully network (see appendix § A.6) is trained as an adversary to predict site from Φ(ℓ), similar to [49]. A lower value of Adv, that is close to random chance, is desirable. (c) 𝓜: Here, we compute the 𝓜𝓜𝓓 measure, as in (7), on the test set. A smaller value of 𝓜 indicates better invariance to site. Lastly, (d) 𝓐𝓒𝓒: This metric notes the test set accuracy in predicting the target variable Y.
+
+Baselines for Comparison.
+
+We contrast our method’s performance with respect to a few well-known baselines. (i) Naïve: This method indicates a naïve approach of pooling data from multiple sites without any scheme to handle nuisance variables. (ii) MMD [29]: This method minimizes the distribution differences across the sites without any requirements for equivariance to the covariates. The latent representations being devoid of the equivariance property result in lower accuracy values as we will see shortly. (iii) CAI [49]: This method introduces a discriminator to train the encoder in a minimax adversarial fashion. The training routine directly optimizes the Adv measure above. While being a powerful implicit data model, adversarial methods are known to have unstable training and lack convergence guarantees [40]. (iv) SS [55]: This method adopts a Sub-sampling (SS) framework to divide the images across the sites by the covariate values C. An MMD criterion is minimized individually for each of the sub-sampled groups and an average estimate is computed. Lastly, (v) RM [33]: Also used in [31], RandMatch (RM) learns invariant representations on samples across sites that ”match” in terms of the class label (we match based on both Y and C values). Below, we summarize each method and nuisance attribute correction adopted by them.
+
+We evaluate methods on the test partition provided with the datasets. The mean of the metrics over three random seeds is reported. The hyper-parameter selection is done on a validation split from the training set, such that the prediction accuracy falls within 5% window relative to the best performing model [10] (more details in appendix § A.2).
+
+4.1. Obtaining Fair Representations
+
+We approach the problem of learning fair representations through our multi-site pooling formulation. Specifically, we consider each sensitive attribute value as a separate site. Results on two benchmark datasets, German and Adult [11], are described below.
+
+German Dataset.
+
+This dataset is a classification problem used to predict defaults on the consumer loans in the German market. Among the several features in the dataset, the attribute foreigner is chosen as a sensitive attribute. We train our encoder while maintaining equivariance with respect to the continuous valued age feature. Table 2 provides a summary of the results in comparison to the baselines. Our equivariant encoder maximizes the ∆Eq metric indicating the the latent space τ (ℓ) is well separated for different values of age. Further, the invariance constraint improves the Adv metric signifying a better elimination of sensitive attribute information from the representations. The 𝓜 metric is higher relative to the other baselines. The 𝓐𝓒𝓒 for all the methods are within a 2% range.
+
+Adult Dataset.
+
+In the Adult dataset, the task is to predict if a person has an income higher (or lower) than $50K per year. The dataset is biased with respect to gender, roughly, 1-in-5 women (in contrast to 1-in-3 men) are reported to make over $50K. Thus, the female/male genders are considered as two separate sites with age as a nuisance covariate feature. As shown in Table 2, our equivariant encoder improves on metrics ∆Eq and Adv relative to all the baselines similar to the German dataset. In addition to the quantitative metrics, we visualize the t-SNE plots of the representations τ (ℓ) in Fig. 4 (right). It is clear from the figure that an equivariant encoder imposes a certain monotonic trend as the Age values as varied.
+
+4.2. Pooling Brain Images across Scanners
+
+For our motivating application, we focus on pooling tasks for two different brain imaging datasets where the problem is to classify individuals diagnosed with Alzheimer’s disease (AD) and healthy control (CN).
+
+Setup.
+
+Images are pre-processed by first normalizing and then skull-stripping using Freesurfer [15]. A linear (affine) registration is performed to register each image to MNI template space. Images are trained using 3D convolutions with ResNet [23] backbone (details in the appendix § A.6). Since the datasets are small, we report results over five random training-validation splits.
+
+ADNI Dataset.
+
+The data for this experiment has been downloaded from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). We have three scanner types in the dataset, namely, GE, Siemens and Phillips. Similar to the fairness experiments, equivariance is sought relative to the covariate Age. The values of Age are in the range 50–95 as indicated in density plot of Fig. 6 (left). The Age distribution is observed to vary across different scanners, albeit minimally, in the full dataset. In the t-SNE plot, Fig. 4 (left), we see that the latent space has an equivariant structure. Closer inspection of the plot shows that the representations vary in the same order as that of Age. Different colors indicate different Age sub-groups. Next, in Fig. 5, we present the t-statistics in the template space on the reconstructed images after pooling. Here, the t-statistics measure the association with AD/CN target labels. As seen in the figure, the voxels significantly associated with the Alzheimer’s disease (p &lt; 0.001) are considerable in number. This result supports our goal to combine datasets to increase sample size and obtain a high power in statistical analysis. Next, in Fig. 6 (right), we increase the difficulty of our problem by randomly sub-sampling for each scanner group such that the intersection of support is minimized. In such an extreme case, our method attains a better 𝓜 metric relative to the Naïve method, thus justifying the applicability to situations where there is a mismatch of support across the sites. Lastly, we inspect the performance on the quantitative metrics on the entire dataset in Table 2. All metrics ∆Eq, Adv and 𝓜 improve relative to the baselines with a small drop in the 𝓐𝓒𝓒.
+
+ADCP dataset.
+
+This experiment’s data was collected as part of the NIH-sponsored Alzheimer’s Disease Connectome Project (ADCP) [1, 25]. It is a two-center MRI, PET, and behavioral study of brain connectivity in AD. Study inclusion criteria for AD / MCI (Mild Cognitive Impairment) patients consisted of age 55–90 years who retain decisional capacity at initial visit, and meet criteria for probable AD or MCI. MRI images were acquired at three sites. The three sites differ primarily in terms of the patient demographics. We inspect the quantitative results of this experiment in Tab. 2 and place the qualitative results in the appendix § A.4,A.5. The table reveals considerable improvements in all our metrics relative to the Naïve method.
+
+Limitations.
+
+Currently, our formulation assumes that the to-be-pooled imaging datasets are roughly similar – there is definitely a role for new developments in domain alignment to facilitate deployment in a broader range of applications. Secondly, larger latent space dimensions may cause compute overhead due to matrix exponential parameterization. Finally, algorithmic improvements can potentially simplify the overhead of the two-stage training.
+
+5. Conclusions
+
+Retrospective analysis of data pooled from previous / ongoing studies can have a sizable influence on identifying early disease processes, not otherwise possible to glean from analysis of small neuroimaging datasets. Our development based on recent results in equivariant representation learning offers a strategy to perform such analysis when covariates/nuisance attributes are not identically distributed across sites. Our current work is limited to a few such variables but suggests that this direction is promising and can potentially lead to more powerful algorithms.
+
+Supplementary Material
+
+1_supp
+
+Acknowledgments
+
+The authors are grateful to Vibhav Vineet (Microsoft Research) for discussions on the causal diagram used in the paper. Thanks to Amit Sharma (Microsoft Research) for the conversation on their MatchDG project. Special thanks to Veena Nair and Vivek Prabhakaran from UW Health for helping with the ADCP dataset. Research supported by NIH grants to UW CPCP (U54AI117924), RF1AG059312, Alzheimer’s Disease Connectome Project (ADCP) U01 AG051216, and RF1AG059869, as well as NSF award CCF 1918211. Sathya Ravi was also supported by UIC-ICR start-up funds.
+
+A. Appendix
+
+A.1. Proofs of theoretical results
+
+In this section, we will provide the proofs of Lemma 4 and Lemma 5 discussed in the main paper.
+
+Lemma. Given two latent space representations ℓi, ℓj ∈ Sn−1, and the corresponding cosets giH = τ (ℓi) and gjH = τ (ℓj), ∃!gij = gjgi−1 ∈ G such that ℓj = gij · ℓi.
+
+Proof. Given giH = τ (ℓi) and gjH = τ (ℓj), we use gij=gigj−1∈G such that, gjH = gijgiH.
+
+Now using the equivariance fact (3), we get, gjH=gijgiH  ⇒τℓj=gijτℓi  ⇒τℓj=τgij⋅ℓi
+
+Now as τ is an identification, i.e., a diffeomorphism, we get ℓj = gijℓi. Note that Sn−1 is a Riemannian homogeneous space and the group G acts transitively on Sn−1, i.e., given x, y ∈ Sn−1, ∃g ∈ G such that, y = g · x. Hence from ℓj = gijℓi and the transitivity property we can conclude that gij is unique. ☐
+
+Lemma. For a τ:𝓛→G/H as defined above, and a mapping b:𝓛→𝓩, the function Φ:𝓛→𝓩 defined by (9) Φ(ℓ)=τ(ℓ)⋅bτ(ℓ)−1⋅ℓ
+
+is G-equivariant, i.e., Φ(g · ℓ) = gΦ(ℓ).
+
+Proof. Let ℓ∈𝓛. Con sider the Φ m apping of g · ℓ, that is Φ(g⋅ℓ)=τ(g⋅ℓ)⋅bτ(g⋅ℓ)−1⋅ℓ.
+
+Using the fact (3) from the main paper, we have τ (g · ℓ) = gτ (ℓ) and τ (g · ℓ)−1 = τ (ℓ)−1g−1. Substituting these in Φ(g · ℓ), we get Φ(g⋅ℓ)=gτ(ℓ)⋅bτ(ℓ)−1g−1g⋅ℓ    =gτ(ℓ)bτ(ℓ)−1⋅ℓ
+
+Thus, Φ(g · ℓ) = gΦ(ℓ) ☐
+
+A.2. Details on Evaluation Metrics
+
+Recall from Section 4 of the paper, our discussion on three metrics – ∆Eq, Adv and 𝓜. While ∆Eq and 𝓜 are variants of distance measure on the latent space, Adv assesses the ability to predict the nuisance attributes from the latent representation (and is therefore probabilistic in nature). Observe that ∆Eq and 𝓜 aare (euclidean) distance measures and could be very different depending on the normalization of the vectors. For our purposes of evaluating these latent vectors/features in downstream tasks, we perform a simple feature normalization in order to obtain 0–1 latent vectors given by, (10) z˜i=zi−minzimaxzi−minzi.
+
+Our feature normalization is composed of two steps: (i) centering – the numerator in (10) ensures that the mean of z (along its coordinates) is 0; and (ii) scale – the denominator projects the features z on the sphere at origin with radius zi∞≥=maxzi−minzi≥0. Note that our scaling step can be thought of as the usual projection in a special case: when zi is guaranteed to be nonnegative (for example, when zi represent activations), then zi∞≥ simply corresponds to a lower bound of the usual infinity norm, z∞ (hence projection on a scaled ℓ∞ ball). We adopt this normalization only to compute ∆Eq and 𝓜 measures, and not for model training.
+
+For computing the Adv measure, we follow [49] to train an adversarial neural network predicting the nuisance attributes. We use a three-layered fully connected network with batch normalization and train for 150 epochs. [34] uses similar architecture for the adversaries with different hidden layers of 0, 1, 2, 3. We found that a three-layer adversary is powerful enough to predict the nuisance attributes and hence we use it to report the Adv measure.
+
+A.3. Understanding ADNI dataset
+
+Dataset.
+
+The data was downloaded from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). The ADNI was launched in 2003 as a public-private partnership, led by Principal Investigator Michael W. Weiner, MD. ADNI was set up with an objective to measure the progression of mild cognitive impairment (MCI) and early Alzheimers disease (AD) using serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers. We have three imaging protocol (scanner) types in the dataset, namely, GE, Siemens and Phillips. The count of samples AD/CN in each of these imaging protocols are provided in Table 3. An example illustration (borrowed from [2]) of using different scanner on the images is shown in Figure 8.
+
+Preprocessing.
+
+All images were first normalized and skull-stripped using Freesurfer [15]. A linear (affine) registration was performed to register each image to MNI template space.
+
+A.4. Understanding ADCP dataset
+
+Participants.
+
+The data for ADCP was collected through an NIH-sponsored Alzheimer’s Disease Connectome Project (ADCP) U01 AG051216. The study inclusion criteria for AD (Alzheimer’s disease) / MCI (Mild Cognitive Impairment) patients consisted of age between 55–90 years, willing and able to undergo all procedures, retains decisional capacity at initial visit, meets criteria for probable AD or meets criteria for MCI.
+
+Scanners.
+
+MRI images were acquired at three distinct sites on GE scanners. T1-weighted structural images were acquired using a 3D gradient-echo pulse sequence (repetition time (TR) = 604 ms, echo time (TE) = 2.516 ms, inversion time = 1060 ms, flip angle = 8°, field of view (FOV) = 25.6 cm, 0.8 mm isotropic). T2-weighted structural images were acquired using a 3D fast spin-echo sequence (TR = 2500 ms, TE = 94.398 ms, flip angle = 90°, FOV = 25.6 cm, 0.8 mm isotropic).
+
+Preprocessing.
+
+The Human Connectome Project (HCP) minimal preprocessing pipeline version 3.4.0 [19] was followed for data processing. This pipeline is based on FMRIB Software Library [27]. Next, the T1w and T2w images are aligned, a B1 (bias field) correction is performed, and the subject’s image in native structural volume space is registered to MNI space using FSL’s FNIRT [4]. Only T1w images in the MNI space were used for further analysis and experiments.
+
+Data Statistics.
+
+We plot the distributions of several attributes in this dataset conditioned on the site. In Figure 10, we show that the values of age and cognitive scores differ across the three sites in this dataset. Cognitive scores are computed based on an test assigned to the patients. Higher scores indicate higher cognitive operation in the patient. Table 4 shows the sample counts for target variable of prediction AD (Alzheimer’s disease) and Control group.
+
+A.5. Visualizing the latent space
+
+In the paper Figure 4, we have seen the latent space τ (ℓ) for the samples in the ADNI and the Adult datasets. Here, we will see similar qualitative results for the German and the ADCP dataset in Figure 9 in the appendix. In the plots, the latent representations for a non-equivariant encoder are stretched thoughout the latent space. In contrast, the representations of an equivariant encoder, for a discretized value of Age, are localized to specific regions. Further, these representations have a monotonic behaviour with respect to the values of Age.
+
+Listing 1. Residual Block
+
+BatchNorm3d	
+Swish	
+Conv3d	
+BatchNorm3d	
+Swish	
+Conv3d	
+
+Listing 2. Fully Connected Block
+
+AdaptiveAvgPool3d	
+Flatten	
+Dropout	
+Linear	
+BatchNorm1d	
+Swish	
+Dropout	
+Linear	
+
+A.6. Hyper-parameters and NN Architectures
+
+For tabular datasets such as German and Adult, our encoders and decoders comprise of fully connected networks and a hidden layer of 64 nodes. The dimension of the quotient latent space τ (ℓi) is 30. Adam is used as a default optimizer and the learning rate is adjusted based on the validation set.
+
+Imaging datasets like ADNI and ADCP require 3D convolutions and a ResNet architecture as the backbone. The last layer is used to describe the quotient space τ (ℓi). We present the residual and the fully connected block below. Detailed architectures can be viewed in the code.
+
+A.7. Scaling factors
+
+Recall from the Algorithm 1 of the main paper that our loss function for each stage comprises of reconstruction and prediction losses in addition to the objectives concerning equivariance and invariance. These multi-objective loss functions require scaling factors that upweight one objective over the other. These scaling factors group up as hyper-parameters for the Algorithm. In our experiments, it was observed that the results were robust to a range of scaling factor choices. For the results reported in Table 1 of the paper, they were identified through cross-validation. Here we provide an example for the scaling factors used for the Adult dataset, please refer to the bash scripts available in the code for the scaling factors of other datasets.
+
+Stage one: Equivariance to Covariates Equivariance Loss Lstage1
+
+Scaling Factor : 1.0
+
+Reconstruction Loss ∑iXi−𝔇𝔈Xi
+
+Scaling Factor : 0.02
+
+Stage two: Invariance to Site Invariance Loss 𝓜𝓜𝓓
+
+Scaling Factor : 0.1
+
+Prediction Loss ∥Y−h(Φ(ℓ))∥2
+
+Scaling Factor : 1.0
+
+Reconstruction Loss ∥ℓ−Ψ(Φ(ℓ))∥2
+
+Scaling Factor : 0.1
+
+We refer the reader to Algorithm 1 and Section 3 of the main paper for the details on the notations used above.
+
+Figure 1. Learning Invariant Representations.
+
+In our framework, input images X are pooled together from multiple sites. An encoder Φ maps X to the latent representations Φ(X) that corresponds to high-level causal features X𝓒 that influences the label prediction. Unlike the input images X, Φ(X) is robust to nuisance attributes like site (scanner) and covariates (age). Φ is trained alongside predictor h and decoder Ψ.
+
+Figure 2. (a) A Causal Diagram listing variable of interest and their relationship for multi-site pooling problem. Nodes Dpopul, Dacqui and Dpreval denote the population, acquisition and prevalence biases that vary across sites. C’s are covariates (like age or gender). X𝓒 denotes the high-level causal features of an image X that influences the labels Y. Nodes in red d-separate the nodes in blue and green. (b) MRI images on control subjects from the ADNI [26] dataset for different scanners in the age group 70–80. (c) Images obtained from the Siemens scanner (i.e., fixing site) on control subjects for three extreme age groups. The gantt chart on top of the image indicates the respective age range in the Phillips and GE scanners. As observed, different scanner groups do not share a common support on “age” covariates, resulting in samples outside of the common support to be discarded in naïve pooling approaches.
+
+Figure 3. Visualization of Stage one.
+
+First, an image pair Xi, Xj are mapped onto a hypersphere using an encoder 𝔈. The resulting pair ℓi, ℓj are passed through τ network to map them into the space of rotation matrices (which is the quotient group denoted by G/H). Fact 3 ensure that τ is a G = SO(n)–equivariant map. 𝓖(i,j)/𝓖(i,j)−1 is the group action of transforming τ(ℓi) to τ(ℓj)/τ(ℓj) to τ(ℓi) respectively.
+
+Figure 4. t-SNE plots of latent representations τ(ℓ).
+
+For ADNI (left) and Adult (right), an equivariant encoder ensures that the latent features are evenly distributed and bear a monotonic trend with respect to the changes in the age covariate value. The non-equivariant space is generated from the Naïve pooling baseline. Each color denotes a discretized age group. Age was discretized only for the figure to highlight the density of samples in each age group.
+
+Figure 5. Statistical Analysis on the reconstructed outputs.
+
+The voxels that are significantly associated with Alzheimer’s disease (p &lt; 0.001) are shown. Adjustments for multiple comparisons were made using Bonferroni correction. A high density of significant voxels indicates that our method preserves disease related signal after pooling across scanners.
+
+Figure 6. Distribution of age covariate in the ADNI dataset.
+
+Two settings are considered – (left) the intersection of the support is large, and (right) with a smaller common support. Despite the mismatch of support across scanner attributes, our approach minimizes the MMD measure (desirable) on the test set relative to the naïve pooling method.
+
+Figure 7. Sample Images from ADCP dataset.
+
+(a) MRI images on control subjects from the ADCP dataset for different sites in the age group 70–80. (b) Images obtained from Site 3 for three extreme age groups. The gantt chart on top of the image indicates the respective age range in the other sites.
+
+Figure 8. Scanner effects on images.
+
+Two imaging protocols are shown: (a) Siemens, (b) GE. The yellow region is the cortical ribbon segmentation, and the green circle shows that the imaging protocol from different manufacturers have an effect on the scan. Image borrowed from [2].
+
+Figure 9. t-SNE plots of latent representations of τ(ℓ) .
+
+For both ADCP (left) and German (right), the the latent vectors of the equivariant encoder are evenly distributed with respect to the age covariate value. The non-equivariant space is generated from the naïve pooling model. Different colors denote the discretized set of age covariate value present in the data.
+
+Figure 10. Distribution of attributes in the ADCP dataset.
+
+On the left we observe the distribution of age for the three different sites present in the ADCP dataset. On the right, we see the distribution of the cognitive scores. The cognitive scores are computed based on a test that assesses executive function. Higher scores indicate higher level of cognitive flexibility. Both age and cognitive scores are observed to vary across the sites.
+
+Table 1. Baselines in the paper and their nuisance attribute correction.
+
+Correction	Naïve	MMD [29]	CAI [49]	SS [55]	RM [33]	Ours	
+Site	✗	✓	✓	✓	✓	✓	
+Covariates	✗	✗	✗	✓	✓	✓	
+
+Table 2. Quantitative Results.
+
+We show Mean(Std) results over multiple run. For our baselines, we consider a Naïve encoder-decoder model, learning representations via minimizing the MMD criterion [29] and Adversarial training [49], termed as CAI. We also compare against Sub-sampling (SS) [55] that minimizes the MMD criterion separately for every age group, and the RandMatch (RM) [33] baseline that generates matching input pairs based on the Age and target label values. The SS and RM baselines discard subset of samples if a match across sites is not available. The measure Adv represents the adversarial test accuracy except for the German dataset where ROC-AUC is used due to high degree of skew in the data.
+
+	German	Adult	ADNI	ADCP	
+	
+∆Eq ↑	Adv ↓	𝓜 ↓	𝓐𝓒𝓒 ↑	∆Eq ↑	Adv ↓	𝓜 ↓	𝓐𝓒𝓒 ↑	∆Eq ↑	Adv ↓	𝓜 ↓	𝓐𝓒𝓒 ↑	∆Eq ↑	Adv ↓	𝓜 ↓	𝓐𝓒𝓒 ↑	
+Naïve	4.6(0.7)	0.62(0.03)	7.7(0.8)	74(0.9)	3.4(0.7)	83(0.1)	9.8(0.3)	84(0.1)	3.1(1.0)	59(2.9)	27(1.6)	80(2.6)	4.1(0.9)	49(8.4)	90(8.7)	83(4.4)	
+MMD [29]	4.5(1.0)	0.66(0.04)	1.5(0.3)	73(1.5)	3.4(0.9)	83(0.1)	3.1(0.3)	84(0.1)	3.1(1.0)	59(3.3)	27(1.7)	80(2.6)	3.6(1.0)	49(11.9)	86(11.0)	84(6.5)	
+CAI [49]	1.9(0.6)	0.65(0.01)	1.2(0.2)	76(1.3)	0.1(0.0)	81(0.7)	4.2(2.4)	84(0.04)	2.4(0.7)	61(2.1)	27(1.5)	74(3.6)	2.8(1.6)	56(6.9)	85(12.3)	82(5.1)	
+SS [55]	3.8(0.5)	0.70(0.07)	1.5(0.6)	76(0.9)	2.8(0.5)	83(0.2)	1.5(0.2)	84(0.1)	3.7(0.5)	57(2.1)	26(1.6)	81(3.7)	3.4(1.3)	51(6.7)	88(14.6)	82(3.5)	
+RM [33]	3.4(0.4)	0.66(0.04)	7.5(0.9)	74(2.1)	0.8(0.1)	82(0.4)	4.8(0.7)	84(0.3)	0.8(0.9)	52(5.4)	22(0.6)	78(3.8)	0.4(0.5)	40(4.7)	77(13.8)	84(5.3)	
+Ours	6.4(0.6)	0.54(0.01)	2.7(0.6)	75(3.3)	5.3(0.9)	75(1.4)	7.1(0.6)	83(0.1)	5.1(1.2)	50(4.2)	16(7.2)	77(4.8)	7.5(1.2)	49(7.3)	70(22.3)	81(1.8)	
+∆Eq : Equivariance Gap, Adv : Adversarial Test Accuracy, 𝓜: Test 𝓜𝓜𝓓 measure, 𝓐𝓒𝓒: Test prediction accuracy
+
+↑: Higher Value is preferred, ↓: Lower Value is preferred
+
+Table 3. Sample counts for ADNI dataset
+
+Imaging Protocol	AD	CN	
+Manufacturer=GE Medical Systems	44	78	
+Manufacturer=Philips Medical Systems	32	50	
+Manufacturer=Siemens	83	162	
+
+Table 4. Sample counts for ADCP dataset
+
+	AD	Control	Female	Male	
+site 1	10	39	29	20	
+site 2	10	33	30	13	
+site 3	5	19	14	10	
+
+
+References
+
+[1] Adluru Nagesh , Nair Veena A , Prabhakaran Vivek , Li Shi-Jiang , Alexander Andrew L , and Bendlin Barbara B . Geodesic path differences in neural networks in the alzheimer’s disease connectome project: Developing topics. Alzheimer’s &amp; Dementia, 16 :e047284, 2020.
+[2] Aisen Paul S , Cummings Jeffrey , Jack Clifford R , Morris John C , Sperling Reisa , Frölich Lutz , Jones Roy W , Dowsett Sherie A , Matthews Brandy R , Raskin Joel , On the path to 2025: understanding the alzheimer’s disease continuum. Alzheimer’s research &amp; therapy, 9 (1 ):1–10, 2017.
+[3] Akash Aditya Kumar , Suresh Lokhande Vishnu , Ravi Sathya N , and Singh Vikas . Learning invariant representations using inverse contrastive loss. arXiv preprint arXiv:2102.08343, 2021.
+[4] Andersson Jesper LR , Jenkinson Mark , Smith Stephen , Non-linear registration, aka spatial normalisation fmrib technical report tr07ja2. FMRIB Analysis Group of the University of Oxford, 2 (1 ):e21, 2007.
+[5] Arjovsky Martin , Bottou Léon , Gulrajani Ishaan , and Lopez-Paz David . Invariant risk minimization. arXiv preprint arXiv:1907.02893, 2019.
+[6] Bareinboim Elias and Pearl Judea . Causal inference and the data-fusion problem. Proceedings of the National Academy of Sciences, 113 (27 ):7345–7352, 2016.
+[7] Bloem-Reddy Benjamin and Whye Teh Yee . Probabilistic symmetries and invariant neural networks. Journal of Machine Learning Research, 21 (90 ):1–61, 2020.34305477
+[8] Bronstein Michael M , Bruna Joan , Cohen Taco , and Veličković Petar . Geometric deep learning: Grids, groups, graphs, geodesics, and gauges. arXiv preprint arXiv:2104.13478, 2021.
+[9] Castro Daniel C , Walker Ian , and Glocker Ben . Causality matters in medical imaging. Nature Communications, 11 (1 ):1–10, 2020.
+[10] Donini Michele , Oneto Luca , Ben-David Shai , Shawe-Taylor John S , and Pontil Massimiliano . Empirical risk minimization under fairness constraints. In Bengio S , Wallach H , Larochelle H , Grauman K , Cesa-Bianchi N , and Garnett R , editors, Advances in Neural Information Processing Systems, volume 31 . Curran Associates, Inc., 2018.
+[11] Dua Dheeru , Graff Casey , Uci machine learning repository 2017.
+[12] Dubey Abhimanyu , Ramanathan Vignesh , Pentland Alex , and Mahajan Dhruv . Adaptive methods for real-world domain generalization In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 14340–14349, 2021.
+[13] Dummit David S. and Foote Richard M. Abstract algebra Wiley, 3rd ed edition, 2004.
+[14] Eskildsen Simon F , Coupé Pierrick , Fonov Vladimir S , Pruessner Jens C , Louis Collins D , Alzheimer’s Disease Neuroimaging Initiative, Structural imaging biomarkers of alzheimer’s disease: predicting disease progression. Neurobiology of aging, 36 :S23–S31, 2015.25260851
+[15] Fischl Bruce . Freesurfer. Neuroimage, 62 (2 ):774–781, 2012.22248573
+[16] Fortin Jean-Philippe , Parker Drew , Tunc Birkan , Watanabe Takanori , Elliott Mark A , Ruparel Kosha , Roalf David R , Satterthwaite Theodore D , Gur Ruben C , Gur Raquel E , Harmonization of multi-site diffusion tensor imaging data. Neuroimage, 161 :149–170, 2017. 128826946
+[17] Ganin Yaroslav , Ustinova Evgeniya , Ajakan Hana , Germain Pascal , Larochelle Hugo , Laviolette Francois , Marchand Mario , and Lempitsky Victor . Domain-adversarial training of neural networks. The journal of machine learning research, 17 (1 ):2096–2030, 2016.
+[18] Ghosh Avishek and Kannan Ramchandran . Alternating minimization converges super-linearly for mixed linear regression In International Conference on Artificial Intelligence and Statistics, pages 1093–1103. PMLR, 2020.
+[19] Glasser Matthew F , Sotiropoulos Stamatios N , Wilson J Anthony , Coalson Timothy S , Fischl Bruce , Andersson Jesper L , Xu Junqian , Jbabdi Saad , Webster Matthew , Polimeni athan R , The minimal preprocessing pipelines for the human connectome project. Neuroimage, 80 :105–124, 2013.23668970
+[20] Gretton Arthur , Borgwardt Karsten , Rasch Malte , Schölkopf Bernhard , and Smola Alex . A kernel method for the two-sample-problem. Advances in neural information processing systems, 19 :513–520, 2006.
+[21] Hall Marshall . The theory of groups Courier Dover Publications, 2018.
+[22] Hardt Moritz and Recht Benjamin . Patterns, predictions, and actions: A story about machine learning https://mlstory.org, 2021.
+[23] He Kaiming , Zhang Xiangyu , Ren Shaoqing , and Sun Jian . Identity mappings in deep residual networks In European conference on computer vision, pages 630–645. Springer, 2016. 8
+[24] Hunacek Mark . Lie groups, lie algebras, and representations: An elementary introduction, by brian hall. pp. 351.£ 50. 2003. isbn 0 387 401229 (springer-verlag). The Mathematical Gazette, 89 (514 ):149–151, 2005.
+[25] Hwang yujoon , John Cook Cole , Nair Veena A , Alexander Andrew L , Antuono Piero G , Asthana Sanjay , Birn Rasmus , Carlsson Cynthia M , Chen Guangyu , Farrar Edwards Dorothy , Ic-p-161: Characterizing structural brain alterations in alzheimer’s disease patients with machine learning. Alzheimer’s &amp; Dementia, 14 (7S_Part_2 ):P135–P136, 2018.
+[26] Jack Clifford R Jr , Bernstein Matt A , Fox Nick C , Thompson Paul , Alexander Gene , Harvey Danielle , Borowski Bret , Britson Paula J , Whitwell Jennifer L. , Ward Chadwick , The alzheimer’s disease neuroimaging initiative (adni): Mri methods. Journal of Magnetic Resonance Imaging: An Official Journal of the International Society for Magnetic Resonance in Medicine, 27 (4 ):685–691, 2008.
+[27] Jenkinson Mark , Beckmann Christian F , Behrens Timothy EJ , Woolrich Mark W , and Smith Stephen M . Fsl. Neuroimage, 62 (2 ):782–790, 2012.21979382
+[28] Knapp Anthony W and Knapp AW . Lie groups beyond an introduction, volume 140 . Springer, 1996.
+[29] Li Yujia , Swersky Kevin , and Zemel Richard . Learning unbiased features. arXiv preprint arXiv:1412.5244, 2014.
+[30] Luo Jingqin , Agboola Folasade , Grant Elizabeth , Masters Colin L , Albert Marilyn S , Johnson Sterling C , Mc-Dade Eric M , Vöglein Jonathan , Fagan Anne M , Benzinger Tammie , Sequence of alzheimer disease biomarker changes in cognitively normal adults: A cross-sectional study. Neurology, 95 (23 ):e3104–e3116, 2020.32873693
+[31] Mahajan Divyat , Tople Shruti , and Sharma Amit . Domain generalization using causal matching In International Conference on Machine Learning, pages 7313–7324. PMLR, 2021.
+[32] Mehta Ronak , Chakraborty Rudrasis , Xiong Yunyang , and Singh Vikas . Scaling recurrent models via orthogonal approximations in tensor trains In Proceedings of the IEEE/CVF International Conference on Computer Vision, pages 10571–10579, 2019.
+[33] Motiian Saeid , Piccirilli Marco , Adjeroh Donald A , and Doretto Gianfranco . Unified deep supervised domain adaptation and generalization In Proceedings of the IEEE international conference on computer vision, pages 5715–5725, 2017.
+[34] Moyer Daniel , Gao Shuyang , Brekelmans Rob , Galstyan Aram , and Ver Steeg Greg . Invariant representations without adversarial training. In Bengio S , Wallach H , Larochelle H , Grauman K , Cesa-Bianchi N , and Garnett R , editors, Advances in Neural Information Processing Systems, volume 31 . Curran Associates, Inc., 2018.
+[35] Pandey Prashant , Raman Mrigank , Varambally Sumanth , and Prathosh AP . Domain generalization via inference-time label-preserving target projections. arXiv preprint arXiv:2103.01134, 2021.
+[36] Pearl Judea , Glymour Madelyn , and Jewell Nicholas P . Causal inference in statistics: A primer John Wiley &amp; Sons, 2016.
+[37] Peters Jonas , Janzing Dominik , and Schölkopf Bernhard . Elements of causal inference: foundations and learning algorithms The MIT Press, 2017.
+[38] Qi Qi , Guo Zhishuai , Xu Yi , Jin Rong , and Yang Tianbao . An online method for distributionally deep robust optimization, 2020.
+[39] Rosenbaum Paul R and Rubin Donald B . Constructing a control group using multivariate matched sampling methods that incorporate the propensity score. The American Statistician, 39 (1 ):33–38, 1985.
+[40] Schaefer Florian and Anandkumar Anima . Competitive gradient descent. In Wallach H , Larochelle H , Beygelzimer A , d'Alché-Buc F , Fox E , and Garnett R , editors, Advances in Neural Information Processing Systems, volume 32 . Curran Associates, Inc., 2019.
+[41] Schölkopf Bernhard , Locatello Francesco , Bauer Stefan , Rosemary Ke Nan , Kalchbrenner Nal , Goyal Anirudh , and Bengio Yoshua . Toward causal representation learning. Proceedings of the IEEE, 109 (5 ):612–634, 2021.
+[42] Selig Jon M . Cayley maps for se (3) In 12th International Federation for the Promotion of Mechanism and Machine Science World Congress, page 6. London South Bank University, 2007.
+[43] Shah Nihar B and Wainwright Martin J . Simple, robust and optimal ranking from pairwise comparisons. The Journal of Machine Learning Research, 18 (1 ):7246–7283, 2017. 3
+[44] Soldan Anja , Pettigrew Corinne , Fagan Anne M , Schindler Suzanne E , Moghekar Abhay , Fowler Christopher , Li Qiao-Xin , Collins Steven J , Carlsson Cynthia , Asthana Sanjay , Atn profiles among cognitively normal individuals and longitudinal cognitive outcomes. Neurology, 92 (14 ):e1567–e1579, 2019.30842300
+[45] Subbaswamy Adarsh , Schulam Peter , and Saria Suchi . Preventing failures due to dataset shift: Learning predictive models that transport In The 22nd International Conference on Artificial Intelligence and Statistics, pages 3118–3127. PMLR, 2019.
+[46] Teo Chung-Piaw , Sethuraman Jay , and Tan Wee-Peng . Galeshapley stable marriage problem revisited: Strategic issues and applications. Management Science, 47 (9 ):1252–1267, 2001.
+[47] Thompson Paul M , Stein Jason L , Medland Sarah E , Hibar Derrek P , Arias Vasquez Alejandro , Renteria Miguel E , Toro Roberto , Jahanshad Neda , Schumann Gunter , Franke Barbara , The enigma consortium: large-scale collaborative analyses of neuroimaging and genetic data. Brain imaging and behavior, 8 (2 ):153–182, 2014.24399358
+[48] Van der Maaten Laurens and Hinton Geoffrey . Visualizing data using t-sne. Journal of machine learning research, 9 (11 ), 2008.
+[49] Xie Qizhe , Dai Zihang , Du Yulun , Hovy Eduard , and Neubig Graham . Controllable invariance through adversarial feature learning. In Guyon I , Luxburg UV , Bengio S , Wallach H , Fergus R , Vishwanathan S , and Garnett R , editors, Advances in Neural Information Processing Systems, volume 30 . Curran Associates, Inc., 2017.
+[50] Yang Shiqi , Wang Yaxing , van de Weijer Joost , Herranz Luis , and Jui Shangling . Generalized source-free domain adaptation In Proceedings of the IEEE/CVF International Conference on Computer Vision, pages 8978–8987, 2021.
+[51] Yang Zhuoran , Zhang Yufeng , Chen Yongxin , and Wang Zhaoran . Variational transport: A convergent particle-basedalgorithm for distributional optimization. arXiv preprint arXiv:2012.11554, 2020.
+[52] Zemel Rich , Wu Yu , Swersky Kevin , Pitassi Toni , and Dwork Cynthia . Learning fair representations In International conference on machine learning, pages 325–333. PMLR, 2013.
+[53] Hu Zhang Brian , Lemoine Blake , and Mitchell Margaret . Mitigating unwanted biases with adversarial learning In Proceedings of the 2018 AAAI/ACM Conference on AI, Ethics, and Society, pages 335–340, 2018.
+[54] Zhao Deli , Zhu Jiapeng , and Zhang Bo . Latent variables on spheres for autoencoders in high dimensions. arXiv preprint arXiv:1912.10233, 2019.
+[55] Henry Zhou Hao , Singh Vikas , Johnson Sterling C , Wahba Grace , Alzheimer’s Disease Neuroimaging Initiative, Statistical tests and identifiability conditions for pooling and analyzing multisite datasets. Proceedings of the National Academy of Sciences, 115 (7 ):1481–1486, 2018.
+[56] Henry Zhou Hao , Zhang Yilin , Ithapu Vamsi K. , Johnson Sterling C. , Wahba Grace , and Singh Vikas . When can multi-site datasets be pooled for regression? Hypothesis tests, ℓ2-consistency and neuroscience applications. In Precup Doina and Whye Teh Yee , editors, Proceedings of the 34th International Conference on Machine Learning, volume 70 of Proceedings of Machine Learning Research, pages 4170–4179. PMLR, 06–11 Aug 2017.

@@ -1,0 +1,380 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9215515
+20498
+Neuroimage
+Neuroimage
+NeuroImage
+1053-8119
+1095-9572
+
+25963734
+6343474
+10.1016/j.neuroimage.2015.04.051
+NIHMS998587
+Article
+Regional flux analysis for discovering and quantifying anatomical changes: An application to the brain morphometry in Alzheimer's disease
+Lorenzi M. *
+Ayache N.
+Pennec X
+Alzheimer's Disease Neuroimaging Initiative (ADNI)1
+Asclepios Research Project, INRIA Sophia Antipolis, 2004 route des Lucioles BP 93, 06 902 Sophia Antipolis, France
+* Corresponding author. marco.lorenzi@inria.fr (M. Lorenzi), nicholas.ayache@inria.fr (N. Ayache), xavier.pennec@inria.fr (X. Pennec).
+30 11 2018
+08 5 2015
+15 7 2015
+23 1 2019
+115 224234
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+In this study we introduce the regional flux analysis, a novel approach to deformation based morphometry based on the Helmholtz decomposition of deformations parameterized by stationary velocity fields. We use the scalar pressure map associated to the irrotational component of the deformation to discover the critical regions of volume change. These regions are used to consistently quantify the associated measure of volume change by the probabilistic integration of the flux of the longitudinal deformations across the boundaries. The presented framework unifies voxel-based and regional approaches, and robustly describes the volume changes at both group-wise and subject-specific level as a spatial process governed by consistently defined regions. Our experiments on the large cohorts of the ADNI dataset show that the regional flux analysis is a powerful and flexible instrument for the study of Alzheimer's disease in a wide range of scenarios: cross-sectional deformation based morphometry, longitudinal discovery and quantification of group-wise volume changes, and statistically powered and robust quantification of hippocampal and ventricular atrophy.
+
+Non-linear registration
+Longitudinal atrophy
+Alzheimer's disease
+Optimization
+Demons
+
+Introduction
+
+Deformation based morphometry is a fundamental instrument for discovering and quantifying the dynamics of biological processes, for instance growth, or pathological changes. We can broadly identify two main paradigms for the analysis of volume changes in T1 magnetic resonance (MR) images: hypothesis-free and regional analysis. In the first case, the volume changes are modeled at finer scales in the whole brain such as in the voxel/tensor based morphometry and in the cortical thickness analysis (Fox et al., 2001; Thompson et al., 2003).
+
+On the one hand these methods are useful for exploratory purposes at the population level, but usually lack robustness for a reliable quantification of the changes at the subject level. On the other hand, regional analyses are focused on the detection of significant changes in regions which are identified thanks to a preliminary segmentation. For instance, the boundary shift integral measures the longitudinal atrophy as a function of the displacement of segmented boundaries (Freeborough and Fox, 1997). These approaches can provide robust assessment of longitudinal atrophy (Leung et al., 2010b), but are limited to previously defined regions of interest. Therefore they might fail to detect the complex and spread pattern of changes which is likely to characterize the biological variation. For example the failure in the recent trials on AD to show significant treatment effects on the hippocampal volume changes led to question whether a more general but still powered analysis would be able to detect possible improvements (Raschetti et al., 2007).
+
+Unifying regional and hypothesis free-approaches
+
+Providing a measure of volume change which can at the same time consistently identify and reliably quantify the volume changes is crucial for understanding the dynamics of the pathological evolution and for providing stable measures for the clinical setting.
+
+Non-linear registration encodes the morphological changes between pairs of longitudinal MRIs as deformation fields. It was employed both for the whole brain exploratory analysis and for the regional quantification, for instance through the Jacobian determinant analysis (Boyes et al., 2006). However, the identification of atrophy regions through group-wise voxel-by-voxel analysis of Jacobian determinant maps, like in tensor based morphometry (TBM) (Riddle et al., 2004), is prone to statistical issues such as multiple comparisons problems. Moreover, the robustness of the regional quantification of the Jacobian is inherently dependent on the accuracy of the underlying anatomical segmentation, and is highly sensitive to numerical biases introduced by the spatial derivatives. For these reasons, tools like TBM are mainly employed in research and found limited applications in the practical clinical routine.
+
+The above limitations might be overcome by noticing that the topology of deformation fields implicitly encode the spatial location of relevant atrophy processes, and thus we might not really require the explicit definition of anatomical regions for the Jacobian determinant analysis (Davatzikos et al., 2009). The aim of this paper is indeed to develop novel analysis techniques to simultaneously extract and analyze these regional features encoded by the deformations.
+
+Helmholtz decomposition of anatomical deformations
+
+It was proposed in Hansen et al. (2009) to parametrize the deformations by irrotational and divergence-free components, according to the Helmholtz decomposition of vector fields. If we assume that atrophy is described by the change of volume associated with the deformation, then it is completely identified by the irrotational part of the deformation, while the divergence-free part only accounts for volume preserving (“locally rigid”) processes which can be interpreted as tissue reorganization. With such a decomposition, the locations of the maximum/minimum irrotational potential define the centers of expanding and contracting regions (Lefevre et al., 2009). These extrema may represent a promising feature for localizing brain atrophy.
+
+A different measure of volume change associated to the deformation field is the flux across surfaces (Chung et al., 2001), which may be seen as the infinitesimal formulation of the boundary shift. However flux-based analysis has been seldom used in morphometric studies, due to the complexity of reliably integrating vector normals on segmentations of the regional boundaries.
+
+Expanding on the conference article (Lorenzi et al., 2012) we propose to merge these approaches, leading to the regional flux analysis of deformations, a novel method for reliably discovering and robustly quantifying volume changes based on the Helmholtz decomposition.
+
+In Section 2 we introduce the Helmholtz theorem, and the relationship between pressure and flux of deformations. These measures are used in Section 3 to provide a probabilistic formulation for the definition of the group-wise regions involved in the atrophy process. We then apply the proposed framework to the study of Alzheimer's disease (AD), to identify and quantify the brain atrophy in three different scenarios: explorative group-wise morphological comparison (Section 4), discovery and quantification of group-wise longitudinal atrophy (Section 5), and robust and statistically powered quantification of hippocampal and ventricular atrophy (Section 6). All the experiments are performed on large cohorts of the ADNI dataset (for details on the experimental data please refer to Appendix A).
+
+Helmholtz decomposition for stationary velocity fields
+
+The present work is based on the image registration framework parameterized by stationary velocity fields (SVF), which has been already applied for the longitudinal analysis of deformations (Lorenzi et al., 2011), and for which an implementation of the LCC-logDemons algorithm is available (Lorenzi et al., 2013a).
+
+Stationary velocity field parameterization of deformations
+
+In the registration setting parameterized by SVFs the diffeomorphic transformation ϕ which maximizes the similarity between a given pair of images belongs to the subset of diffeomorphisms generated by the flow of a tangent SVF v (Arsigny et al., 2006). Such a deformation is parametrized through the Lie group exponential of v, denoted exp(v), defined by the solution of the ODE:∂ϕ(x,t)∂t=v(ϕ(x,t)), with initial condition ϕ(x, 0) = id(x), where id(x) is the identity transformation. This ODE defines a one parameter subgroup, ϕt(x) = ϕ(x, t) since ϕs + t(x) = ϕ(x, s) ○ ϕ(x, t) = ϕ(x, s + t). The transformation is obtained at the parameter value t =1, i.e. ϕ(x) = ϕ(x, 1).
+
+The advantage of the SVF parameterization lies in the simplification of mathematical operations on diffeomorphic transformations, for instance for inverse computing and composition (Arsigny et al., 2006). More generally, the tangent nature of SVF simplifies the definition of statistical quantities, like the group-wise barycenter (Pennec and Arsigny, 2012) or local principal components analysis of variations (Seiler et al., 2011).
+
+In the following sections we show how the SVF framework can be used to define a consistent statistical setting for the group-wise analysis of longitudinal anatomical volume changes.
+
+Pressure potential and flux through a region
+
+The Helmholtz theorem states that a vector field v (which in our case is a SVF) which vanishes at infinity can be uniquely factored as the sum of an irrotational and a divergence free component, v = ∇p + ∇ × A (Fig. 1) (Arfken and Weber, 1995).
+
+The irrotational component ∇p is the gradient of a scalar pressure (potential) field p, while the divergence-free component is the curl of the vector potential A. Since ∇ × ∇p = 0, the scalar pressure component encodes the information concerning all the volume change.
+
+Please note that the diffeomorphic transformation ϕ(x, t) = exp(∇(tp))(x) is the flow of an irrotational velocity field ∇p(x) = dϕ(x, t)/dt, for every t. On the other hand the divergence-free component is by definition such that ∇ ⋅ ∇ × A = 0 and therefore it describes the incompressible part of the deformation.
+
+Finally, the flux of a stationary velocity field across a given surface ∂V is given by the Divergence (or Ostrogradsky's) theorem, and can be rewritten as ∮∂vv⋅ndS=∫v∇⋅vdV.
+
+Recently the Helmholtz decomposition was introduced in the Demons registration in order to estimate incompressible deformations (Mansi et al.). Here we propose to use it for the analysis of the compressible part, which encodes the observed matter loss as a smooth compression/expansion process. In such a model, the associated divergence quantifies the apparent anatomical changes as the flux of the estimated SVF across surfaces (Fig. 3).
+
+Topology of pressure fields
+
+Theoretically, given the irrotational field ∇p one could partition the whole space into critical regions of positive and negative divergence ∇ ⋅ ∇p, each of them containing a critical point of local maximal/minimal pressure p (Fig. 2). From the divergence theorem, the flux across the boundaries of these regions is flowing either inward or outward. The saddle points for the pressure are on the boundaries of those regions, and identify a change in the flow.
+
+The analysis of the critical points of a pressure map can be addressed by the Morse-Smale theory as a topological problem, leading to the representation of incompressible fields as a geometrical complex of regions, boundaries, edges and vertices (Morse, 1934). Although intriguing, the application of such concepts to medical imaging is still difficult, due to the missing statistical version (and implementation) of the Morse theory. In order to obtain a tractable approach to the problem, we propose in this study to focus on the statistical definition of a consistent subset of critical regions in a sample of observed pressure maps. This way we can robustly describe group-wise irrotational fields as a spatial process governed by key critical regions. In the following section we provide a framework for the statistical definition of these critical regions, and for the quantitative analysis of the associated scalar flux, in order to provide a robust measure of volume changes in anatomical studies.
+
+Probabilistic group-wise definition of the critical regions
+
+The aim of this section is to provide a statistical definition of the group-wise pressure field associated to a set of observed pressure images {pi}i=1N. We rely on the standard deformation based morphometry setting, in which the anatomies observed in a given population of images {Ii}i=1N are represented by the non-linear transformations parameterized by SVFs, φi, = exp(vi), obtained by non-linear registration to a reference anatomical template T. According to the Helmholtz decomposition, the group-wise volume changes are encoded in the set of scalar pressure fields {pi}i=1N associated to the SVFs vi.
+
+The group-wise pressure field p¯ is unknown and must be inferred from the set {pi}i=1N. In particular we are interested in characterizing the common topological properties among the observed scalar pressures, i.e. in the localization of the group-wise critical points, and of the associated boundaries between critical regions of contraction and expansion. For this reason we cannot simply rely on the standard statistical tests based on the sample mean pavg=1N∑i=1Npi since its topology might not be representative of the group-wise one. In fact since the scalar pressure fields are integral quantities they might differ by a constant value and cannot be directly compared. Moreover the set of maxima, minima and boundary points of the sample mean can be importantly affected by the presence of outliers, and thus the topology associated to the average pressure field might be biased. For this reason, we propose here to implicitly estimate the group-wise pressure p¯ by relying on simple geometrical assumptions about the spatial distribution of the pressure fields, and on robust statistics of the group-wise divergence maps. This approach avoids the direct identification (and subsequent manual selection) of the critical points associated to the average pressure map, differently from the approach previously proposed in Lorenzi et al. (2012).
+
+Based on these considerations we provide in this section an alternative definition of the group-wise pressure p¯ by relying on simple geometrical assumptions about the spatial distribution of the pressure fields. We recall from Section 2 that the critical regions of expansion and contraction of p¯ form a binary partition of the whole space that we denote by R+¯∪R−¯.
+
+For a given location x, we note by N(x) the neighborhood of radius σ centered in x, and by {piσ(x)} the set of pressure fields {pi}i=1N observed in N(x). We are interested in evaluating p(x∈R+∣{piσ(x)}), i.e. the probability of x to belong to R+, given observed group-wise pressure fields in the neighborhood N(x). Since the critical regions define a binary partition of the space we have p(x∈R+∣{piσ(x)})=p(x∉R−∣{piσ(x)})=1−p(x∈R−,∣{piσ(x)}). The critical regions of expansion (resp. contraction) are characterized by strictly positive (resp. negative) divergence, which can be measured by H(Δpi(x)) = 1 (resp. H(Δpi(x)) = 0), where the Laplacian Δpi(x) is the divergence of the irrotational field ∇pi, and H is the step function: H(j) = 1 if j &gt; 0 and 0 elsewhere.
+
+Thus, we may identify the probability q=p(x∈R+∣{piσ(x)}) with the parameter of a Bernoulli distribution, and compute the estimate q~ of q as the sample mean: (1) q~=1∕N∑i=1NH(Δpi(x)).
+
+Such a formulation identifies the critical regions through a robust statistic of the pressure fields, since it accounts only for the sign of the divergence map, and not for its magnitude. In particular the proposed computation is motivated by the definition of the discrete Laplacian: (2) Δpi(y)=−pi(y)+∑x∈N(y)w(x)pi(x)∑x∈N(y)w(x),
+
+for specific coefficients w(x), defined for instance by the heat kernel associated to the Laplace-Beltrami operator (Belkin and Niyogi, 2001). Formula (2) shows that the step function H(Δpi(y)) evaluates whether the value of pi(y) is extremal in N(y) with respect to the neighboring voxels, thus providing a quantification of the local topological properties of the pressure field. The quantity q~ can be generalized to any neighborhood size σ and weights w(x) to define a coarse Laplacian operator for the detection of critical regions at different resolution levels, similarly to what has been in (Ollivier, 2007) for the coarse Ricci curvature.
+
+Probabilistic cross-sectional comparison of the critical regions
+
+The probabilistic formulation presented in Section 3 enables us to define the group-wise critical regions associated to a given set of observed pressure fields. In this section we extend the proposed model to the comparison between the group-wise critical regions associated to two different sets of pressure fields. We then provide an application to the group-wise comparison of the brain morphology between AD patients and healthy controls.
+
+Given two groups of images A={InA} and B={ImB} with the associated set of pressure maps {pnA} and {pmB}, the proposed probabilistic setting provides a straightforward way to compare the associated critical regions. In fact, the differences between the modelled sets of critical regions can be initially evaluated by the difference between the beliefs ΔFluxAB+=p(x∈R+∣{pnA})−p(x∈R+∣{pnB}). We note that by definition ΔFluxAB−=p(x∈R−∣{pnA})−p(x∈R−∣{pnB})=ΔFluxBA+. However, as for the Jacobian analysis in TBM, the above measure is informative about the presence of significant group-wise volume differences only, and it does not provide any information concerning the specificity of the critical regions. In fact volumetric differences can be equally due to the different spatial localization of the critical regions as well as to the same set of critical regions leading to different associated flux.
+
+For this reason we are interested in assessing the set of critical regions R+ jointly associated to the groups A and B, and the set of critical regions which are specific for a given group. The former test is assessed by evaluating pAB+=p(x∈RA+,x∈RB+∣{pnA,pmB})=p(x∈R+∣{pnA,pmB}), while the latter is associated to pA+=p(x∈RA+,x∉RB+∣{pnA},{pmB})=p(x∈R+,x∈RB−∣{pnA},{pmB})=p(x∈RA+,x∈RB+∣{pnA},{−pmB}))=p(x∈R+∣{pnA},{−pmB}))
+
+In the same way we can estimate pAB−=1−pAB+, and pA−=1−pB+.
+
+Group-wise analysis of atrophy in Alzheimer's disease
+
+We selected the baseline MR T1 images for 142 patients affected by AD and for 200 healthy controls from the ADNI dataset. The images were affinely aligned to a previously estimated anatomical template and non-linearly registered with the LCC-logDemons algorithm (Lorenzi et al., 2013a) in order to obtain the set of subject to template SVFs {vn}n=1N. The Helmoltz decomposition was performed on the SVFs by solving the discrete Poisson equation Δpi = ∇ ⋅ vi with a finite differences scheme, and by imposing pi = 0 outside the brain boundaries. The proposed framework was applied to the resulting sets of pressure maps {pnAD} and {pmHC} in order to assess 1) group-wise differences between the probability measure of the critical regions, 2) the locations of the joint critical regions, and 3) of the AD-specific critical regions.
+
+The proposed analysis was compared to the standard TBM analysis of the group-wise log-Jacobian determinant associated to the subject-to-template transformations. The log-Jacobian maps were robustly computed as proposed in (Lorenzi et al., 2013a), and the voxel-wise statistical analysis was performed by using the SPM software2 (Ashburner and Friston, 2000). Statistical results were corrected for family wise error at the statistical threshold of p &lt; 0.05.
+
+Results
+
+The difference ΔFlux between the group-wise probability of the critical regions is shown in Fig. 4. We observe that the AD patients have increased probability with respect to the healthy controls of showing critical regions of expansion (i.e. apparent volume gain) located generally in the CSF areas and in particular in the ventricles, in the temporal horns of the hippocampi and around the temporal poles. On the other hand, critical regions of contraction (i.e. apparent volume loss) are more likely for the AD patients in the temporal regions, hippocampi, and around the ventricles. The latter result is due to the smoothly construction of the non-linear diffeomorphic registration, which associates to the apparent ventricles expansion a complementary matter contraction in the surrounding regions. We note that the map of volume differences described by ΔFlux is strikingly similar to the one obtained with TBM after correction for multiple comparisons (family wise error rate), and leads to highly significant results as shown by the statistical analysis performed by permutation test (2000 bootstrap samples).
+
+Fig. 5 shows the modelled joint and specific critical regions of volume change. Interestingly most of the regional differences highlighted in Fig. 4 are of joint volume change, i.e. are consistently detectable in both groups, even though they are characterized by different magnitude between the volume changes measured in AD patients and in healthy controls. The specific critical regions are instead localized in the temporal lobes, in the temporal horn of the hippocampi, in the frontal lobes and around the ventricles.
+
+Probabilistic longitudinal flux analysis
+
+In this section we define a consistent framework for the discovery and quantification of longitudinal group-wise atrophy. In particular, the probabilistic model of Section 3 is applied in order to discover the critical regions associated to the longitudinal evolution of a group of AD patients. The resulting regions are then used for the quantification of the longitudinal atrophy in an independent group of AD patients and healthy controls.
+
+Consider the longitudinal observations from a group of subjects composed of a baseline image I0n and follow-up I1n brain scans. For each subject n, the LCC-logDemons non-linear registration of the pair I0n, I1n estimates the longitudinal trajectory of changes as a diffeomorphism parametrized by the SVF exp(vn), such that I0n∘exp(vn)≃I1n. Let T be the population-specific anatomical template estimated as in (Guimond et al., 2000) from the group of baseline images. By nonlinearly registering every baseline image I0n to T we obtain the correspondent subject-to-template deformation ψn. In order to perform group-wise statistics of the longitudinal SVF vn in this anatomical reference we use the deformation ψn to normalize them to the template space.
+
+In the context of the flux analysis, several strategies are possible in order to normalize the irrotational component in the group-wise anatomical reference space through the change of coordinate ψn. A simple normalization strategy consists in the scalar interpolation of the pressure potential in the reference coordinate system to obtain the resampled pressure field p~n(x)=pn(ψn−1(x)). However further investigation of the irrotational component associated to the resampled pressure field is required, for instance to assess the invariance of the volume change associated to the resampled regions. One may also take advantage of the mathematical framework of the diffeomorphic registration, in order to parallel transport the longitudinal SVF vn on the reference space T. The parallel transport is a mathematical operation which consists in translating the tangent vector vn along the geodesic defined by the change of coordinates according to the geometrical properties of the manifold of the diffeomorphisms (do Carmo, 2012). The parallel transport is however dependent on the geometrical properties of the transformation space, and therefore its implementation is not unique. One may refer to (Bossa et al., 2010; Younes, 2007; Lorenzi and Pennec, 2012) for different parallel transport schemes employed in the context of morphometric analysis. Concerning the proposed application in the context of the flux analysis we ideally require to preserve the flux properties of the parallel transported trajectory vn, or eventually of the parallel transported irrotational component ∇pn. For instance, volume preserving parallel transport methods are currently under investigation, as proposed in (Niethammer and Vialard, 2013) in the LDDMM setting applied to the registration of 2D shapes. In this work the parallel transport is performed by the Pole ladder, a method that was shown to be stable in the context of SVF-based registration (Lorenzi and Pennec, 2014), to obtain the normalized trajectory v¯n. In particular, empirical evidence showed that the Pole ladder outperforms other standard transport methods in preserving the local measures of volume changes, and thus the irrotational component, when applied to longitudinal trajectories (Lorenzi and Pennec, 2014). In particular, the Pole ladder improves our previous discrete parallel transport methods based on the Schild’s ladder by reducing the computational time, along with the potential numerical inaccuracies introduced by the multiple registration involved.
+
+The ensemble of SVFs {v~n} is now defined in the common template reference, and can thus be compared voxel-wise. Let ∇pn be the irrotational component of v¯n computed as the solution of the Poisson equation.
+
+The approach proposed in Section 3 can be applied to the set of longitudinal pressure fields {pn} in order to identify associated group-wise critical regions of volume change. In particular a set of group-wise probabilistic critical regions {Tk} can be defined by opportunely thresholding the resulting probabilistic maps. Given a novel subject I, the regions {Tk} can be resampled in the subject space thanks to the previously estimated subject-to-template non-linear mapping, and thus they can be used as prior weights for the integration of the subject-specific regional flux.
+
+Discovery and quantification of longitudinal atrophy in AD
+
+Baseline and 1-year follow-up brain scans of 200 healthy controls, 150 MCI, and 142 AD patients from the ADNI dataset were linearly aligned and non-linearly registered with the LCClog-Demons. The longitudinal SVFs vi of 20 randomly selected AD patients were transported into a previously defined anatomical reference along the subject-to-template deformations ψi, and the correspondent pressure maps pi were computed. Those 20 AD patients were discarded from the subsequent analysis.
+
+Fig. 1 shows the associated mean pressure map corresponding to the group-wise longitudinal trajectories. The figure shows that most of the local pressure maxima are located in the ventricels and around the hippocampi, and that these regions are characterized by the lowest divergence values. Interestingly the divergence-free component appears to be highly localized in the temporal poles. This is indicative of a local rotational component detected by the non-linear registration, which might be associated to a process of structural readjustment.
+
+The critical regions were estimated in a neighborhood of size σ = 3 voxels. The whole set {Tk} of critical regions was obtained by thresholding the probabilistic map at p &gt; 0.8, and was composed of respectively 44 regions of minimal and 18 of maximal pressure. Fig. 6 shows a sample of the automatically defined critical points corresponding to those regions. We notice that critical regions of expansions are always localized in CSF, while critical regions of contractions are in white/grey matter regions.
+
+The framework illustrated in Section 5 was used for the regional probabilistic integration of the flux for the remaining patients and the healthy controls. Therefore, we associate to each participant of this study the series of 62 scalar flux measures obtained by the probabilitic integration of the longitudinal divergence in the critical regions defined in Section 5. Fig. 7 shows an example of the resulting probabilistc regions obtained for a given AD subject.
+
+Quantification of the longitudinal regional flux for clinical applications
+
+In order to determine the most relevant regions of group-wise atrophy we performed a discriminative analysis with random forests, to define the regions for which the regional flux is most discriminative between respectively AD and MCI vs healthy subjects. The analysis was performed with the R package randomForest (Liaw and Wiener, 2002)3, carried out through 2-folds cross-validation with 1000 permutations. Fig. 8 shows the regions associated to the most discriminative flux measures between the considered clinical groups, with associated average values of group-wise longitudinal flux. We notice that patients have consistently higher regional flux (and thus associated apparent volume change) than controls. The resulting atrophy patterns of AD and MCI are characterized by several common regions, denoting similar underlying anatomical process. In particular, common regions of longitudinal volume change are located in temporal areas and in ventricles/temporal horns of hippocampi.
+
+Sample size analysis of the longitudinal regional flux
+
+Binary classification tasks through random forest are based on the majority votes of the trained set of binary decision trees. Thus, the above mentioned discriminative analysis assigns to each test subject a probability to belong to patients or healthy group, defined as the average vote of the set of decision trees. The votes represent the degree of similarity of the measured regional flux with respect to the healthy (vote approaching to 0) or to the patient (vote approaching to 1) group, and they can thus be used as outcome measure for an hypothetical clinical trial for measuring significant reduction of detected pathological longitudinal atrophy. For each permutation of the cross validation we evaluated the statistical power associated to the outcome votes by estimating the associated sample size for a randomized two-arm placebo controlled clinical trial with the classical formula proposed in (Fox et al., 2000): (3) Sample Size=(u+v)2(2σ)2∕(Δμ)2.
+
+Here u = 0.841 (80% power), v = 1.95 (5% significance level), Δμ = 0.25 * (mean(votespatients) − mean(votesheaithy)) is the 25% change of atrophy rate controlled by normal aging, and σ is the pooled standard deviation of the votes of patients and healthy controls. Average and 95% confidence interval were finally estimated from the obtained sampling distribution of the sample size.
+
+For illustrative purposes we compared the resulting sample size with the one provided by annual hippocampal volume change, a clinically recognized and validated marker of AD progression. We considered baseline and 1-year hippocampal volumes reported by ADNI and measured by a semi-automated method based on atlas propagation (here called SNT) (Haller et al., 1997). The method was validated for hippocampal volumetry in AD and MCI (Hsu et al., 2002; Schuff et al., 2009) and is commercially distributed by Medtronic Surgical Navigation Technologies (Louisville, CO).
+
+SNT follow-up measures were available for 140 healthy subjects, 139 MCI, and 104 AD patients. The annualized hippocampal volume changes were computed relatively to baseline as (Vol1 − year − Volbaseline)/Volbaseiine and the associated sample size was evaluated with Formula (3). The 95% confidence interval was computed by bootstrap.
+
+Table 1 reports the head-to-head comparison of the sample size associated to regional flux and SNT for this ADNI sub-cohort. The regional flux requires 243 subjects per arm for an hypothetical trial on AD patients, and 556 for MCI, in order to detect 25% significant changes of longitudinal progression when controlled for normal aging. We note that sample size as well as upper and lower bounds associated to regional flux are significantly lower than those provided by SNT. Moreover, even though evaluated on different sub-cohorts, our measures are compatible with those reported by Leung et al. (2010b), in which they proposed to measure longitudinal hippocampal atrophy rates by multi-atlas segmentation combined with hippocampal boundary shift integral. For that study the estimated sample size was of 135 for AD and 511 for MCI, compared to respectively 221 and 2545 for SNT.
+
+Regional flux analysis in specific anatomical regions
+
+The flux analysis proposed in the previous sections does not rely on prior hypothesis on the location of the regional atrophy. We propose here a different approach for the quantification of the longitudinal atrophy in a limited number of specific regions, with a specific focus on the measurement of hippocampal and ventricular atrophy in AD.
+
+This section builds upon the work initially presented to the “Novel Imaging Biomarkers For Alzheimer's Disease And Related Disorders” (NIBAD) Challenge helded in 2012 within the conference MICCAI.
+
+In particular we aim to test the reliability of flux-based measures of atrophy to provide accurate, robust and unbiased quantification of regional volume change over time. These factors are crucial for the use of automatic volumetric measures in the clinical setting, as recently pointed in (Fox et al., 2012). In this last work the authors identify a set of “quality criteria” that an imaging tool should satisfy in order to find successful application in clinical trials and for diagnostic purposes: Biological plausibility. The algorithm should provide atrophy measurements consistent with the known pathophysiology.
+
+Symmetry. The atrophy quantified from A to B should be consistent with the one quantified from B to A.
+
+Transitivity. The atrophy quantified from A to C should be equivalent to the cumulative one from A to B and B to C.
+
+Comparison with the “state of art”. The atrophy measurements should be validated on shared data and compared to those obtained from more established algorithms.
+
+Reproducibility on back-to-back images. The atrophy measure on same day scans should be zero.
+
+Statistical validation. The accuracy of the measurements should be evaluated by sample size analysis based on the differential progression between AD and normal aging.
+
+In the following sections the framework will be illlustrated and validated on the ADNI dataset with respect to the above-mentioned quality criteria.
+
+Probabilistic flux analysis of hippocampal and ventricular atrophy in AD
+
+Given a sequence of follow-up images Ii (i = 0,…,N) for a given subject, the region specific flux analysis is applied as follows.
+
+Alignment of the sequence to the template space
+
+In this step (Processing Step 1) the images are aligned and normalized to a pre-defined anatomical template estimated from a group of healthy elderly subjects of the ADNI cohort. The alignment to the Template space is needed for the subsequent propagation of the anatomical regions through non-rigid registration. The global affine transformation is estimated by the FLIRT software (Jenkinson and Smith, 2001). The resampling is performed by linear interpolation on the intensities.
+
+Algorithm 1. Consistent alignment of the time series.
+
+Given a sequence of follow-up images Ii (i = 0,…,N): Estimate the “9 parameters affine” global transformation to the baseline Ai: I0 ≃ Ii ○ Ai (i = 0,…,N).
+
+Skull strip the baseline I0 (ROBEX software (Iglesias et al., 2011)). Mask the Ii (i = 0,…,N) with the estimated brain mask to get IiM.
+
+Refine the initial transformation.
+
+Estimate the “9 parameters affine” global transformation AiM:I0M≃IiM∘AiM (i = 0,…,N).
+
+Register the baseline I0M to the template space T.
+
+Estimate the 12 parameters global affine transformation A0T:T≃I0∘A0T.
+
+Compute the aligned time series IiT=Ii∘(A0T∘AiM∘Ai).
+
+We notice that all the images undergo only one interpolation, and are therefore consistently processed in order to not introduce biases on the intensities due to asymmetric resamplings (Yushkevich et al., 2010).
+
+Definition of consistent spatial regions of atrophy
+
+Prior group-wise regions for the quantification of the hippocampal and ventricular longitudinal changes were defined in the template space T. The regions were estimated from a mixture of anatomical segmentation and of prior information of the longitudinal AD atrophy, here quantified by the divergence of the modeled average longitudinal progression modelled in Section 5.1. The regions were defined as follow: Region of ventricular expansion Rv. The prior region of ventricular expansion was decomposed in two complementary parts Rv=Rv+∪Rv− (Fig. 9A) of respectively compression and expansion (red and yellow in the figure). These areas are defined by the maximal and minimal average divergence (Fig. 9B) within a predefined ventricle mask (Fig. 9C, blue).
+
+Region of hippocampal atrophy Rh. The prior region of longitudinal hippocampal atrophy was decomposed in two complementary parts Rh=Rh+∪Rh− of respectively hippocampal atrophy and temporal horn expansion. The first one (Rh−) is the anatomical mask of the hippocampi computed by segmentation propagation in the template space of the automatically segmented ADNI subject-specific hippocampal masks (Patenaude et al., 2011) (Fig. 9A, green). The resulting probabilistic hippocampal mask is the region for the quantification of the longitudinal matter loss. The second one (Rh+) is defined similarly for the ventricles from the locations of maximal average divergence in the hippocampal mask (Fig. 9C red), and encodes the expansion of the temporal horn which is complementary to the hippocampal atrophy (Fig. 9A purple).
+
+The subject specific regional longitudinal changes are computed by following the Processing Step 2.
+
+Algorithm 2. Quantification of subject-specific regional atrophy Given the sequence of aligned follow-up images IiT(i=0,…,N): Non linearly register the follow-up images to the baseline with the LCC-Demons algorithm. Estimate vi such that I0T≃IiT∘exp(vi).
+
+Compute the average longitudinal divergence map D=∇.vi¯.
+
+Transport the regions Rh and Rv in the subject space through the subject-to-template deformation to define Rvs and Rhs.
+
+Restrict the hippocampal region to the subject specific regions of compression/expansion: Rh−s∩{x∣D(x)&lt;0},Rh+s∩{x∣D(x)&gt;0}.
+
+Define the atrophy rate at the time point i as the algebraic sum of the average divergence Di in the compression and expansion regions of the resulting ventricular and hippocampal regions.
+
+Longitudinal atrophy on the ADNI dataset
+
+The presented method was applied to the quantification of the longitudinal hippocampal atrophy in a sample of 96 AD subjects and 160 healthy controls from the ADNI dataset. Images of 0, 12, and 24 months were aligned according to the Step 1 and the longitudinal atrophy was evaluated as in Step 2 to test the following quality criteria: Consistency with the clinical condition. As indicated by Table 2 the AD group has significantly higher ventricular expansion and hippocampal atrophy for all the considered intervals (p &lt; 0.001, standard t-test). The estimated atrophy rates are consistent with those reported in the literature (Frisoni et al., 2010; Schott et al., 2010; Leung et al., 2010a).
+
+Symmetry. The longitudinal atrophy measure is perfectly symmetric, due to the symmetry of the registration algorithm. Therefore the absolute changes measured from A to B are equal (with opposite sign) to those from B to A.
+
+Linearity over two years. Table 3, first row, shows the estimated mean and standard deviation for the ratio of the estimated atrophy between 2- and 1-year atrophy rate. The ratios are never significantly different from the reference value of 2.
+
+Transitivity. Table 3, second row, shows the compatibility in time of the atrophy measures computed as the error between the measure from A to C and the cumulative one from A to B and B to C. As indicated, the transitivity error is never significantly different from 0, even though it is close to significance for the hippocampal atrophy in AD. We notice that this error is however small relatively to the atrophy rate at 24 months (about 1%).
+
+Sample size analysis. Based on the reported atrophy rates, we estimated the sample size required to detect a 25% difference in the AD longitudinal progression relative to the normal aging (80% power, 0.05 significance). The sample size values listed in Table 4 are in line with those reported in the previous studies (Leung et al., 2010a), (Schott et al., 2010). We observe that the regional flux analysis in the specific anatomical regions generally provides better results than those obtained from the group-wise longitudinal analysis. These results can be explained by observing that the approach presented in this section is optimized in order to provide subject-specific measures of longitudinal changes.
+
+Discussion and conclusions
+
+In this study we presented the regional flux analysis of deformations, a novel approach to deformation based morphometry which combines the flexibility of TBM-like voxel based approaches with the robustness of ROI based methods for the atrophy quantification.
+
+We proposed to decompose the longitudinal trajectories according to the Helmholtz theorem, in order to analyze the atrophy processes through the pressure potential map and the associated flux. This new approach studies the morphological changes as a topological problem, and paves the way to new analysis methods based on graph and complex theory. The proposed work provided precise and statistically powered quantifications of the group-wise regional atrophy processes. Moreover the presented method describes and compares the patterns of dynamic changes between clinical populations, and might thus lead to potentially new anatomical findings, such as differential atrophy trajectories at different disease stages.
+
+We showed the potential and the flexibility of the flux analysis in the analysis of the morphological changes in AD across very diverse settings: cross-sectional comparison, longitudinal group-wise analysis, and atrophy quantification on specific regions.
+
+A central aspect of the regional flux analysis is the reliable identification of the critical points of the pressure field. In this paper we contributed a probabilistic inference algorithm which makes the presented method fully operator independent, contrarily to the manual definition of Lorenzi et al. (2012). Moreover, the proposed framework circumvents the explicit search of extremal points, since it is based on the detection of the critical regions through robust statistics of the group-wise divergence maps. In fact, in our previous experiments we noticed that the local search of pressure extrema can be biased by local noise, and usually leads to the detection of a number of spurious extremal points which are not necessarily informative about the underlying topology of the pressure field.
+
+Our first implementation of the flux analysis (Lorenzi et al., 2012) was based on the simple scalar interpolation of the pressure field, which is generally a robust and efficient operation. However, we believe that further investigation of the properties of the associated irrotational field is still required, for instance concerning the resulting volume change of the resampled regions. In this work we opted for the Pole ladder since in previous experiments it provided good results in terms of preservation of the regional volume change, as measured by the average Jacobian determinant of the deformation in specific regions (see (Lorenzi and Pennec, 2014) for more details). We believe that this is a crucial aspect as the ultimate goal of our study is the quantitative analysis of brain atrophy, even though we cannot exclude potential numerical inaccuracies introduced by the parallel transport operation.
+
+As a future perspective, the present work might be extended to the different spatial scales of the atrophy process. Critical regions can be contained in larger zones of pressure extrema, and the global irrotational field is therefore the contribution of several components acting differently across scales. It is therefore of interest to introduce a scale space analysis of the topology of pressure fields in order to disentangle and separately analyze its different components. This issue was addressed in our recent work (Lorenzi et al., 2013b), in which we proposed a robust framework for the reliable scale-space identification of critical regions associated to irrotational fields of anatomical deformations. The framework was based on the scale-space decomposition of the pressure field through difference of Gaussians. Future extensions of the present study will aim to combine proper scale-space analysis of pressure fields to the robust atrophy quantification.
+
+The present study is a step towards the consistent topological analysis of deformations. For example, one can define a tree-like structure of the pressure field, where each level of the tree is a given spatial scale, and the branches connect critical regions which are nested across scales. This way, topology of deformations can be studied with Morse-Smale or graph theory.
+
+Further appealing approaches to the topological analysis of the pressure fields are represented by the random field theory which was extensively developed for the analysis of statistical parametric maps (Worsley et al., 1996, 2004; Friston et al., 1994), or by the study of the homological properties of the scalar fields as proposed in Chung et al. and Pachauri et al., 2011.
+
+The presented work can be also extended to the analysis of sequences of deformations, for instance for detecting anatomical changes in time series of several images. For this purpose, the consistent extension of the presented framework to 5-dimensional data (space + scale + time) is required.
+
+Finally, thanks to the Helmholtz decomposition of velocity fields, we illustrated for the first time that the evolution of AD is not exclusively associated to volume changes represented by the irrotational component, but is also characterized by a complementary rotational part (Fig. 1). This component accounts for local matter reorganization associated to the disease progression. We believe that future analysis of the rotational part of the deformation might provide novel and informative insights about the dynamics of morphological changes in AD.
+
+Acknowledgments
+
+This work was partially funded by the European Research Council through the ERC Advanced Grant MedYMA, the French ANR “programme blanc” Karametria number ANR-09-BLAN-0332, and the EU project Care4Me.
+
+Data collection and sharing for this project were funded by the Alzheimer's Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: Abbott; Alzheimer's Association; Alzheimer's Drug Discovery Foundation; Amorfix Life Sciences Ltd.; AstraZeneca; Bayer HealthCare; BioClinica, Inc.; Biogen Idec Inc.; Bristol-Myers Squibb Company; Eisai Inc.; Elan Pharmaceuticals Inc.; Eli Lilly and Company; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; GE Healthcare; Innogenetics, N.V.; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Medpace, Inc.; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Servier; Synarc Inc.; and Takeda Pharmaceutical Company. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer's Disease Cooperative Study at the University of California, San Diego. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of California, Los Angeles. This research was also supported by NIH grants P30 AG010129 and K01 AG030514.
+
+Appendix A. Experimental data
+
+Data used in the preparation of this article were obtained from the Alzheimer's Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). The ADNI was launched in 2003 by the National Institute on Aging (NIA), the National Institute of Biomedical Imaging and Bioengineering (NIBIB), the Food and Drug Administration (FDA), private pharmaceutical companies and non-profit organizations, as a $60 million, 5-year public-private partnership. The Principal Investigator of this initiative is Michael W. Weiner, MD, VA Medical Center and University of California - San Francisco. ADNI is the result of efforts of many coinvestigators from a broad range of academic institutions and private corporations, and subjects were recruited from over 50 sites across the U.S. and Canada. For up-to-date information, see www.adni-info.org.
+
+Fig. 1. Helmholtz decomposition of the average longitudinal trajectory in AD, and pressure potential and divergence maps associated to the irrotational component. The divergence describes the critical regions of local expansion and contraction.
+
+Fig. 2. Topology of pressure fields. Black arrows indicate the irrotational component. The pressure field summarizes the observed contraction/expansion processes.
+
+Fig. 3. We can draw analogies between the flux analysis and the study anticyclones and depressions fronts in meteorological charts. Critical regions are identified by extremal pressure points, and are such that the flux (wind) across the boundaries is maximum.
+
+Fig. 4. Cross-sectional comparison of the average volume changes in AD patients vs healthy controls. Top: statistical comparison of the log-Jacobian determinant (TBM), significance is assessed at p &lt; 0.05 corrected for family-wise error. Bottom: difference ΔFlux between the group-wise probability of the critical regions, and statistical assessment by permutation test (2000 bootstrap samples). The map of volume differences described by ΔFlux is strikingly similar to the one obtained with TBM after correction for multiple comparisons.
+
+Fig. 5. Group-wise comparison of critical regions. Top: probabilistic estimation of the critical regions of joint maximal expansion and contraction for AD and healthy subjects. Bottom: probabilistic estimation of the critical regions of specific volume change in AD compared to healthy subjects.
+
+Fig. 6. Sample critical regions associated to the AD average pressure map. Pressure extrema map to anatomically relevant areas for AD, and show an asymmetric distribution between left and right hemispheres.
+
+Fig. 7. From group-wise to patient specific quantification. The figure shows a sample of critical regions for the probabilistic integration of the flux estimated for a specific AD patients. Red regions: expanding critial regions. Blue regions: contracting critical regions.
+
+Fig. 8. Average regional flux for the most discriminative regions between AD and MCI (green) with respect to healthy controls (blue). The resulting atrophy patterns of AD and MCI are characterized by several common regions, denoting similar underlying anatomical process. In particular, common regions of longitudinal volume change are located in temporal areas and in ventricles/temporal horns of hippocampi.
+
+Fig. 9. Prior region of longitudinal atrophy in AD. A) Prior anatomical areas for the hippocampal (purple and green), and ventricular (yellow and red) expansion and contraction. B) Average divergence map for the longitudinal atrophy in AD. C) Ventricular and hippocampal mask for the extraction of the maximal/minimal divergence areas.
+
+Table 1 Sample size analysis for the global group-wise longitudinal flux analysis. Estimated sample size (mean(95%CI)) to detect a 25% difference of the yearly AD progression measured by the regional flux by controlling for normal aging with 80% power.
+
+	AD vs CT	MCI vs CT	
+Regional flux	243 (125,441)	 556 (244,1273)	
+SNT	383 (211,810)	1413 (565,7175)	
+
+Table 2 Estimated percentage volume changes (SD) in the ventricular and hippocampal regions for the time intervals [0,12], [0,24], and [12,24] months.
+
+	Hippocampi	Ventricles	
+Time interval	Ctrls	AD	Ctrls	AD	
+[0,12]	−2.38 (1.64)	−5.28 (2.38)	1.89 (2.09)	4.03 (2.79)	
+[0,24]	−3.52 (2.04)	−10.09 (4.5)	3.56 (2.82)	8.9 (5.32)	
+[12,24]	−1.19 (1.4)	−4.89 (2.94)	1.72 (2.19)	4.9 (3.3)	
+
+Table 3 Linearity and transitivity of the estimated atrophy rates. First row: mean (SD) of the ratio 2-years over 1-year atrophy. The p-value indicates the significance of the difference relative to the reference value of 2. Second row: mean (sd) of the transitivity error. The p-value indicates the significance of the difference relative to 0 (paired t-test).
+
+	Hippocampi	Ventricles	
+	Ctrls	AD	Ctrls	AD	
+[0,24]/[0,12]	1.77 (1.19)	1.98 (0.67)	1.48 (5.65)	2.65 (3.96)	
+p	0.44	0.8	0.39	0.11	
+[0,12] + [12,24] − [0,24]	0.04 (0.3)	0.09 (0.5)	0.05 (0.61)	0.08 (0.75)	
+p	0.1	0.08	0.28	0.3	
+
+Table 4 Sample size analysis provided by the estimated atrophy rates. Average sample size (95% CI) to detect a 25% difference in the AD progression relative to the normal aging with 80% power and significance level of p = 0.05.
+
+	[0–12]	[0–24]	
+Hippocampi	169 (119,255)	117 (89,162)	
+Ventricles	426 (249,880)	249 (168,410)	
+
+1 Data used in preparation of this article were obtained from the Alzheimer's Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+2 http://www.fil.ion.ucl.ac.uk/spm/.
+
+3 http://cran.r-project.org/web/packages/randomForest/.
+
+
+References
+
+Arfken GB , Weber HJ , 1995 Mathematical Methods for Physicists. San Diego, Academic Press.
+Arsigny V , Commowick O , Pennec X , Ayache N , 2006 A Log-Euclidean framework for statistics on diffeomorphisms. MICCAI vol. 9 , pp. 924–931.17354979
+Ashburner J , Friston K , 2000 Voxel-based morphometry—the methods. NeuroImage 11 , 805–821.10860804
+Belkin M , Niyogi P , 2001 Laplacian eigenmaps and spectral techniques for embedding and clustering Advances in Neural Information Processing Systems 14 MIT Press, pp. 585–591.
+Bossa M , Zacur E , Olmos S , 2010 On changing coordinate systems for longitudinal tensor-based morphometry Spatio Temporal Image Analysis Workshop (STIA), p. 2010.
+Boyes , Rueckert , Aljabar , , 2006 Cerebral atrophy measurements using Jacobian integration: comparison with the boundary shift integral. NeuroImage 32 , 159–169.16675272
+Chung M , Worsley K , Paus T , , 2001 A unified statistical approach to deformation-based morphometry. NeuroImage 14 , 595–606.11506533
+Chung MK , Bubenik P , Kim PT , Dalton KM , Davidson RJ , 2009 Persistence diagrams of cortical surface data, in: Information Processing in Medical Imaging. LNCS 21 , 386–397.19694279
+Davatzikos , Xu , An , Fan , Resnick , 2009 Longitudinal progression of Alzheimer's-like patterns of atrophy in normal older adults: the SPARE-AD index. Brain 132 ,2026–2035.19416949
+do Carmo M , 2012 Riemannian geometry. Mathematics. Birkhauser, Boston, Mass.
+Fox N , Cousens S , Scahill R , Harvey R , Rossor M , 2000 Using serial registered brain magnetic resonance imaging to measure disease progression in Alzheimer disease: power calculations and estimates of sample size to detect treatment effects. Arch. Neurol 57 , 339–344.10714659
+Fox N , Crum W , Schaill R , Stevens J , Janssen J , Rossnor M , 2001 Imaging of onset and progression of Alzheimer's disease with voxel compression mapping of serial magnetic resonance images. Lancet 358 , 201–205.11476837
+Fox N , Ridgway G , Schott J , 2012 Algorithms, atrophy and Alzheimer's disease: cautionary tales for clinical trials. NeuroImage 57 ,15–18.
+Freeborough P , Fox N , 1997 The boundary shift integral: an accurate and robust measure of cerebral volume changes from registered repeat MRI. IEEE Trans. Med. Imaging 16 , 623–629.9368118
+Frisoni G , Fox N , Jr CJ , Scheltens P , Thompson P , 2010 The clinical use of structural MRI in Alzheimer's disease. Nat. Rev. Neurol 6 ,67–77.20139996
+Friston K , Worsley K , Frackowiak R , Mazziotta J , Evans A , 1994 Assessing the significance of focal activations using their spatial extent. Hum. Brain Mapp 1 , 214–220.
+Guimond A , Meunier J , Thirion J , 2000 Average brain models: a convergence study. ComputerVision and Image Understanding 77 (2 ), 192–210.
+Haller J , Banerjee A , Christensen G , Gado M , Joshi S , Miller M , Sheline Y , Vannier M , Csernansky J , 1997 Three-dimensional hippocampal MR morphometry with high-dimensional transformation of a neuroanatomic atlas. Radiology 202 ,504–510.9015081
+Hansen MS , Larsen R , Christensen NV , 2009 Curl-gradient image warping—introducing deformation potentials for medical image registration using Helmholtz decomposition. VISAPP vol. 1 , pp. 179–185.
+Hsu YY , Schuff N , Du AT ., Mark K , Zhu X , Hardin D , Weiner MW , 2002 Comparison of automated and manual MRI volumetry of hippocampus in normal aging and dementia. J. Magn. Reson. Imaging 16 , 305–310.12205587
+Iglesias J , Liu C , Thompson P , Tu Z , 2011 Robust brain extraction across datasets and comparison with publicly available methods. IEEE Trans. Med. Imaging 30 ,1617–1634.21880566
+Jenkinson M , Smith S , 2001 A global optimisation method for robust affine registration of brain images. Med. Image Anal 5 , 143–156.11516708
+Lefevre J , Leroy F , Khan S , Dubois J , Huppi PS , Baillet S , Mangin JF , 2009 Identification of growth seeds in the neonate brain through surfacic helmholtz decomposition In: Prince JL , Pham DL , Myers KJ (Eds.), IPMI, volume 5636 of Lecture Notes in Computer Science. Springer, pp. 252–263.
+Leung K , Barnes J , Ridgway G , Bartlett J , , 2010a Automated cross-sectional and longitudinal hippocampal volume measurement in mild cognitive impairment and Alzheimer's disease. NeuroImage 51 ,1345–1359.20230901
+Leung K , Barnes J , Ridgway G , , 2010b Automated cross-sectional and longitudinal hippocampal volume measurement in mild cognitive impairment and Alzheimer's disease. NeuroImage 51 , 1345–1359.20230901
+Liaw A , Wiener M , 2002 Classification and regression by randomforest. R News 2 , 18–22.
+Lorenzi M , Pennec X , 2012 Geodesics, parallel transport &amp; one-parameter subgroups for diffeomorphic image registration. Int. J. Comput. Vis 105 ,111–127.
+Lorenzi M , Pennec X , 2014 Efficient parallel transport of deformations in time series of images: from Schild's to Pole ladder. J. Math. Imaging Vision 50 , 5–17.
+Lorenzi M , Ayache N , Frisoni GB , Pennec X , 2011 Mapping the Effects of Aβ1-42 Levels on the Longitudinal Changes in Healthy Aging: Hierarchical Modeling Based on Stationary Velocity Fields, LNCS. Springer, Heidelberg, pp. 663–670.
+Lorenzi M , Ayache N , Pennec X , 2012 Regional flux analysis of longitudinal atrophy in Alzheimer's disease. Proceedings of Medical Image Computing and Computer Assisted Intervention 2012 (MICCAI), volume 7510 of LNCS. Springer, Heidelberg, pp. 739–746.
+Lorenzi M , Ayache N , Frisoni G , Pennec X , 2013a LCC-Demons: a robust and accurate diffeomorphic registration algorithm. NeuroImage 81 , 470–483 (Code available online: https://team.inria.fr/asclepios/software/lcclogdemons/).23685032
+Lorenzi M , Ayache N , Pennec X , 2013b Sparse scale-space decomposition of volume changes in deformations fields. Proceedings of Medical Image Computing and Computer Assisted Intervention 2012 (MICCAI), LNCS. Springer, Heidelberg, pp. 328–335.
+Mansi T , Pennec X , Sermesant M , Delingette H , Ayache N , 2010 LogDemons revisited: Consistent regularisation and incompressibility constraint for soft tissue tracking in medical images. in: Proceedings of Medical Image Computing and Computer Assisted Intervention (MICCAI 2010) 13 , 652–659.
+Morse M , 1934 The Calculus of Variations in the Large. American Mathematical Society Colloquium Publication.
+Niethammer M , Vialard FX , 2013 Riemannian metrics for statistics on shapes: parallel transport and scale invariance. Proceedings of Mathematical Foundations of Computational Anatomy.
+Ollivier Y , 2007 Ricci curvature of Markov chains on metric spaces. J. Funct. Anal. 256 ,
+Pachauri D , Hinrichs C , Chung MK , Johnson SC , Singh V , 2011 Topology-based kernels with application to inference problems in Alzheimer's disease. IEEE Trans. Med. Imaging, pp. 1760–1770.21536520
+Patenaude B , Smith S , Kennedy D , Jenkinson M , 2011 A bayesian model of shape and appearance for subcortical brain. NeuroImage 56 (3 ), 907–922.21352927
+Pennec X , Arsigny V , 2012 Exponential Barycenters of the Canonical Cartan Connection and Invariant Means on Lie Groups In: Barbaresco F , Mishra A , Nielsen F (Eds.), Matrix Information Geometry. Springer, pp. 123–168.
+Raschetti R , Albanese E , Vanacore N , Maggini M , 2007 Cholinesterase inhibitors in mild cognitive impairment: a systematic review of randomised trials. PLoS Med. 4 , e338.18044984
+Riddle WR , Li R , Fitzpatrick JM , DonLevy SC , Dawant BM , Price RR , 2004 Characterizing changes in MR images with color-coded Jacobians. Magn. Reson. Imaging 22 , 769–777.15234445
+Schott J , Bartlett J , Barnes J , Leung K , , 2010 Reduced sample sizes for atrophy outcomes in Alzheimer's disease trials: baseline adjustment. Neurobiol. Aging 31 , 1452–1462.20620665
+Schuff N , Woerner N , Boreta L , Kornfield T , Shaw LM , Trojanowski JQ , Thompson PM , Jr CRJ ., Weiner MW , 2009 MRI of hippocampal volume loss in early Alzheimer's disease in relation to apoe genotype and biomarkers. Brain 132 .
+Seiler C , Pennec X , Reyes M , 2011 Geometry-aware multiscale image registration via obbtree-based polyaffine log-demons Proceedings of Medical Image Computing and Computer Assisted Intervention 2011 (MICCAI), volume 6892 of LNCS. Springer, Heidelberg, pp. 631–638.
+Thompson P , Ayashi K , Zubicaray G , Janke A , Rose S , Semple J , Herman D , Hong M , Dittmer S , Dodrell D , Toga A , 2003 Dynamics of gray matter loss in Alzheimer's disease. J. Neurosci 23 , 994–1005.12574429
+Worsley KJ , Marrett S , Neelin P , Evans AC , 1996 Searching scale space for activation in pet images. Hum. Brain Mapp 4 , 74–90.20408187
+Worsley KJ , Taylor JE , Tomaiuolo F , Lerch J , 2004 Unified univariate and multivariate random field theory. NeuroImage 23 (Suppl. 1 ), S189–S195 (1).15501088
+Younes L , 2007 Jacobi fields in groups of diffeomorphisms and applications. Q. Appl. Math 65 ,113–134.
+Yushkevich P , Avants B , Das S , Pluta J , Altinay M , Craige C , 2010 Bias in estimation of hippocampal atrophy using deformation-based morphometry arises from asymmetric global normalization: an illustration in ADNI 3 T MRI data. NeuroImage 50 , 434–445.20005963

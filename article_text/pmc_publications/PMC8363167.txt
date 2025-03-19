@@ -1,0 +1,358 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+8310780
+20511
+IEEE Trans Med Imaging
+IEEE Trans Med Imaging
+IEEE transactions on medical imaging
+0278-0062
+1558-254X
+
+33798076
+8363167
+10.1109/TMI.2021.3070780
+NIHMS1729340
+Article
+Multi-Resemblance Multi-Target Low-Rank Coding for Prediction of Cognitive Decline with Longitudinal Brain Images
+Zhang Jie
+Wu Jianfeng
+Li Qingyang
+School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, Tempe, AZ, USA.
+Caselli Richard J. Department of Neurology, Mayo Clinic Arizona, Scottsdale, AZ, USA.
+
+Thompson Paul M. Imaging Genetics Center, Institute for Neuroimaging and Informatics, Univ. of Southern California, Los Angeles, CA, USA.
+
+Ye Jieping Fellow, IEEE Department of Electrical Engineering and Computer Science, Univ. of Michigan, Ann Arbor, MI, USA.
+
+Wang Yalin Senior Member, IEEE School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, Tempe, AZ, USA.
+
+The Alzheimer’s Disease Neuroimaging Initiative
+jzhan313@asu.edu
+2 8 2021
+30 7 2021
+8 2021
+01 8 2022
+40 8 20302041
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+An effective presymptomatic diagnosis and treatment of Alzheimer’s disease (AD) would have enormous public health benefits. Sparse coding (SC) has shown strong potential for longitudinal brain image analysis in preclinical AD research. However, the traditional SC computation is time-consuming and does not explore the feature correlations that are consistent over the time. In addition, longitudinal brain image cohorts usually contain incomplete image data and clinical labels. To address these challenges, we propose a novel two-stage Multi-Resemblance Multi-Target Low-Rank Coding (MMLC) method, which encourages that sparse codes of neighboring longitudinal time points are resemblant to each other, favors sparse code low-rankness to reduce the computational cost and is resilient to both source and target data incompleteness. In stage one, we propose an online multi-resemblant low-rank SC method to utilize the common and task-specific dictionaries in different time points to immune to incomplete source data and capture the longitudinal correlation. In stage two, supported by a rigorous theoretical analysis, we develop a multi-target learning method to address the missing clinical label issue. To solve such a multi-task low-rank sparse optimization problem, we propose multi-task stochastic coordinate coding with a sequence of closed-form update steps which reduces the computational costs guaranteed by a theoretical convergence proof. We apply MMLC on a publicly available neuroimaging cohort to predict two clinical measures and compare it with six other methods. Our experimental results show our proposed method achieves superior results on both computational efficiency and predictive accuracy and has great potential to assist the AD prevention.
+
+Index Terms—
+
+Multi-task
+Longitudinal incomplete data
+Sparse coding
+Low-rank
+Multi-resemblance
+
+I. Introduction
+
+ALZHEIMER’S disease (AD) [1] is known as the most common type of dementia. It is a slow progressive neurodegenerative disorder leading to a loss of memory and reduction of cognitive function. Many clinical/cognitive measures such as Mini Mental State Examination (MMSE) and Alzheimer’s Disease Assessment Scale cognitive subscale (ADAS-Cog) have been designed to evaluate a subject’s cognitive decline. It is crucial to predict AD-related cognitive decline in its presymptomatic stage so an early intervention or prevention becomes possible.
+
+In AD research, cognitive concerns correlate with structural magnetic resonance imaging (sMRI)-based measures of atrophy in several structural measures, including wholebrain, entorhinal cortex, hippocampus and temporal lobe volumes. [2] These findings support their potential usage as predictors of disease progression. Among various sMRI-based measures, hippocampal morphometry was one of the most popular measures for assessing disease burden, progression and effects of treatments [3], [4], [2], [5], [6]. Therefore, surface-based hippocampal morphometry has been studied intensively for cognitive decline research, e.g., [7], [8], [9], [10], [11], [12], including our work, e.g., [13], [14], [15], [16], [17]. However, a notoriously challenging problem in neuroimaging arises from the fact that the imaging feature dimensionality is intrinsically high while only a small number of samples are available. Recent work shows that sparse coding (SC) [18], [19], [20], [21] allows us to represent the primary image features as a small set of sparse coefficients and boosts their prediction power. However, the optimization of such problems is extremely time-consuming and the local features with similar descriptors lead to inconsistent sparse codes which may downgrade the statistical power on AD prediction. In addition, modeling sequential longitudinal data by an unsupervised learning approach such as SC is even more challenging because it is hard to extract correlation patterns from different time points.
+
+Many multi-task researches aim to excavate the correlations among data from different modalities or time points. Wang et al. [22] propose a multi-task sparse regression and feature selection method to jointly analyze the clinical and neuroimaging data in prediction of the memory performance [23]. Zhang and Shen [24] exploit a ℓ2,1-norm based group sparse regression method to select features that can be used to jointly predict two clinical statuses and represent the different clinical status. A multi-task sparse learning framework is proposed to integrate multiple incomplete data sources in [25], e.g. there are blockwise sMRI images missing in some time points. Our prior work [20] proposes a novel unsupervised multi-task SC method that learns the different tasks simultaneously and utilizes shared and task-specific dictionaries to encode both consistent and individual imaging features for longitudinal image data analysis.
+
+Although the multi-task SC may model sequential longitudinal data, the conventional SC method remains a computational challenge. We therefore consider the low-rankness in the sparse codes computation that favors both feature sparsity and learning efficiency. There are at least two advantages of the low-rank constraint on the sparse codes at each time point. Firstly, low-rankness technique was originally proposed to reduce noise and improve the signal-to-noise ratio (SNR) [26], [27]. Adding the low-rank constraint on the learned sparse codes at each time point (Eq. 2), we aim to exploit the correlations between the sparse codes. Similar to our recent work [17], it will reduce the noises in surface-based hippocampal morphometry features and therefore improve the statistical power. Secondly, the low-rankness will significantly improve the computational efficiency [28], [29], [30]. Meanwhile, our prior work [20] simply concatenates the longitudinal data while neglecting the intrinsic resemblance of the longitudinal data. It ignores the fact that the neighborhood features not only have resemblant codebooks but also have resemblant representations. Therefore, there is a huge sacrifice of valuable neighborhood time points information from the longitudinal data. To remedy this problem, here we exploit the resemblance among features lying in the neighboring time points and seek an accurate joint representation of these local features. We design a resemblance penalty term which may make the coefficients of multiple neighboring time points resemblant, ensuring higher correlations between features of nearby time points than those of distant time points.
+
+The unsupervised multi-task learning overcomes the incomplete source data problem to obtain sparse features, but the missing clinical label problem is also ubiquitous. It results in multi-task target values after sparse features are extracted. A forthright method is to perform linear regression at each task and determine weighted matrix separately. However, such methods treat all tasks independently, ignore the useful information reserved in the changes among different tasks and cause strong bias to predict multiple target outputs. Another simple strategy is to remove all patients with missing target values. It, however, significantly reduces the number of samples. Zhou et al. [31] consider multi-task with missing target values in the training process, but the algorithm did not incorporate multiple-source data. For a complete solution, we therefore consider both multiple task-incomplete data and multiple outputs with missing target values in this work for exploring the disease prediction problem.
+
+In this paper, we propose a novel two-stage framework, termed Multi-Resemblance Multi-Target Low-rank Coding (MMLC) algorithm. In stage one, we utilize shared and task-specific dictionaries to encode both consistent and changing imaging features along longitudinal time points and mine the correlations among a small number of features to obtain more consistent sparse codes than learning each time point separately. Meanwhile, we encourage using only a few sparse codebook representations to represent neighboring resemblant features to improve the smoothness of prediction over the longitudinal neighboring time points and maintain a low computational cost. In stage two, we deal with missing clinical labels on the target side, thus, we consider both input and target sides’ incomplete data in the longitudinal learning process. MMLC is computed by solving an online low-rank dictionary learning optimization problem, which comprises a sequence of closed-form update steps. They are achieved by the Inexact Augmented Lagrange Multiplier (IALM) that guarantees a fast convergence. Our extensive experimental results on the Alzheimer’s Disease Neuroimaging Initiative (ADNI) I cohort [1] show the proposed MMLC achieves significantly faster running speed and lower estimation errors, as well as reasonable smooth prediction scores when compared with six other algorithms, which demonstrates great potential benefits for the medical imaging research community.
+
+Our prior work [20] establishes the multi-source multi-target dictionary learning framework. The current extended journal manuscript has four major expansions over its conference version, including 1) adding low-rank technique to model feature similarity and reduce the dictionary learning computational cost, 2) enforcing sparse codes of neighboring time point longitudinal features to be resemblant to each other, 3) providing a detailed sequence of closed-form updating steps and theoretical guarantee of fast convergence, and 4) expanding the experiments to provide additional insights into the benefit of our new method.
+
+II. Methods
+
+The pipeline of MMLC is illustrated in Figure 1. We will detail each step in this section. The pipeline source code is publicly available at http://gsl.lab.asu.edu/software/MMLC.
+
+A. Problem definition and Preliminaries
+
+Given subjects from T time points: {X1,·⋯, XT}, our goal is to learn a set of sparse codes {S1,···, ST} for each time point. The sparse code St∈ℝmt×nt is a sparse representation of the original input Xt∈ℝp×nt and t ∈ {1, …, T}, where p is the feature dimension of each sample of xit,i=1,…,nt and nt is the number of samples for Xt and mt is the dimension of each sparse code in St.
+
+When employing the conventional single-task sparse coding (SC) to learn the sparse codes St by Xt individually, we obtain a set of dictionary {D1, ⋯, DT} without correlation between each learnt dictionary. The objective function of single-task SC for time point t will be (1) minDt,St12‖Xt−DtSt‖F2+λ1‖St‖1,1, s.t.Dt∈Ψt,
+
+where Ψt={Dt∈ℝp×mt:∀j∈1,…,mt,‖Djt‖2≤1} and λ1 is an non-negative parameter. Ψt is to prevent an arbitrary scaling of the sparse code, each column of Dt is restricted to be in a unit ball, i.e., ‖Djt‖2≤1. The details of SC can be summarized into Algorithm 1.
+
+B. MMLC Stage-I: Multi-Resemblance Low-Rank SC Stage
+
+However, single-task SC (Eq. (1)) only uses one dictionary D which is not sufficient to model the variations among subjects from different time points. To address this problem, we integrate the idea of multi-task learning [34] into the SC method. Different from previous works, we propose to learn the intrinsic low-dimensional space of the original data by simultaneously conducting the dictionary learning and sparse feature learning processes. The objective function of our proposed multi-task low-rank SC framework is as follows: (2) minDt∈Ψt,St∑t=1T(12‖Xt−DtSt‖F2+λ1||St‖1,1), s.t. rank(St)≤lt,
+
+where the rank lt-estimate of St denotes as rank(St) ≤ lt.
+
+However, Eq. (2) dose not consider the correlation between the samples among the multiple time points. Therefore, we proposed to use common and task-specific dictionary structure to learn dictionary atoms across multiple time points to capture the correlations. For each input matrix Xt, we learn the dictionary atoms Dt which are composed of two parts: Dt=[D^t,D¯t] where D^t∈ℝp×m^t, D¯t∈ℝp×m¯t and m^+m¯t=mt. D^ is the common dictionary atoms among different tasks and D^=D^1=⋯=D^T while D¯t is different from each other and only learned from the corresponding task input matrix Xt. The objective function can be reformulated as follows: (3) minDt∈Ψt,St∑t=1T(12‖Xt−[D^,D¯t]St‖F2+λ1‖St‖1,1+λ2‖St‖*).
+
+where λ1 and λ2 quantify the tradeoff between sparsity and low-rankness in the feature learning process. λ2 = 0 is the special case of Eq. (3), the problem (3) will become sparse coding problem. Specifically, the objective function Eq. (2) is a non-convex problem due to the non-convexity of the rank(S). We use the convex relaxation technique [35] in Eq. (3), the trace norm (nuclear norm) has been known as the convex envelop of the function of the rank ||S||* ≤ rank(S), ∀S∈ℂ={S∣‖S‖2≤1}.
+
+The longitudinal data of the time points close to the baseline MR images has higher resemblance than those of time points distant to the baseline MR images (e.g., 3-month and 6-month MR images are more resemblant to baseline images than those of 12-month MR images). We further use a Gaussian similarity kernel to emphasize such inherent resemblance knowledge between two different time points: (4) wp,q=exp(−‖p−q‖2σ2),
+
+where σ is empirically set as 1, and p and q donate time point p and time point q.
+
+The function wp,q is used to penalize the distance between two time points so that it emphasizes the inherent resemblance, i.e., the nearby time points induce high resemblant sparse codes S and distant time points induce high disparities. The final objective function of MMLC stage-I multi-resemblant low-rank SC stage can be formalized as follows: (5) minDt∈Ψt,St∑t=1T(12‖Xt−[D^,D¯t]St‖F2+λ1‖St‖1,1+λ2‖St‖*)+λ3∑p=1T−1∑q=p+1Twp,q‖Sp−Sq‖22.
+
+where λ3 is a non-negative regularization parameter. We will discuss how to optimize Eq. (5) in Sec. III.
+
+Fig. 2 illustrates the learning process of MMLC with subjects of ADNI from three different time points which represents as X1, X2 and X3, respectively. Through the multi-resemblant low-rank SC stage (Stage 1), we obtain the dictionary and sparse codes for subjects from each time point t: Dt and St. A dictionary Dt is composed by a shared dictionary D^t across all tasks and a task-specific part D¯t only corresponding with the specific task Xt. As a result, the sparse codes are low-rankness and have different resemblance between each others (e.g., S1, S2 and S2, S3 share higher resemblance, i.e., more common colors, than S1, S3).
+
+C. MMLC Stage-II: Multi-Target Learning with Missing Labels
+
+We measure the cognitive scores of patients at multiple time points in the longitudinal AD study. We formulate the prediction of clinical scores at multiple future time points simultaneously rather than considering the prediction of cognitive scores as a set of single time point regression since the intrinsic temporal smoothness information among different tasks can be incorporated into the model as the prior knowledge. However, there are many missing clinical scores at certain time points, especially for later time point (36 and 48 months) ADNI data. It will result in a huge information loss if we throw away these data in the prediction stage. It is necessary to incorporate the missing target values with multi-task regression to predict clinical scores [31], [36], [37].
+
+In this paper, we use a matrix Θ∈ℝnt×mt to indicate missing target values, where Θi,j = 0 if the target value of label Yi,jt is missing and Θi,j = 1 otherwise. Given the sparse codes {S1, …, ST} and corresponding labels {Y1, …, YT} from different times where Yt∈ℝmt×nt, we formulate the multi-target learning stage with missing target values as: (6) minW1,⋯,WT∑t=1T‖Θ(Yt−WtSt)‖F2+ξ∑t=1T‖Wt‖F2.
+
+Although Eq. (6) is associated with missing values on the labels, we show that it has a close form and present the theoretical analysis of MMLC stage-II in Supplemental Material.
+
+III. Optimization Analysis
+
+In this section, we explain the updating procedures for MMLC. Eq. (5) is a non-convex problem. However, it will become a convex problem when we fix either D or S. When the sparse codes S is fixed, solving dictionary D^ and D¯ can be solved as a quadratically constrained quadratic programming (QCQP) problem [35]. At the end of each update in MMLC stage-I, we update the shared dictionary Φ:Φ=D^t and let D^1=⋯=D^t. When the dictionary D is fixed, solving each sparse code si can be view as a sparse group Lasso problem [38]. We alternately update Dt and St for k = κ epoches and summarize the optimization details into Algorithm 2.
+
+In Algorithm 2, for each image patch xit, we learn the i-th sparse code sit,(k+1) from st by several steps of cyclic coordinate descent (CCD) [32]. We then use learnt sparse codes sit,(k+1) to update the dictionary D^t,(k+1) and D¯t,(k+1) by one step stochastic gradient descent (SGD) [33]. Since sit,(k+1) is very sparse, we use the index set Iit,(k+1), to record the location of non-zero entries in sit,(k+1) to accelerate the update of sparse codes and dictionaries. Φ is updated by the end of the k-th iteration to ensure D^t,(k+1) is the same part among all the dictionaries.
+
+A. Updating the low-rankness sparse codes
+
+After we pick an image patch xit from the sample Xt at the time point t, we fix the dictionary D and only consider updating the first sparse codes term S. The optimization problem becomes the following form: (7) minSt∑t=1T(12‖Xt−[D^,D¯t]St‖F2+λ1‖St‖1,1)
+
+Coordinate descent [32] is known as one of the state-of-the-art methods for solving this Lasso problem [39]. In this study, we perform the CCD to optimize Eq. (7). Empirically, the iteration may take thousands of steps to converge, which is time-consuming in the optimization process of dictionary learning. However, we observe that after a few steps, the support of the coordinates, i.e., the locations of the non-zero entries in sit, becomes very stable, usually after less than ten steps. In this study, we perform P steps CCD to generate the non-zero index set Itk+1, recording the non-zero entry of sit,(k+1). Then we perform Q steps CCD to update the sparse codes only on the non-zero entries of sit,(k+1), accelerating the learning process significantly. Stochastic coordinate coding (SCC) [40] employs a similar strategy to update the sparse codes in a single task. For the multi-task learning, we summarize the updating rules as follows: Perform P steps CCD to update the locations of the non-zero entries Iit,(k+1) and the model sit,(k+1).
+
+Perform Q steps CCD to update the sit,(k+1) in the index of Iit,(k+1).
+
+In (a), we will pick up j-th coordinate to update the model si,jt and non-zero entries, where j ∈ {1, …, pt} in every CCD step. We perform the update from the 1st coordinate to the pt-th coordinate. Meanwhile, we calculate the gradient g based on Eq. (7)) and update the model si,jt,(k+1) based on g. The calculation of g and si,jt,(k+1) follows the equations: (8) g=[D^t,(k),D¯t,(k)]jT(Ω([D^t,(k),D¯t,(k)],sit,(k),Iit,(k))−xit),
+
+(9) si,jt,(k+1)=Γλ(si,jt,(k)−g),
+
+where Ω is a sparse matrix multiplication function that has three input parameters. Taking Ω(A,b,I) as an example, A is a matrix, b denotes a vector and I records the locations of non-zero entries in b (an index set). The output value of Ω is defined as: Ω(A,b,I)=Ab. We manipulate the non-zero entries of b and the corresponding columns of A based on the index set I when computing Ab so that we speed up the calculation by utilizing the sparsity of b. Γ is the soft thresholding shrinkage function [41] as below: (10) Γφ(x)=sign(x)(|x|−φ).
+
+In the end of (a), we count the non-zero entries in sit,(k+1) and store the non-zero index in Iit,(k+1). In (b), we perform Q steps CCD by only considering the non-zero entries in sit,(k+1). As a result, for each index l∈Iit,(k+1), we calculate the gradient g and update the si,lt,(k+1) by: (11) g=[D^t,(k),D¯t,(k)]lT(Ω([D^t,(k),D¯t,(k)],sit,(k+1),Iit,(k+1))−xit),
+
+(12) si,lt,(k+1)=Γλ((si,lt,(k+1)−g).
+
+Since we only focus on the non-zero entries of the model and P is less than 10 iterations and Q is a much larger number, we significantly accelerate the entire sparse codes learning process. The procedure of updating sparse codes can be summarized into Algorithm 3.
+
+However, in Eq. (5), there are two convex and non-smooth regularizers for St. We propose to update the low-rankness sparse codes by using the conventional Inexact Augmented Lagrange Multiplier (IALM) [42]. IALM is an iterative method that augments the Lagrangian function with quadratic penalty terms, which allows closed-form updates for each variable in the problem. Therefore, solving the ℓ1 and the nuclear norm will result in solving the following problem, where we use two slack variables S2t and S3t for the two terms: (13) minDt∈Ψt,S1t,S2t,S3t∑t=1T(12‖Xt−[D^,D¯t¯]S1t‖F2+λ1||S2t‖1,1+λ2‖S3t‖*+tr[L1(S1t−S2t)]+tr[L2(S1t−S3t)]+μ12‖S1t−S2t‖F2+μ22‖S1t−S3t‖F2),
+
+where L1 and L2 are lagrange multipliers, and μ1 and μ2 are two positive scalars. IALM efficiently minimize Eq. (13) and the validity and optimality of Eq. (13) is guaranteed by the following theorem.
+
+Theorem1: For Eq. (13), if {μrk}(r=1,2) is non-decreasing and ∑k=1+∞1/μrk=+∞ then (S2, S3) converge to an optimal solution (S2*, S3*).
+
+We provide the proof of Theorem 1 in Supplemental Material.
+
+Theorem 1 only guarantees convergence but does not specify the rate of convergence for the IALM method and we discuss the convergence rate at the end of this section. we use blockwise coordinate descent to alternatively update each variable of S1t, S2t, S3t with all other variables fixed to their most recent values as follows: (14) S2t*=Ωλ1μ1(S1t+L1μ1),S3t*=Θλ2μ2(S1t+L2μ2),S1t*=(DtTDtμ1I+μ2I)−1G,
+
+where G=DtTXt−L1−L2+μ1S2t+μ2S3t, Ωλ(S)=sign(S)(|S|−λ)+ is the soft-thresholding operator and Θλ(S) = UΩλ(Σ)VT is the singular value soft-thresholding operator with S = UΣV T is the SVD of S. Then, we can update the multipliers with ϕ &gt; 1 as follows, (15) L1=L1+μ1(S1t−S2t);L2=L2+μ2(S1t−S3t);μ1=ϕμ1;μ2=ϕμ2.
+
+After we obtain S1t* as St, we then fix St to update Dt.
+
+B. Updating common and task-specific dictionaries
+
+We update the dictionaries by fixing the sparse codes, thus, and the optimization problem becomes: (16) minD^t,D¯tF(D^t,D¯t)=12‖xit−[D^t,D¯t]sit‖22
+
+We know the non-zero entries of sit,(k+1) after we updating the sparse codes. The key insight of MMLC is that we just need to update the non-zero entries of the dictionaries but not all columns of the dictionaries, and it dramatically accelerates the optimization. When updating the i-th column and j-th row’s entry of the dictionary D, the gradient of Dj,i is set to be ∇Dj,i=si(DjTs−xj). If si = 0, the gradient would be zero. We therefore do not need to update the Dj. The learning rate is set to be an approximation of 1/Htk+1, which is updated by the sparse codes sit,(k+1) in k-th iteration. We first update the Hessian matrix Htk+1 by: (17) Htk+1=Htk+sit,(k+1)si(t,(k+1))T.
+
+One step SGD is performed to update the dictionaries: D^tk+1 and D¯tk+1. We use a vector R to store the information Dz − x in order to speed up the computation. (18) R=Ω([D^t,(k),D¯t,(k)],sit,(k+1),Iit,(k+1))−xit.
+
+Here, R=τ([D^(k−1),D¯t,(k−1)],St,(k))−Xt, where τ(A, B) is a matrix multiplication function and τ(·) = AB. The procedure of learning the l-th column and j-th row of dictionaries takes the form of (19) [D^tk+1,D¯tk+1]j,l=[D^t,(k),D¯t,(k)]j,l−1Htk+1(l,l)si,lt,(k+1)Rj,
+
+where l is the non-zero entry stored in Iit,(k+1). We let the learning rate be the inverse of the diagonal element of the Hessian matrix as 1/Htk+1(l,l) for the l-th column of the dictionary.
+
+It is important to normalize the dictionaries D^t,(k+1) and D¯t,(k+1) after updating them because of Dt ∈ Ψt in equation (Eq. (16)). Since the dictionaries updating procedure only occurs at non-zero entries, we perform the normalization on the the corresponding columns of sit,(k+1). The step of utilizing non-zero entries from Iit,(k+1) accelerates the whole learning process. We summarized the updating rules of dictionaries into Algorithm 4.
+
+C. Updating resemblance term
+
+After we update Dt, we finally calculate wp,q, and update the fourth term of Eq. (5) at the end of k-th epoch. We update the inherent resemblant knowledge term with the iterative soft-thresholding [43]. We first calculate the gradient g based on Eq. (20), and then update the model St,(k) based on g. The calculation of g and St,(k) follows the equations: (20) g=1γDtXt+[I−1γ(DtTDt+wp,qλ3I)]St,(k−1),St,(k)=Ωλ3(g+wp,qλ3γDt),
+
+where γ is a non-negative parameter and Ωλ3 is the soft-thresholding operator. Details of MMLC updating rules can be found in Algorithm 2.
+
+The convergence of MMLC algorithm is reached when the error of the objective function is below a threshold ϵ = 10−3 and the SVD of S can be computed efficiently with time complexity O(mnl), where l &lt; min(m, n) is its rank. It is worth noting that the overall computational complexity of MMLC is O(m3+ϵ−0.5mn+m2n) when the number of IALM iterations is O(ϵ−0.5). This is much faster than the complexity of conventional method O(m3 + m2n + mn2).
+
+IV. Experiments
+
+A. Dataset
+
+Data is downloaded from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database ([44], adni.loni.usc.edu). ADNI is the result of efforts of many co-investigators from a broad range of academic institutions and private corporations. Subjects have been recruited from over 50 sites across the U.S. and Canada. The primary goal of ADNI is to test whether biological markers, such as serial MRI and positron emission tomography (PET), combined with clinical and neuropsychological assessments, can measure the progression of mild cognitive impairment (MCI) and early AD. Subjects originally recruited for ADNI-1 and ADNI-GO had the option to be followed in ADNI-2. For up-to-date information, see www.adniinfo.org.
+
+In this work, we study the performance of MMLC on the entire ADNI-1 cohort. We use T1-weighted magnetic resonance images (MRIs) coming from seven different time points: baseline, 6-, 12-, 18-, 24-, 36- and 48-month. 837, 733, 728, 326, 641, 454 and 251 are the sample sizes corresponding to seven time points, respectively. Thus, we learn a total of 3970 images and the responses are the Mini Mental State Examination (MMSE) and Alzheimer’s Disease Assessment Scale cognitive subscale (ADAS-Cog) score. In addition, we remove 23 subjects who do not have MMASE and ADAS-cog information at baseline in this work.
+
+B. Experimental Setting
+
+1) Surface features:
+
+We use hippocampal surface multivariate morphometry statistics (MMS) [14] (Fig. 1 (c)) as our learning features. The original input data are the three-dimensional (3D) T1-weighted images (Fig. 1 (a)) from ADNI dataset. We first use FIRST(https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIRST) to segment the original data and obtain the hippocampus substructure (Fig. 1 (b)). We then adopt the surface fluid registration [45] to obtain surface geometric features for automated surface registration. Following that, a set of vertex-wise hippocampal MMS features are computed as [14]. They consist of surface multivariate tensor-based morphometry (mTBM) and radial distance (RD). mTBM describes the surface deformation along the surface tangent plane while RD reflects surface differences along the surface normal directions. MMS features consist 4 × 1 vectors on each vertex of 15000 vertices on every hippocampal surface (each subject has two hippocampal surfaces). We select 1102 patches of size 10 × 10 on each hippocampal surface mesh and each patch dimension is 400. We use the baseline and 6-month imaging data as training data and predict 12-month to 48-month clinical scores.
+
+2) MMLC settings:
+
+The model is trained on an Intel(R) Core(TM) i7-6700 K CPU with 4.0GHz processors, 64 GB of globally addressable memory and a single Nvidia TITAN X GPU. The source code of MMLC are available at http://gsl.lab.asu.edu/software/mmlc. In stage one, λ1 = 0.1, λ2 = 10−2, λ3 = 10−3, μ1 = 10, μ2 = 1 and γ = 1, ϕ = 10. The SCC sparsity parameter (λ1) is the best parameter setting as [40]. The rest parameters are selected by cross-validation results on the training data. For example, we use 5-fold cross-validation with a grid search to pick the best parameters for λ2 and λ3 from {1000, 100, 10, 1, 0.1, 10−2, 10−3, 10−4, 10−5}. In stage two, cross-validation is used to select model parameters ξ (between 10−3 and 103). For common and individual dictionary split, we compare the performance by varying the dictionary size as 125:875, 250:750, 500:500, 750:250, 875:125. We observe that the algorithm has the best performance while the ratio between the common dictionary and the individual parts is 1:1. Therefore, in all experiments, we use 1000 atoms for the dictionary and 500:500 split atoms as the size of common and task-specific dictionaries (Sec. IV-C1). When the sparse features are learned, Max-Pooling is used to generate features for annotation and finally we got a 1000-dimensional feature vector for each subject.
+
+3) Evaluation method:
+
+In order to evaluate the model, we randomly split the data into training and testing sets using a 9:1 ratio to avoid data bias and report the mean and standard deviation based on 50 different splits of data. We evaluate the overall regression performance using weighted correlation coefficient (wR) and root mean square error (rMSE) for task-specific regression performance measures. The two measures are defined as wR(Y,Y^)=∑t=1TCorr(Yt,Y^t)nt/∑t=1Tnt, rMSE(Yt,Y^t)=‖Yt−Y^t‖22/nt. For wR, Yt is the ground truth of target of task t and Y^t is the corresponding predicted value, Corr is the correlation coefficient between two vectors and nt is the number of subjects of task t. rMSE is computed for each task t, Yt is the ground truth of the target responses and Y^t is the corresponding prediction. The smaller rMSE, the bigger wR mean the better results.
+
+4) Comparison methods:
+
+We compare the proposed algorithm MMLC with six other methods: 1) single-task regression methods: LASSO [39] and Ridge [46]; 2) multi-task regression methods: multi-task regression with ℓ2,1 norm regularization [47] (L21) and temporal group Lasso based multi-task progression model [31] (TGL); 3) sparse coding-based methods: single-task sparse coding followed by Lasso [21] (STSC), Muilti-source Multi-target dictionary learning followed by Lasso regression [20] (MSMT) (λ2 = 0 and λ3 = 0 in Eq. (5)).
+
+C. Experimental Results
+
+1) The atoms of common and task-specific dictionaries:
+
+In stage one of MMLC, the common dictionary is assumed to be shared by different tasks. It is necessary to evaluate what is an appropriate size of such common dictionary. Therefore, we set the dictionary size to be 1000 and partition the dictionary by different proportions: 125:875, 250:750,500:500, 750:250 and 875:125, where the left number is the size of common dictionary while the right one is the size of individual dictionary for each task. Fig. 3 shows the results of rMSE of MMSE and ADAS-cog prediction. As it shows in Fig. 3, the rMSE of MMSE and ADAS-Cog are lowest when we split the dictionary by half and a half. It means the both of common and individual dictionaries are of equal importance during the multi-task learning.
+
+2) Comparison with two other sparse coding methods:
+
+There are quite a variety of sparse coding approaches in the literature. We compare our work with two other sparse coding methods. We use the online dictionary learning code package for (ODL) [18] method. We also implement the low-rank shared dictionary learning (LRSDL) method, based on the paper [48] and the github source code1. To simplify the comparison experiments, we adopt the classification problem in our prior work [49] where we apply Stochastic Coordinate Coding (SCC) to generate sparse hippocampal surface features for classification studies. In this problem, its objective function is the same as Eq. (1) for ODL and SCC (we provide the objective function for LRSDL in Supplemental Material). We conduct 6 different classification experiments and test ODL, SCC and LRSDL measures in terms of running time, and objective function value, respectively. For the comparison methods, we select the hyper-parameter for LRSDL by using the same strategy as SCC on the training set. We report the detailed experimental results in Supplemental Material. In summary, among these three methods, SCC achieves the best balance between performance and the running time. The experimental results may justify our selection of SCC method for the studied problem.
+
+3) The comparisons of time efficiency:
+
+We compare the efficiency of our proposed MMLC with STSC (Algorithm 1). In this experiment, we focus on the single batch size setting, that is, we process one image patch in each iteration. We vary the dictionary size as: 500, 1000 and 2000. For MMLC, the ratio between the common dictionary and the individual parts is 1:1. We report the results on ADNI-I cohort in Table I. We observe that the proposed MMLC uses less time than STSC. When the size of dictionary increases, MMLC is more efficient and has a higher speedup compared to STSC.
+
+4) Comparison results on MMSE and ADAS-cog:
+
+We report the comparison results of MMLC and other methods of MMSE and ADAS-cog with ADNI-1 cohort in Table II and Table III, respectively. In both tables, we can find that the cognition predictions produced by MMLC achieves the highest correlation with the ground truth data. In Fig. 4, we can find that MMLC achieves relatively high correlation on both 12-month and 48-month prediction results. It shows that the prediction results of MMLC do not decrease quickly for the long term prediction. After MMLC formulates temporary sequence information, the results are more linear, reasonable and accurate on all time points. Moreover, MMLC and MSMT methods can handle missing data on both source and target sides. L21 and TGL can deal with missing target data while neither Lasso nor Ridge can deal with missing data.
+
+In Table II, the proposed MMLC outperforms linear regression methods in terms of both rMSE and correlation coefficient wR on four different time points. The results of Lasso and Ridge are very close while sparse coding methods are superior to them. For sparse coding methods, we observe that MTSC obtains lower rMSE and higher correlation results than STSC since MTSC considers the correlation between different time slots and the task-specific relationship. STSC has lower rMSE than MMLC on M18 because 18-month data is significantly less than other time points and SC has its bias on that point. We also notice that the proposed MMLC further improves the result of MTSC since we consider the low-rankness of the sparse codes and the resemblant knowledge in longitudinal dataset. Note that we significantly improve the rMSE results for later time points. A possible reason is that the baseline images have less correlation with later time points images and MTSC treats each time point equally.
+
+In Table. III, we can observe that the best performance of predicting scores of ADAS-Cog is achieved by MMLC in four-time points. Comparing with L21, after MMLC dealing with missing labels, the results are more linear, reasonable and accurate. Due to the dimension of M36 and M48 is too small, it is hard to learn a complete model. TGL also considers the issue of missing labels, however, MMLC achieves better results because MMLC incorporates multiple-source data and uses common and individual dictionaries. This shows our method is more efficient in dealing with incomplete data.
+
+We also notice that the proposed MMLC further improved the results of MSMT since we consider the low-rankness of the sparse codes and the resemblant knowledge in longitudinal dataset. Note that we significantly improve the rMSE results for later time points. A possible reason is that the baseline images have less correlation with later time points images and MSMT treats each time point equally.
+
+We show the scatter plots for the predicted values versus the actual values for MMSE and ADAS-Cog on the M12 and M48 in Fig. 4. In the scatter plots, we see the predicted values and actual clinical scores have a high correlation. The scatter plots show that the prediction performance for ADAS-Cog is better than that of MMSE.
+
+5) Ablation study on different amount of missing data:
+
+Furthermore, we study whether MMLC helps improve incomplete data results by varying different amounts of missing data. We start with a total of 122 subjects, which have complete MMSE value at all seven time points. We then randomly removed 20%, 30%, 40% and 50% target values during training. We perform our algorithm MMLC to the complete data and different amounts of incomplete data. For comparison purposes, we apply the imputation approach [50] to complete the missing data which uses neighboring time point data to approximate the missing value. For the experimental settings, we follow those of Sec. IV-B2. Fig. 5 shows the rMSE results with different amounts of missing data. The results show that compared with the imputation method [50], our approach has better results that are close to the performance with the complete data.
+
+V. Discussion
+
+In AD research, structural MRI-based hippocampal morphometry measures correlate closely with differences and changes in cognitive performance [51], [52], supporting their validity as markers of AD progression. Recent research further demonstrated that hippocampal morphometry may be used to predict amyloid burden [53], [54] and identify AD related changes in the preclinical stage [55], [15]. In this work, we found that one may predict future cognitive decline by analyzing longitudinal hippocampal morphometry changes. Therefore, our work supports the potential to use sMRI biomarkers as predictors of disease progression.
+
+In this work, we adopted FIRST for hippocampus segmentation. However, our hippocampal morphometry system has utilized different segmented hippocampal data as input. For example, our earlier work (e.g., [56], [57], [58]) used manually segmented hippocampi to build surface meshes. Later we adopted FIRST for automatic hippocampus segmentation [45] and used it in almost all our hippocampal morphometry research. Meanwhile, we also used FreeSurfer segmented hippocampi to build hippocampal surface meshes [59]. All of them achieved reasonable results in group difference studies and thus the results demonstrated that our pipeline is robust to segmentation methods. The reason for us to choose FIRST for most of work is that FIRST can always generate topologically sound segmentation results while FreeSurfer does not guarantee topologically correct results. Therefore, manual quality control is necessary to incorporate FreeSurfer in our pipeline. Thus far, our related prediction/classification work (e.g., [16], [60]) all adopted FIRST segmented hippocampal surfaces to work with relatively large scaled datasets. Since the input of our MMLC is the surface features rather than the output from segmentation tools, it is reasonable for us to expect that our method is not sensitive to the hippocampus segmentation tools used.
+
+In ADNI, the scan times “12-month”, “24-month” etc. are nominal times. With the baseline data, we computed the exact interval months for all longitudinal data used in our research. The average months and their standard deviations on each time point are 6.94±0.96, 12.98±1.01, 19.10±1.06, 25.18±1.41, 37.15 ± 1.37 and 49.43 ± 1.42 for 6-, 12-, 18-, 24-, 36- and 48-month data, respectively. It shows that 6-month data are not exactly scanned in the following 6-month. One way to make them perfectly aligned to a specific month may be a linear interpolation. However, it would assume all features change linearly with time, a strong assumption which we try to avoid in our formulation. On the other hand, our multi-task model does not make any specific assumption on the relationship between features on a specific time point. Our model simply assumes that the time points are similar to each other so that they can be clustered together (i.e., with the same time label in the same matrix Xt). It can be uniquely applied to analyze longitudinal data which are not collected in the exact time points (such as ADNI, Australian Imaging Biomarkers and Lifestyle Study of Aging (AIBL) [61] and Arizona APOE cohorts [62]). Although we believe that the development of more refined analysis models is necessary, our current experimental results show that our models may be effectively applied to analyze such longitudinal data.
+
+In Supplementary Material, we show that the final objective function is non-decreasing and converges to an optimal solution. However, as the objective function is not convex, the problem may have multiple solutions. For general cases, existing works show for such problems, the objective function values increasingly convert to some value in each iteration but whether it converges to the global optimum is still an open problem [63], [64], [65]. With the current “greedy” strategy in each optimization iteration, we can guarantee that the solution converges to a local optimum. To show the local optimal solution is also the global optimum, we empirically repeated our experiments several times with different random initializations and the solutions of our proposed method converged to the minimum values which are very close to each other. Besides, in Supplementary Material, we also compare the objective function values of our MMLC methods with two state-of-the-art methods, online dictionary learning (ODL) [18] and low-rank shared dictionary learning (LRSDL) [48] methods. With a similar experimental setup, the three minimal objective function values are quite close. These results empirically support that our work may converge to the global optimum in the current study.
+
+This work represents our initial efforts to develop robust machine learning algorithms to study the prediction of cognitive decline with both incomplete longitudinal brain images and incomplete clinical labels. Nonetheless, there is still much to be desired in our current experimental results on ADNI cohort. For example, in both Table II and Table III, although we generally achieved smaller rMSE results compared to other methods, on some time points, our work only achieved slightly improved results and our work sometimes had larger standard deviation. In the future, we will further evaluate our work in larger brain imaging cohorts (e.g., UKBiobank imaging study [66]). Meanwhile, we will continue refining our methods by exploring the underlying feature-feature relationship and it may further improve our results.
+
+VI. Conclusion and Future Work
+
+In this paper, we propose a novel multi-task sparse coding framework together with an efficient numerical scheme (MMLC). Our experimental results clearly show MMLC offers a unique perspective on prognosis with longitudinal data. In the future, we will incorporate our recent feature selection model [67] to visualize the identified imaging biomarkers. We will also refine our system by considering the design of a hierarchical model to further improve its statistical power.
+
+Supplementary Material
+
+supp1-3070780
+
+Acknowledgment
+
+This research is supported in part by National Institutes of Health (RF1AG051710, R01EB025032, U54EB020403, R21AG065942, R01AG031581 and P30AG19610), ASU-Mayo seed grant, and Arizona Alzheimer’s Consortium. Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: Alzheimer’s Association; Alzheimer’ s Drug Discovery Foundation; BioClinica, Inc.; Biogen Idec Inc.; Bristol-Myers Squibb Company; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; GE Healthcare; Innogenetics, N.V.; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Medpace, Inc.; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Synarc Inc.; and Takeda Pharmaceutical Company. The Canadian Institutes of Health Research is providing funds to Rev December 5, 2013 support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Disease Cooperative Study at the University of California, San Diego. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Data used in preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wpcontent/uploads/how to apply/ADNI Acknowledgement List.pdf.
+
+Fig. 1. The pipeline of our Multi-Resemblance Multi-Target Low-Rank Coding (MMLC) framework.
+
+Fig. 2. Illustration of the learning process of MMLC on ADNI-I cohort from multiple different time points to predict multiple future time points clinical scores. In the figure, there are three input feature spaces from baseline, 6-month and 12-month as {X1,X2,X3}. We learn the dictionaries and sparse codes in stage 1. The dictionaries have two components (shared dictionary D^t and task-specific dictionary D¯t corresponding to specific input Xt). The sparse codes are low-rankness and have different resemblance between each others (e.g., S1, S2 and S2, S3 share higher resemblance, i.e., more common colors, than S1, S3). In stage 2, we use multi-target learning to predict multiple target clinical scores while dealing with missing label problem.
+
+Fig. 3. Comparison of rMSE performance by varying the size of common dictionary.
+
+Fig. 4. Scatter plots of actual MMSE and ADAS-Cog versus predicted values on M12 and M48 by using MMLC.
+
+Fig. 5. The rMSE results of MMSE with different amount missing data by MMLC-Lasso and Imputation-Lasso, respectively.
+
+TABLE I Time comparisons of MMLC and STSC by varying dictionary size on ADNI-I dataset.
+
+Dictionary Size	MMLC	STSC	
+500	1.74 hour	8.84 hour	
+1000	3.34 hour	21.95 hour	
+2000	6.93 hour	49.90 hour	
+
+TABLE II Performance comparison between the proposed algorithm (MMLC) and six other methods (Sec. IV. B. (4)) on predicting future MMSE scores of 12-, 18-, 24-, 36-, 48-month based on baseline and 6-month hippocampal morphometry data on the whole ADNI-I dataset
+
+Methods	wR	M12	M18	M24	M36	M48	
+Lasso	0.40±0.09	4.04±0.77	3.46±0.97	5.53±0.86	4.39±0.74	4.73±1.49	
+Ridge	0.41±0.07	4.26±0.56	3.56±0.93	5.05±0.54	4.21±0.47	3.62±0.91	
+L21	0.57±0.01	3.32±0.63	4.75±0.75	4.64±0.88	4.08±1.01	3.11±1.05	
+ODL-L	0.63±0.08	2.99±0.63	2.88±0.68	4.29±0.84	3.62±1.45	2.93±1.07	
+TGL	0.70±0.05	2.73±0.72	4.00±1.31	4.00±0.64	3.19±1.38	2.60±1.42	
+MTSC	0.73±0.02	2.61±0.55	3.37±1.01	3.66±0.78	2.73±1.09	2.52±1.20	
+MMLC	0.75±0.02	2.55±0.23	2.99±0.89	3.38±0.76	2.65±0.79	2.32±1.02	
+
+TABLE III Performance comparison between the proposed algorithm (MMLC) and six other methods (Sec. IV. B. (4)) on predicting future ADAS-COG scores of 12-, 18-, 24-, 36-, 48-month based on baseline and 6-month hippocampal morphometry data on the whole ADNI-I dataset.
+
+Methods	wR	M12	M18	M24	M36	M48	
+Lasso	0.49±0.05	6.81±1.03	6.87±0.74	7.62±0.87	8.08±1.39	6.55±1.34	
+Ridge	0.46±0.07	7.68±0.96	6.89±1.69	7.84±1.54	8.59±0.62	6.64±1.58	
+L21	0.53±0.07	6.40±0.51	6.95±0.88	8.07±0.67	8.00±1.04	5.92±0.60	
+ODL-L	0.53±0.05	5.65±0.73	4.97±0.67	7.30±0.77	7.25±0.69	5.56±1.22	
+TGL	0.72±0.04	5.52±1.15	5.70±0.53	6.85±1.06	6.36±1.22	5.73±0.61	
+MTSC	0.77±0.02	5.18±0.88	4.64±1.12	6.76±1.35	6.78±1.54	5.27±1.76	
+MMLC	0.80±0.04	5.17±0.95	4.87±0.99	6.66±0.65	6.37±1.23	5.16±1.31	
+
+1 https://github.com/tiepvupsu/DICTOL_python
+
+
+References
+
+[1] Weiner MW , Veitch DP , Aisen PS , Beckett LA , Cairns NJ , Green RC , and , “The Alzheimer’s Disease Neuroimaging Initiative: a review of papers published since its inception,” Alzheimers Dement, vol. 8 , no. 1 Suppl , pp. 1–68, 2 2012.22265587
+[2] Frisoni GB , Fox NC , Jack CR Jr , Scheltens P , and Thompson PM , “The clinical use of structural mri in Alzheimer disease,” Nature Reviews Neurology, vol. 6 , no. 2 , p. 67, 2010.20139996
+[3] Fox NC , Warrington EK , Freeborough PA , Hartikainen P , Kennedy AM , Stevens JM , and , “Presymptomatic hippocampal atrophy in Alzheimer’s disease. A longitudinal MRI study,” Brain, vol. 119 (Pt 6 ), pp. 2001–2007, 12 1996.9010004
+[4] Dickerson BC , Goncharova I , Sullivan MP , Forchetti C , Wilson RS , Bennett DA , and , “MRI-derived entorhinal and hippocampal atrophy in incipient and very mild Alzheimer’s disease,” Neurobiol Aging, vol. 22 , no. 5 , pp. 747–754, 2001.11705634
+[5] Josephs KA , Martin PR , Weigand SD , Tosakulwong N , Buciuc M , Murray ME , and , “Protein contributions to brain atrophy acceleration in Alzheimer’s disease and primary age-related tauopathy,” Brain, vol. 143 , no. 11 , pp. 3463–3476, 12 2020.33150361
+[6] Nadal L , Coupe P , Helmer C , Manjon JV , Amieva H , Tison F , and , “Differential annualized rates of hippocampal subfields atrophy in aging and future Alzheimer’s clinical syndrome,” Neurobiol Aging, vol. 90 , pp. 75–83, 06 2020.32107063
+[7] Adler DH , Wisse LEM , Ittyerah R , Pluta JB , Ding SL , Xie L , and , “Characterizing the human hippocampus in aging and Alzheimer’s disease using a computational atlas derived from ex vivo MRI and histology,” Proc Natl Acad Sci U S A, vol. 115 , no. 16 , pp. 4252–4257, 04 2018.29592955
+[8] Zhao K , Ding Y , Han Y , Fan Y , Alexander-Bloch AF , Han T , and , “Independent and reproducible hippocampal radiomic biomarkers for multisite Alzheimers disease: diagnosis, longitudinal progress and biological basis,” Science Bulletin, vol. 65 , no. 13 , pp. 1103–1113, 2020.
+[9] Apostolova LG , Dutton RA , Dinov ID , Hayashi KM , Toga AW , Cummings JL , and , “Conversion of mild cognitive impairment to Alzheimer disease predicted by hippocampal atrophy maps,” Arch Neurol, vol. 63 , no. 5 , pp. 693–699, 5 2006.16682538
+[10] Devanand DP , Bansal R , Liu J , Hao X , Pradhaban G , and Peterson BS , “MRI hippocampal and entorhinal cortex mapping in predicting conversion to Alzheimer’s disease,” Neuroimage, vol. 60 , no. 3 , pp. 1622–1629, 4 2012.22289801
+[11] Gerardin E , Chetelat G , Chupin M , Cuingnet R , Desgranges B , Kim HS , and , “Multidimensional classification of hippocampal shape features discriminates Alzheimer’s disease and mild cognitive impairment from normal aging,” Neuroimage, vol. 47 , no. 4 , pp. 1476–1486, 10 2009.19463957
+[12] Marti-Juan G , Sanroma-Guell G , Cacciaglia R , Falcon C , Operto G , Molinuevo JL , and , “Nonlinear interaction between APOE 4 allele load and age in the hippocampal surface of cognitively intact individuals,” Hum Brain Mapp, vol. 42 , no. 1 , pp. 47–64, 1 2021.33017488
+[13] Thompson PM , Hayashi KM , De Zubicaray GI , Janke AL , Rose SE , Semple J , Hong MS , Herman DH , Gravano D , Doddrell DM , , “Mapping hippocampal and ventricular change in alzheimer disease,” Neuroimage, vol. 22 , no. 4 , pp. 1754–1766, 2004.15275931
+[14] Wang Y , Song Y , Rajagopalan P , An T , Liu K , Chou YY , and , “Surface-based TBM boosts power to detect disease effects on the brain: an N=804 ADNI study,” Neuroimage, vol. 56 , no. 4 , pp. 1993–2010, 6 2011.21440071
+[15] Dong Q , Zhang W , Wu J , Li B , Schron EH , McMahon T , and , “Applying surface-based hippocampal morphometry to study APOE-E4 allele dose effects in cognitively unimpaired subjects,” Neuroimage Clin, vol. 22 , p. 101744, 2019.
+[16] Dong Q , Zhang J , Li Q , Wang J , Lepore N , Thompson PM , and , “Integrating Convolutional Neural Networks and Multi-Task Dictionary Learning for Cognitive Decline Prediction with Longitudinal Images,” J. Alzheimers Dis, vol. 75 , no. 3 , pp. 971–992, 2020.32390615
+[17] Wang G , Dong Q , Wu J , Su Y , Chen K , Su Q , and , “Developing univariate neurodegeneration biomarkers with low-rank and sparse subspace decomposition,” Med Image Anal, vol. 67 , p. 101877, 1 2021.33166772
+[18] Mairal J , Bach F , Ponce J , and Sapiro G , “Online dictionary learning for sparse coding,” in Proceedings of the 26th Annual International Conference on Machine Learning. ACM, 2009, pp. 689–696.
+[19] Li Y , Chen H , Jiang X , Li X , Lv J , Li M , and , “Transcriptome Architecture of Adult Mouse Brain Revealed by Sparse Coding of Genome-Wide In Situ Hybridization Images,” Neuroinformatics, vol. 15 , no. 3 , pp. 285–295, 7 2017.28608010
+[20] Zhang J , Li Q , Caselli RJ , Thompson PM , Ye J , and Wang Y , “Multi-source multi-target dictionary learning for prediction of cognitive decline,” in Inf Process Med Imaging. Springer, 2017, pp. 184–197.
+[21] Zhang J , Shi J , Stonnington C , Li Q , Gutman BA , Chen K , and , “Hyperbolic space sparse coding with its application on prediction of Alzheimer’s disease in mild cognitive impairment,” in Med Image Comput Comput Assist Interv. Springer, 2016, pp. 326–334.
+[22] Wang H , Nie F , Huang H , Risacher S , Ding C , Saykin AJ , and , “Sparse multi-task regression and feature selection to identify brain imaging predictors for memory performance,” in Proc IEEE Int Conf Comput Vis, 2011, pp. 557–562.25283084
+[23] Brand L , Nichols K , Wang H , Shen L , and Huang H , “Joint Multi-Modal Longitudinal Regression and Classification for Alzheimer’s Disease Prediction,” IEEE Trans Med Imaging, 12 2019.
+[24] Zhang D and Shen D , “Multi-modal multi-task learning for joint prediction of multiple regression and classification variables in Alzheimer’s disease,” Neuroimage, vol. 59 , no. 2 , pp. 895–907, 2012.21992749
+[25] Yuan L , Wang Y , Thompson PM , Narayan VA , and Ye J , “Multi-source feature learning for joint analysis of incomplete multiple heterogeneous neuroimaging data,” Neuroimage, vol. 61 , no. 3 , pp. 622–632, 7 2012.22498655
+[26] Candes E , Li X , Ma Y , and Wright J , “Robust principal component` analysis?” Journal of ACM, vol. 58 , no. 3 , 2011.
+[27] Zhou X , Yang C , Zhao H , and Yu W , “Low-rank modeling and its applications in image analysis,” ACM Comput. Surv, vol. 47 , no. 2 , 12. 2014. [Online]. Available: 10.1145/2674559
+[28] Zhang Y , Jiang Z , and Davis LS , “Learning structured low-rank representations for image classification,” in Proceedings of the IEEE conference on computer vision and pattern recognition, 2013, pp. 676–683.
+[29] Zhang T , Ghanem B , Liu S , Xu C , and Ahuja N , “Low-rank sparse coding for image classification,” in 2013 IEEE International Conference on Computer Vision, 2013, pp. 281–288.
+[30] Sprechmann P , Bronstein AM , and Sapiro G , “Learning efficient sparse and low rank models,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 37 , no. 9 , pp. 1821–1833, 2015.26353129
+[31] Zhou J , Liu J , Narayan VA , and Ye J , “Modeling disease progression via fused sparse group lasso,” in Proceedings of the 18th ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2012, pp. 1095–1103.
+[32] Canutescu A and Dunbrack RL , “Cyclic coordinate descent: A robotics algorithm for protein loop closure,” Protein science, vol. 12 , no. 5 , pp. 963–972, 2003.12717019
+[33] Zhang T , “Solving large scale linear prediction problems using stochastic gradient descent algorithms,” in Proceedings of the twenty-first international conference on Machine learning. ACM, 2004, p. 116.
+[34] Liu J , Ji S , and Ye J , “Multi-task feature learning via efficient l2, 1-norm minimization,” in Proceedings of the twenty-fifth conference on uncertainty in artificial intelligence. AUAI Press, 2009, pp. 339–348.
+[35] Boyd S and Vandenberghe L , Convex optimization. Cambridge university press, 2004.
+[36] Huang L , Jin Y , Gao Y , Thung KH , and Shen D , “Longitudinal clinical score prediction in Alzheimer’s disease with soft-split sparse regression based random forest,” Neurobiol Aging, vol. 46 , pp. 180–191, 10 2016.27500865
+[37] Liu M , Zhang J , Lian C , and Shen D , “Weakly Supervised Deep Learning for Brain Disease Prognosis Using MRI and Incomplete Clinical Scores,” IEEE Trans Cybern, vol. 50 , no. 7 , pp. 3381–3392, 7 2020.30932861
+[38] Simon N , Friedman J , Hastie T , and Tibshirani R , “A sparse-group lasso,” Journal of Computational and Graphical Statistics, vol. 22 , no. 2 , pp. 231–245, 2013.
+[39] Tibshirani R , “Regression shrinkage and selection via the lasso,” Journal of the Royal Statistical Society. Series B (Methodological), pp. 267–288, 1996.
+[40] Lin B , Li Q , Sun Q , Lai M-J , Davidson I , Fan W , and , “Stochastic coordinate coding and its application for drosophila gene expression pattern annotation,” arXiv preprint arXiv:1407.8147, 2014.
+[41] Combettes PL and Wajs VR , “Signal recovery by proximal forward-backward splitting,” Multiscale Modeling &amp; Simulation, vol. 4 , no. 4 , pp. 1168–1200, 2005.
+[42] Fernández D and Solodov MV , “Local convergence of exact and´ inexact augmented lagrangian methods under the second-order sufficient optimality condition,” SIAM Journal on Optimization, vol. 22 , no. 2 , pp. 384–407, 2012.
+[43] Bredies K and Lorenz DA , “Linear convergence of iterative soft-thresholding,” Journal of Fourier Analysis and Applications, vol. 14 , no. 5–6 , pp. 813–837, 2008.
+[44] Mueller SG , Weiner MW , Thal LJ , Petersen RC , Jack C , Jagust W , Trojanowski JQ , Toga AW , and Beckett L , “The Alzheimer’s disease neuroimaging initiative,” Neuroimaging Clin. N. Am, vol. 15 , no. 4 , pp. 869–877, 11 2005.16443497
+[45] Shi J , Thompson PM , Gutman B , and Wang Y , “Surface fluid registration of conformal representation: Application to detect disease burden and genetic influence on hippocampus,” NeuroImage, vol. 78 , pp. 111–134, 2013.23587689
+[46] Hoerl E and Kennard RW , “Ridge regression: Biased estimation for nonorthogonal problems,” Technometrics, vol. 12 , no. 1 , pp. 55–67, 1970.
+[47] Liu J , Ji S , and Ye J , “SLEP: Sparse learning with efficient projections,” Arizona State University, 2009. [Online]. Available: https://github.com/jiayuzhou/SLEP
+[48] Vu TH and Monga V , “Fast low-rank shared dictionary learning for image classification,” IEEE Transactions on Image Processing, vol. 26 , no. 11 , pp. 5160–5175, 2017.28742035
+[49] Zhang J , Stonnington C , Li Q , Shi J , Bauer RJ , Gutman BA , and , “Applying sparse coding to surface multivariate tensor-based morphometry to predict future cognitive decline,” in Biomedical Imaging (ISBI), 2016 IEEE 13th International Symposium on. IEEE, 2016, pp. 646–650.
+[50] Ito K , Ahadieh S , Corrigan B , French J , Fullerton T , and Tensfeldt T , “Disease progression meta-analysis model in Alzheimer’s disease,” Alzheimer’s &amp; Dementia, vol. 6 , no. 1 , pp. 39–53, 2010.
+[51] de Leon MJ , George AE , Stylopoulos LA , Smith G , and Miller DC , “Early marker for Alzheimer’s disease: the atrophic hippocampus,” Lancet, vol. 2 , no. 8664 , pp. 672–673, 9 1989.
+[52] Jack CR , Slomkowski M , Gracon S , Hoover TM , Felmlee JP , Stewart K , Xu Y , Shiung M , O’Brien PC , Cha R , Knopman D , and Petersen RC , “MRI as a biomarker of disease progression in a therapeutic trial of milameline for AD,” Neurology, vol. 60 , no. 2 , pp. 253–260, 1 2003.12552040
+[53] Ansart M , Epelbaum S , Gagliardi G , Colliot O , Dormont D , Dubois B , Hampel H , and Durrleman S , “Reduction of recruitment costs in preclinical AD trials: validation of automatic pre-screening algorithm for brain amyloidosis,” Stat Methods Med Res, vol. 29 , no. 1 , pp. 151–164, 01 2020.30698081
+[54] Pekkala T , Hall A , Ngandu T , van Gils M , Helisalmi S , Hanninen T , and , “Detecting Amyloid Positivity in Elderly With Increased Risk of Cognitive Decline,” Front Aging Neurosci, vol. 12 , p. 228, 2020.32848707
+[55] Cacciaglia R , Molinuevo JL , Falcon C , Brugulat-Serrat A , Sanchez-Benavides G , Gramunt N , Esteller M , Moran S , Minguillon C , Fauria K , and Gispert JD , “Effects of APOE-e4 allele load on brain morphology in a cohort of middle-aged healthy individuals with enriched genetic risk for Alzheimer’s disease,” Alzheimers Dement, vol. 14 , no. 7 , pp. 902–912, 07 2018.29605385
+[56] Wang Y , Chan TF , Toga AW , and Thompson PM , “Multivariate tensor-based brain anatomical surface morphometry via holomorphic one-forms,” Med Image Comput Comput Assist Interv, vol. 12 , no. Pt 1 , pp. 337–344, 2009.20426005
+[57] Luders E , Thompson PM , Kurth F , Hong JY , Phillips OR , Wang Y , and , “Global and regional alterations of hippocampal anatomy in long-term meditation practitioners,” Hum Brain Mapp, vol. 34 , no. 12 , pp. 3369–3375, 12 2013.22815233
+[58] Monje M , Thomason ME , Rigolo L , Wang Y , Waber DP , Sallan SE , and , “Functional and structural differences in the hippocampus associated with memory deficits in adult survivors of acute lymphoblastic leukemia,” Pediatr Blood Cancer, vol. 60 , no. 2 , pp. 293–300, 2 2013.22887801
+[59] Joshi SH , Espinoza RT , Pirnia T , Shi J , Wang Y , Ayers B , and , “Structural Plasticity of the Hippocampus and Amygdala Induced by Electroconvulsive Therapy in Major Depression,” Biol. Psychiatry, vol. 79 , no. 4 , pp. 282–292, 2 2016.25842202
+[60] Fu Y , Zhang J , Li Y , Shi J , Zou Y , Guo H , and , “A novel pipeline leveraging surface-based features of small subcortical structures to classify individuals with autism spectrum disorder,” Prog. Neuropsychopharmacol. Biol. Psychiatry, vol. 104 , p. 109989, 1 2021.32512131
+[61] Ellis J , Nathan PJ , Villemagne VL , Mulligan R , Saunder T , Young K , and , “Galantamine-induced improvements in cognitive function are not related to alterations in α 4 β 2 nicotinic receptors in early alzheimers disease as measured in vivo by 2-[18 f] fluoro-a-85380 pet,” Psychopharmacology, vol. 202 , no. 1–3 , pp. 79–91, 2009.18949462
+[62] Caselli RJ , Reiman EM , Osborne D , Hentz JG , Baxter LC , Hernandez JL , and , “Longitudinal changes in cognition and behavior in asymptomatic carriers of the APOE e4 allele,” Neurology, vol. 62 , no. 11 , pp. 1990–1995, 6 2004.15184602
+[63] Xu Y , “On the convergence of higher-order orthogonal iteration,” Linear and Multilinear Algebra, vol. 66 , no. 11 , pp. 2247–2265, 2018.
+[64] De Lathauwer L , De Moor B , and Vandewalle J , “A multilinear singular value decomposition,” SIAM journal on Matrix Analysis and Applications, vol. 21 , no. 4 , pp. 1253–1278, 2000.
+[65] Uschmajew, “A new convergence proof for the higher-order power method and generalizations,” arXiv preprint arXiv:1407.4586, 2014.
+[66] Miller KL , Alfaro-Almagro F , Bangerter NK , Thomas DL , Yacoub E , Xu J , and , “Multimodal population brain imaging in the UK Biobank prospective epidemiological study,” Nat. Neurosci, vol. 19 , no. 11 , pp. 1523–1536, 11 2016.27643430
+[67] Zhang J , Tu Y , Li Q , Caselli RJ , Thompson PM , Ye J , and , “Multi-task sparse screening for predicting future clinical scores using longitudinal cortical thickness measures,” Proc IEEE Int Symp Biomed Imaging, vol. 2018 , pp. 1406–1410, 4 2018.30023040

@@ -1,0 +1,392 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9713490
+21159
+Med Image Anal
+Med Image Anal
+Medical image analysis
+1361-8415
+1361-8423
+
+29502033
+5910185
+10.1016/j.media.2018.01.003
+NIHMS951017
+Article
+Estimating fiber orientation distribution from diffusion MRI with spherical needlets
+Yan Hao 1
+Carmichael Owen 2
+Paul Debashis 1
+Peng Jie 1*
+for the Alzheimer’s Disease Neuroimaging Initiative†
+1 Department of Statistics, University of California, Davis One Shields Ave., Davis, CA 95616
+2 Pennington Biomedical Research Center, Louisiana State University 6400 Perkins Road, Baton Rouge, LA 70808
+* Correpondence author: jiepeng@ucdavis.edu
+† Data used in preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+21 3 2018
+08 2 2018
+5 2018
+01 5 2019
+46 5772
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+We present a novel method for estimation of the fiber orientation distribution (FOD) function based on diffusion-weighted magnetic resonance imaging (D-MRI) data. We formulate the problem of FOD estimation as a regression problem through spherical deconvolution and a sparse representation of the FOD by a spherical needlets basis that forms a multi-resolution tight frame for spherical functions. This sparse representation allows us to estimate the FOD by ℓ1-penalized regression under a non-negativity constraint on the estimated FOD. The resulting convex optimization problem is solved by an alternating direction method of multipliers (ADMM) algorithm. The proposed method leads to a reconstruction of the FOD that is accurate, has low variability and preserves sharp features. Through extensive experiments, we demonstrate the effectiveness and favorable performance of the proposed method compared to three existing methods. Specifically, we demonstrate that the proposed method is able to successfully resolve fiber crossings at small angles and automatically identify isotropic diffusion. We also apply the proposed method to real 3T D-MRI data sets of healthy individuals. The results show realistic depictions of crossing fibers that are more accurate, less noisy, and lead to superior tractography results compared to competing methods.
+
+Graphical abstract
+
+diffusion MRI
+fiber orientation distribution function
+spherical deconvolution
+spherical needlets
+ℓ1 regression
+
+1 Introduction
+
+Diffusion-weighted MRI (D-MRI) (Le Bihan et al. 2001, Mori 2007) has become a widely used, noninvasive tool for clinical and experimental neuroscience due to its capability of characterizing tissue microstructure in vivo by measuring the diffusion displacement of water molecules. Specifically, high angular resolution diffusion imaging (HARDI) enables extraction of accurate and detailed information about fiber tract directions through measurements made along a large number of gradient directions (Tuch et al. 2002). Such information is then used in fiber reconstruction algorithms (tractography) to facilitate better mapping of neuronal connections.
+
+HARDI techniques may be categorized according to their sampling schemes in the space of possible b-values and diffusion gradient directions (i.e., the q space) (Assemlal et al. 2011, Descoteaux et al. 2011, Jones et al. 2013, Parker et al. 2013, Tournier et al. 2011, Yeh et al. 2010). Single q-shell techniques sample gradient directions with a single b-value, whereas multiple q-shell techniques sample gradient directions with multiple b-values (Jensen et al. 2005, Lu et al. 2006, Weeden et al. 2005, 2008, Wu &amp; Alexander 2007, Wu et al. 2008, Liu et al. 2004, Descoteaux et al. 2011, Assemlal et al. 2009, Cheng et al. 2010). Models for single q-shell diffusion data include the fiber orientation distribution (FOD or fFOD) (Tournier et al. 2004, 2007, Jian &amp; Vemuri 2007, Yeh &amp; Tseng 2013a), diffusion orientation distribution function (ODF or dODF) (Tuch 2004, Descoteuax et al. 2007, 2009, Aganj et al. 2010), diffusion orientation transform (DOT) (Oz¨arslan et al. 2006) and fiber ball imaging (Jensen et al. 2016).
+
+Different q-space sampling schemes and data representations are optimal for different analytical goals. For example, multiple q-shell techniques enable explicit modeling of separate cellular contributors to the D-MRI signal. In this paper, we focus on one particular representation for single q-shell data: the FOD. The FOD is designed to describe the local spatial arrangement of axonal fiber bundles in such a way that sharply-defined geometric features are preserved (Jensen et al. 2016). This property makes the FOD an attractive representation if the downstream analytic goal is fiber reconstruction.
+
+One commonly used approach to FOD estimation is based on spherical deconvolution (Tournier et al. 2004, 2007), which assumes that the observed D-MRI data consists of a convolution of the underlying FOD and a spherical convolution kernel. A parsimonious representation of the FOD in a suitable basis is the key to a successful deconvolution method, since there is greater noise amplification when the effective number of basis coefficients is larger (Kerkyacharian et al. 2007, Johnstone &amp; Paul 2014).
+
+Several popular FOD estimators rely on spherical harmonics (SH) representations of the D-MRI data (Tournier et al. 2004, 2007). However, when the function being represented has localized sharp peaks, as the FODs of well-defined fiber tracts do, the SH basis does not provide an efficient representation due to the global support of its basis functions.
+
+In Yeh &amp; Tseng (2013a), FODs are represented in a mono-resolution basis consisting of a large class of putative dODF functions and an ℓ1 penalty is used to induce a sparse representation. In Daducci et al. (2014), an ad-hoc dictionary of functions is used to represent FODs under ℓ1 and ℓ0 penalization schemes. While these methods aim to give sparse solutions, their choice of basis functions may not lead to sparse representation of the FOD.
+
+Another approach to modeling D-MRI data uses a multiresolution basis on the sphere, namely ridgelets, to filter the noisy DWI signal and extract information about local fiber orientations (Michailovich et al. 2010, 2011, Rathi et al. 2011). Rathi et al. (2011) applied an ℓ1 penalty to the coefficients in the ridgelet representation, Michailovich et al. (2010) used orthogonal matching pursuit, and Michailovich et al. (2011) combined an ℓ1 penalty with a total variation penalty to utilize spatial information for ODF estimation. In contrast, our objective here is to estimate the FOD, rather than DWI signal reconstruction or ODF estimation.
+
+Another class of methods for FOD estimation is based on the discrete mixture model, also referred to as the multi-tensor model. A prominent approach in this framework (Landman et al. 2012) is to use an ℓ1 penalty with a non-negativity constraint on the mixture fractions. For such methods, the number of mixture components needs to be reasonably small to ensure identifiability of the parameters (Scherrer &amp; Warfield 2010, Wong et al. 2016) and low variability of the estimator.
+
+In this paper, we propose a novel FOD estimator based on a multiresolution basis called needlets (Narcowich et al. 2006a, Marinucci &amp; Peccati 2011), which are smooth functions localized in both space and frequency. Consequently they yield sparse and stable representations for a spiky but otherwise regular functions such as FODs (Narcowich et al. 2006b,a). The tightness of the needlet frame, which translates into low mutual correlation and a parsimonious representation, is particularly beneficial for estimation accuracy when solving a deconvolution problem based on noisy data (Kerkyacharian et al. 2007, Johnstone &amp; Paul 2014).
+
+Unlike a monoresolution basis such as that used by Yeh &amp; Tseng (2013a), multiresolution frames such as needlets are better suited to parsimonious approximation of inhomogeneous, spiky functions due to their localization and tight frame properties. These are the key reasons why orthogonal wavelets or wavelet type tight frames have played such an important role in signal denoising and adaptive estimation in deconvolution problems (Mallat 1999). The term “multiresolution basis” is used to mean a collection of functions that is complete in the L2 sense; Moreover, the basis elements are indexed through a “location-scale index” whose value controls the degree of spatial and frequency localization (Mallat 1999, Marinucci &amp; Peccati 2011).
+
+Needlets also provide an accurate approximation of finite mixtures of distinct directions since these are well approximated by smooth inhomogeneous functions. Therefore, a needlet representation can be used to obtain good estimates for a broad class of FODs including the finite mixtures. Moreover, although the discrete mixture model is a convenient mathematical abstraction of fiber populations within a voxel, the actual local geometry of neuronal fiber bundles is often more complex. There can be significant variability in local orientations among the fibers within an individual fiber bundle passing through a voxel. Under such circumstances, the representation of the FOD as a continuous distribution with a few sharp peaks would provide a more realistic depiction of the geometry.
+
+We ensure sparsity of the needlet representation by imposing an ℓ1 penalty on the needlet coefficients of the FOD. The ℓ1 penalty results in accurate estimates that preserve sharp peaks even when the number of gradient directions and signal-to-noise ratio are both moderate. In addition, since the FODs are probability densities, we impose a nonnegativity constraint on the estimated FODs. This allows us to take advantage of the needlets representation, even though the needlets are not nonnegative functions themselves.
+
+To eliminate subjectivity in the estimation procedure and to ensure a good statistical performance of the estimator, we propose a data-driven scheme for selecting the ℓ1 penalty parameter that balances between bias and variance in the FOD estimation. This is in contrast to the ad-hoc choices of the regularization parameters made by many methods in the literature. Finally, we implement an efficient estimation algorithm based on a fast computation of the spherical needlets transform and the Alternating Direction Method of Multipliers algorithm (Boyd et al. 2011). Our experiments demonstrate that these methodological and computational innovations lead to improved estimation accuracy and better detection of fiber directions.
+
+We conduct synthetic data experiments to demonstrate the effectiveness of the proposed estimator and to compare it with three existing methods based on the SH representation (Tournier et al. 2004, 2007) and the discrete mixture model (Wong et al. 2016), respectively. We specifically consider small crossing angles since this is a challenging yet very important problem in resolving crossing fibers, and we focus on high b-value and/or high signal-to-noise ratio for such cases as this is the direction the field is moving (Setsompop et al. 2013, Van Essen et al. 2013). The proposed estimator shows favorable performance compared to the competing methods. For example, it is able to recover the FOD even when the fiber crossing angle is as small as 30°, and automatically identify isotropic diffusions.
+
+Finally, we conduct experiments using real 3T D-MRI data sets of healthy individuals. We corroborate the results against the FSL Jülich Histological Atlas (Jenkinson et al. 2012, Smith et al. 2004) and apply deterministic tractography (Wong et al. 2016) to the estimated FODs. Tractography results based on the FODs estimated by the proposed method tend to agree better with the known geometric configuration of fiber tracts, compared to FODs based on other estimators. These results demonstrate that the more accurate description of local fiber organization afforded by the proposed FOD estimator results in superior tractography performance.
+
+The rest of the paper is organized as follows. We describe the proposed method and experiments based on both synthetic data and real D-MRI data in Section 2. We report the experimental results in Section 3. We draw conclusions and discuss future directions in Section 4. Much of the technical detail and additional experimental results are reported in the Supplementary Material.
+
+2 Material and Methods
+
+2.1 Needlets representation of spherical functions
+
+We give a brief introduction to needlets and some of their relevant properties. More details are available in Marinucci &amp; Peccati (2011) and Narcowich et al. (2006b,a).
+
+Needlets are constructed by complex-valued SH functions {Φlm : m = −l, …, l}l=0,1,2,…, which form an orthonormal basis for L2(S2), the space of square integrable functions defined on the unit sphere S2. The indices l and m, referred to as level index and phase index, respectively, together determine the wavy pattern of the function Φlm.
+
+The needlets construction is based on two key ideas (Marinucci &amp; Peccati 2011): (a) discretization of S2 : If ℋl denotes the space spanned by {Φlm : m = −l, …, l}, and Kj:=⊕l=0jℋl, then for every j ∈ ℕ, there exists a finite subset χj={ζ∼jk}k=1Nj⊂S2 (quadrature points) and positive weights {λ∼jk}k=1Nj (quadrature weights) such that, for any f∈Kj, (1) ∫S2f(x)dω(x)=∑k=1Njλ∼jkf(ζ∼jk),
+
+where dω(x) denotes the surface element of S2 at x; and (b) Littlewood-Paley decomposition: This is through a function b defined on ℝ+ satisfying: (i) b(·) &gt; 0 on (B−1, B) for some B &gt; 1, and equal to zero on the complement set (B−1, B)c; (ii) ∑j=0∞b2(y/Bj)=1 for all y ∈ ℝ+; and (iii) b(·) ∈ CM(ℝ+). (B = 2 is used in our construction).
+
+With the above, a class of needlets {ψjk; j ≥ 0; 1 ≤ k ≤ pj} is defined as follows: for x∈S2, (2) ψjk(x)=λjk∑l=⌈Bj−1⌉⌊Bj+1⌋b(lBj)∑m=−llΦlm(ζjk)Φ¯lm(x)=λjk∑l=⌈Bj−1⌉⌊Bj+1⌋b(lBj)2l+14πPl(〈ζjk,x〉),
+
+where pj=Nrj, ζjk=ζ∼rjk and λjk=λ∼rjk, with rj = 2⌊Bj+1⌋. The index j ∈ ℕ encodes scale/frequency and k ∈ {1, …, pj} encodes location (determined by ζjk) and Pl is the l-th Legendre polynomial. Also note that, the needlets are real valued spherical functions.
+
+It can be shown that needlets thus constructed are localized in both space and scale, with exponentially increasing concentration around the quadrature point as the scale index j increases. The quadrature formula (1) is an important factor behind the spatial concentration of needlets and the consequent advantages in terms of function approximation.
+
+The collection of needlets together with Φ00 (i.e., the constant function on the sphere) form a tight frame (referred to as the needlets frame), i.e., for f∈L2(S2), ∫S2(f(x))2dω(x)=|〈f,Φ00〉|2+∑j=0∞∑k=1pj|〈f,ψjk〉L2|2, where (3) βjk=〈f,ψjk〉L2=∫S2f(x)ψjk(x)dω(x)
+
+is called the needlet coefficient of f corresponding to index pair (j, k). The tight frame property, together with the localization in space and scale, imply that needlets can be used to perform multiresolution analysis of functions in L2(S2).
+
+Moreover, by (2), the needlet coefficients of f have the linear representation in terms of SH coefficients: (4) βjk=〈f,ψjk〉L2=λjk∑l=⌈Bj−1⌉⌊Bj+1⌋b(lBj)∑m=−ll〈f,Φlm〉L2Φlm(ζjk).
+
+(4) provides a very useful computational tool since fast computational algorithms are available for the SH transform (Driscoll &amp; Healy 1994, Fan 2015).
+
+In order to obtain the quadrature points and weights, we make use of the HEALPix construction due to Górski et al. (2005) that partitions S2 into Nj,pix=12Nj,side2=12×(2j)2 spherical triangles of equal area, where Nj, side is a power of two determining the resolution. Then, quadrature points are chosen as the centroid of the triangles, while the weights are all equal to 4π/Nj, pix.
+
+Since we assume FODs to be symmetric, we construct symmetrized needlets which can be easily derived from the original needlets. Henceforth (with slight abuse of notations), {Φlm} denote the real symmetric SH functions where l = 0, 2, 4, ⋯ (Atkinson &amp; Han 2012, Descoteuax et al. 2007) and {ψjk} denote the symmetrized needlets functions. See Section S.1 in the Supplementary Material for details.
+
+2.2 Regression model for D-MRI measurements
+
+In this section, we first describe the spherical deconvolution model that relates FOD, denoted by F(·), with the diffusion signal function, denoted by S(·). We view the observed diffusion weighted measurements y={yi}i=1n corresponding to n gradient directions as noise corrupted samples from the diffusion signal function S(·) evaluated at the respective gradient directions. After representing the FOD in the SH basis, we can then model the observed measurements by a linear regression model where the needlet coefficients of the FOD are the regression coefficients.
+
+Following, Tournier et al. (2004), Tournier et al. (2007), Sakaie &amp; Lowe (2007) and Lenglet et al. (2009), it is assumed that the diffusion signal function S(·) is a spherical convolution of the FOD F:S2→ℝ+, a symmetric spherical distribution; with an azimuthal symmetric kernel R : L1([−1, 1]) → ℝ. The kernel R, referred to as the response function, represents the local diffusion characteristics of water molecules along neuronal fibers, which are assumed to be the same across different fiber bundles and voxels. In the following, we assume that the response function R(·), and hence its SH coefficients, are known. In practice, we may assume that R(·) belongs to a parametric family of nonnegative functions on [−1, 1] (e.g., specified by a tensor model) and then estimate the parameters based on voxels with a single dominant fiber bundle, typically characterized by high fractional anisotropy (FA) values. Experimental results show that our method is robust to the specification of the response function (See Supplementary Material Section S.3.9 for more details).
+
+Denote S = R * F to mean the spherical convolution of F with the axially symmetric kernel R, which is defined as (5) S(x)=∫S2R(xTy)F(y)dω(y),x∈S2.
+
+The SH coefficients of the diffusion signal function S(·) follow: (6) slm:=〈S,Φl,m〉=4π2l+1rlflm,l=0,2,⋯,m=−l,⋯,0,⋯l.
+
+where rl := 〈R, Φl,0〉, and flm := 〈F, Φl, m〉, are the rotational harmonics and spherical harmonics coefficients of the response function and FOD, respectively. Moreover, by the orthonormality of the SH basis, we can express the diffusion signal function as: S(x)=∑l∑m=−llslmΦl,m(x)=∑l4π2l+1rl∑m=−llflmΦl,m(x).
+
+In the following, we assume that both S(·) and F(·) can be well approximated in a finite order real symmetric SH basis {Φl, m : −l ≤ m ≤ l}l=0,2,☆, lmax consisting of L = (lmax + 1)(lmax + 2)/2 basis functions. The observed DWI measurements thus can be modeled as: (7) y=ΦRf+ε,
+
+where R is an L × L diagonal matrix with diagonal elements 4π/(2l+1)rl (in blocks of length 2l + 1); f = (flm) is the L × 1 vector of SH coefficients of the FOD F ; Φ is the n × L matrix with the i-th row being {Φl, m(θi, ϕi)}, where θi and ϕi are elevation angle and azimuthal angle, respectively, of the i-th gradient direction. The i-th coordinate of y=(yi)i=1n corresponds to the observed diffusion measurement along the i-th gradient direction; and ε=(εi)i=1n is an n × 1 vector representing observational noise and possible approximation error.
+
+2.3 ℓ1-penalized estimation of FOD under needlets representation
+
+If we assume that the FOD F (·) is either a constant function on the sphere (when the diffusion is isotropic) or a spherical function with a few sharp peaks (each corresponding to a distinct major fiber bundle), the localization and tight frame properties of the needlets would imply that the needlet coefficients of F (·) form a sparse vector (Narcowich et al. 2006a), i.e., F (·) can be well approximated by a small fraction of needlet functions.
+
+Consider a symmetrized needlets frame with the first N=1+(∑0≤j≤jmaxNj,pix)/2=22jmax+3−1 frame elements (corresponding to B = 2), where jmax ≥ 0 is the maximum level of needlets being used. jmax is set to be ⌈log2(lmax)⌉ so that SH functions up to level lmax can be linearly represented in the first N needlets. Denote the N × 1 needlet coefficients vector of F (·) by β. Then the SH coefficients f of F (·) can be expressed as f = Cβ, where C is an L × N matrix. This allows us to rewrite equation (7) as (8) y=ΦRCβ+ε.
+
+A key point here is that C can be easily computed (see Section S.1 in the Supplementary Material for details), and so is the design matrix ΦRC. Furthermore, since the response function R is the same across voxels, the design matrix needs to be computed only once.
+
+The sparseness of the FOD needlet coefficients β motivates us to propose a penalized regression estimate: (9) β^λ=argminβ:Φ∼Cβ≽0‖y−ΦRCβ‖2+Pλ(β)
+
+where Pλ(β) denotes a sparsity-inducing penalty, with the tuning parameter λ ≥ 0 controlling the degree of regularization, and Φ∼ is the matrix of SH basis functions (up to level lmax) evaluated on a pre-specified dense evaluation grid. The constraint Φ∼Cβ≽0 ensures that the estimated F(·) evaluated on this grid, i.e., F^:=Φ∼Cβ^, is nonnegative. In the subsequent experiments, we use an equiangular grid (corresponding to the triangular tessellation of the unit sphere using an Icosahedron) with 2562 grid points.
+
+Following Tibshirani (1996) and subsequent developments in the statistical literature, we propose to use an ℓ1 penalty Pλ(β)=λ∑j,k|βjk|. The estimation problem is then a convex optimization problem with a non-negativity constraint. We develop a computationally efficient algorithm based on the Alternating Direction Method of Multipliers (ADMM) (Boyd et al. 2011, Sra et al. 2012) to solve (9). ADMM is a general-purpose algorithm for solving convex optimization problems with constraints. Finally, we rescale the estimated F(·) such that it integrates to one on the unit sphere. The details of the ADMM algorithm is given in Section S.2.1 of the Supplementary Material.
+
+Since our goal here is to get a good estimate of FOD, particularly one that is useful for subsequent analyses such as tractography, thus slight overfitting is less detrimental than underfitting. Thus we propose a criterion which chooses the largest λ such that the penalty parameter values smaller than this value will lead to essentially the same residual sum of squares (RSS) (See Section S.2.2 in Supplementary Material for details). The commonly used model selection criteria such as BIC (Schwarz 1978) and AIC (Akaike 1974) require specification of the degrees of freedom for the model which is difficult when the design matrix is ill-conditioned and non-smooth penalties such as the ℓ1 norm are used. Experiments based on synthetic data show that the proposed strategy is able to strike a good balance between bias and variance in FOD estimation and leads to better results than BIC or AIC (results not reported).
+
+After obtaining an estimated FOD, we may want to identify major fiber bundle orientation(s), which could be used for subsequent analyses such as deterministic tractography or for evaluation and comparison of methods. Ideally, this can be done through peak detection, i.e., locating the local maxima of the (estimated) FOD. However, since the estimated FOD may have spurious peaks due to noise, we need to eliminate peaks that are likely to be false. We propose a simple yet effective peak detection algorithm based on grid search, followed by a pruning step and a clustering step to filter out potential false peaks. Details are given in Section S.2.3 of the Supplementary Material. One may also consider more sophisticated peak detection algorithms including Ghosh et al. (2014), Michailovich et al. (2010), Alexander (2005).
+
+2.4 Synthetic Data Experiments
+
+In this section, we describe experiments based on synthetic data to study the performance of the proposed estimator, referred to as SN-lasso, and to compare it with three competing estimators as described below.
+
+2.4.1 Competing estimators
+
+In addition to the proposed SN-lasso, we also consider three existing estimators: (i) The SH-ridge estimator (Tournier et al. 2004) through a ridge type regression by minimizing: ‖y−ΦRf‖22+λE(F),E(F):=∫Ω(ΔbF)2dΩ=fTPf,
+
+where ∆b is the spherical Laplacian operator and P is a diagonal matrix with entries l2(l + 1)2 in blocks of size 2l + 1 (l = 0, 2, ⋯, lmax). E(F), referred to as the Laplace-Beltrami penalty, is a measure of roughness of spherical functions. The SH-ridge estimator is solved explicitly by: f^LB=(RTΦTΦR+λP)−1RTΦTy,F^LB=∑l,mf^l,mLBΦl,m.
+
+The penalty parameter λ can be chosen by the Bayesian Information Criterion (Schwarz 1978).
+
+The super-CSD estimator (Tournier et al. 2007). The idea is to suppress small values of the estimated FOD and consequently sharpen the peak(s) of the FOD estimator using an SH representation of order lmaxs. In our experiments, we apply super-CSD algorithm to the SH-ridge estimates and consider lmaxs=8,12,16. We refer to the corresponding estimators as SCSD8, SCSD12, and SCSD16, respectively. For other parameters in the super-CSD algorithm, we follow the recommended values in Tournier et al. (2007). For more details, see Section S.2.4 in Supplementary Material.
+
+The DiST method (Wong et al. 2016). DiST is based on the discrete mixture model and utilizes a novel parametrization to resolve the non-identifiability issue of such models. Particularly, DiST focuses on diffusion direction estimation and uses MLE and BIC for direction estimation and selection, respectively.
+
+2.4.2 Experimental setting
+
+We consider FOD estimation for a voxel with various scenarios of fiber populations. We use sep to denote the separation angle between a pair of crossing fiber bundles. Our experimental settings include K = 2 fiber bundles crossing at sep = 90°, 75°, 60°, 45°, 30°. We also consider K = 0 fiber bundle, i.e., isotropic diffusion; K = 1 fiber bundle, i.e., no crossing fiber; and K = 3 fiber bundles with pairwise crossing at sep = 90°, 75°, 60°.
+
+We simulate noiseless diffusion weighted signals according to the convolution model (5), where the true FOD F: F(θ,ϕ)=∑k=1Kwkδθk,ϕk(θ,ϕ),θ∈[0,π],ϕ∈[0,2π),
+
+with wk &gt; 0, ∑k=1Kwk=1 being the volume fractions and θk (elevation angle) and ϕk (azimuthal angle) being the spherical coordinates of the orientation of the k-th fiber bundle, respectively. The response function is set as: R(cos(θ))=S0exp−b(λ1sin2θ+λ3cos2θ),θ∈[0,π],
+
+where throughout we fix S0 = 1, λ3 = 1 × 10−3mm2/s and set the ratio between λ3 and λ1 as ratio = 10. The volume fractions are set as w1 = w2 = 0.5 for the two-fiber case and w1 = w2 = 0.3, w3 = 0.4 for the three-fiber case.
+
+In terms of the D-MRI experimental parameters, we consider b-value at b = 1000s/mm2, 3000s/mm2 and 5000s/mm2 (for small crossing angles only); and three angular resolutions, namely, n = 41, 81, 321 gradient directions on an equiangular grid. These settings aim to cover commonly used values in large-scale D-MRI experiments such as those in ADNI (relatively low b-value and angular resolution) and human connectome project (relatively high b-value and angular resolution).
+
+The observed diffusion weighted measurements along the n gradient directions are generated by adding independent Rician noise (Gudbjartsson &amp; Patz 1995, Hahn et al. 2006, Polzehl &amp; Tabelow 2008) to the respective noiseless diffusion signals. The signal-to-noise ratio (SNR), defined as the ratio between the b0 image intensity S0 and the Rician noise level σ (Tournier et al. 2007), is set at SNR := S0/σ = 20 and 50 (for small crossing angles only). Note that b-value=5000s/mm2 and SNR = 50 may be a rare setting for current D-MRI experiments. We included this scenario mainly as a reference point to demonstrate the potential of these methods, with the expectation that future technological advancements would make such an experimental setting more realistic (Setsompop et al. 2013).
+
+2.4.3 Evaluation metrics
+
+We report the statistical characteristics of the estimators (across 100 independent data sets) by depicting the mean estimated FOD in opaque color and the mean plus two standard deviations in translucent color. Since DiST only gives direction estimation, in these plots we only report results corresponding to SN-lasso, SH-ridge and SCSD.
+
+We also examine the performance of each estimator using various numerical metrics including: (i) The success rate of the peak detection algorithm applied to the 100 estimated FODs, where ‘success’ means that the algorithm identifies the correct number of fiber bundles. (ii) Among the successful estimators, the mean angular errors between the identified peaks and the true fiber directions, as well as bias in separation angle estimation (defined as the average of the estimated separation angle across the “successful replicates” minus the true separation angle) between pairs of fiber bundles. Throughout, “true FOD” refers to the true FOD projected on to an SH basis for ease of visualization and comparison.
+
+2.5 Real D-MRI Data Experiments
+
+Data used in the preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). The ADNI was launched in 2003 as a public-private partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to test whether serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of mild cognitive impairment (MCI) and early Alzheimers disease (AD).
+
+We analyzed a D-MRI data set from a 58 year old female from the second phase of the ADNI project (ADNI-2). This participant was scanned at the Wein Center for Alzheimer’s Disease and Memory Disorders on a 3 Tesla MRI machine produced by General Electric. The scanning protocol was analogous across scanners, and was optimized prior to the study to provide harmonized data across scanners.
+
+We used eddy-current-corrected diffusion images (Andersson &amp; Sotiropoulos 2016) from ADNI database. The diffusion signals were measured on a 256 × 256 × 60 3D grid (voxel side-length: x− 1.37mm, y−1.37mm, z−2.7mm) along 41 distinct gradient directions under b = 1000s/mm2. There are also five b0 images based on which we extracted the brain using FSL (Jenkinson et al. 2012, Smith et al. 2004) BET module (Smith 2002) and estimated the b0 image intensity S0 and the Rician noise level σ. The signal-to-noise ratio S0/σ has a median 40 across voxels. We first fitted the single diffusion tensor model (Le Bihan 1995, Basser &amp; Jones 2002, Mori 2007, Carmichael et al. 2013) to each voxel and calculated the fractional anisotropy (FA) value and mean diffusivity (MD). We then identified voxels with a single dominant fiber bundle characterized by F A &gt; 0.8 and the ratio between the two minor eigenvalues of the tensor &lt; 1.5. We used these voxels to estimate the response function R under a Gaussian diffusion model. The (estimated) response functions have the leading eigenvalue 1.5×10−3mm2/s and the ratio between the leading and the minor eigenvalue is 6.5. See Section S.4 in the Supplementary Material for more details.
+
+We then focused on a 16 × 16 × 6 region of interest (ROI) with x-slices 108-123, y-slices 124-139, z-slices 37-42. This region included portions of the corpus callosum (CC), cingulum bundle (CB), superior occipitofrontal fasciculus (SOF) and corticospinal tract (CT) according to the FSL Jülich Histological Atlas (Eickhoff et al. 2005, 2006, 2007). In Figure 5, we first used the FSL FLIRT module (Jenkinson &amp; Smith 2001, Jenkinson et al. 2002) to register the tracts from Jülich Histological Atlas with the extracted brain b0 image, and then superimposed these tracts onto the extracted brain image using FLSeyes. The right portion of the ROI on z-slices 37 and 38 also encompassed the cerebrospinal fluid (CSF) region as indicated by Figure 5 (see also Figure S.14 of the Supplementary Material).
+
+In Figure 6(a), we also showed the fiber orientation colormap, FA map and MD map (zoomed into the ROI) at z-slice 40. The fiber orientation colormaps depict the orientation of the principal eigenvector under a single tensor model, where red indicates left-to-right direction, green indicates up-to-down direction (anterior-to-posterior in 3D brain) and blue indicates into-to-out-of-page direction (inferior-to-superior in 3D brain). Moreover, fiber orientation colormaps were modulated by the FA values such that voxels with small FA values were darker. The FA map and MD map were also calculated under the single tensor model, where darker colors correspond to smaller FA/MD values.
+
+We first applied the FOD estimation methods to each voxel in this region and then extracted the peaks of the estimated FODs. We then applied the deterministic tracking algorithm developed in Wong et al. (2016) to the estimated FODs. We also analyzed a second data set from ADNI and a data set from the MGH Adult Diffusion Data of the Human Connectome Project (www.humanconnectome.org). We defer descriptions and results of these two experiments to Sections S.4.3 and S.4.4, respectively, of the Supplementary Material.
+
+3 Results
+
+3.1 Synthetic Data Experiments
+
+In the main text, we only report graphical summaries of the results for cases with two-fiber (K = 2) crossing and n = 41 gradient directions. For detailed numerical summaries, see Tables S.3, S.4, S.5 in the Supplementary Material. We also defer results and discussions of other settings to Section S.3 of the Supplementary Material.
+
+As can be seen from Figure 1, when the crossing angle is large-to-moderate (90°, 75°, 60°), even at relatively low b-value and SNR (b = 1000s/mm2, SNR = 20), SN-lasso leads to satisfactory reconstruction of FOD, particularly in terms of accurately identifying the peak directions. SCSD8 and SCSD12 also show various degrees of success in these cases, though their performances are not as good as that of SN-lasso ( SCSD16 estimates are very variable and thus omitted). Particularly, SN-lasso estimates have much more localized and sharper peaks. While crossing at a smaller angle (45°; Figure 2), none of these methods works well when b-value and SNR are both low (b = 1000s/mm2, SNR = 20). However, when either parameter is increased (b = 3000s/mm2 and/or SNR = 50), SN-lasso is able to accurately recover the sharp features of FOD. SCSD estimators are again much less localized ( SCSD8 estimates are overly smoothed and thus omitted). For a small crossing angle (30°; Figure 3), SN-lasso works well when both b-value and SNR are high (b = 3000, 5000s/mm2 and SNR = 50), while all other methods do a poor job in terms of detecting crossing fibers irrespective of b-value and SNR.
+
+In Figure 4, we depict success rate, angular error in direction estimation (averaged over the two directions) and bias in separation angle estimation, respectively. Under 90°/75°/60°/45° crossing, DiST has overall the highest success rate (except for 45° crossing with b-value 1000s/mm2 and SNR 20), followed by SN-lasso and SCSD12. In contrast, SCSD8, SCSD16 and SH-ridge have considerably lower success rate. The advantage of DiST in picking the correct number of fiber directions lies in the fact that it utilizes the information that there are only finite discrete fiber bundles (which is the truth here). In contrast, the other methods do not use such information. In terms of angular error (calculated on replicates where the correct number of fibers is identified), SCSD, SN-lasso and DiST perform similarly. On the other hand, SN-lasso has considerably smaller bias in separation angle estimation, leading to a more faithful reconstruction of crossing patten.
+
+Under 30° crossing, SN-lasso has the best performance in all three aspects. More specifically, for all four combinations of b-value and SNR, SN-lasso successfully identifies two peaks for at least 70% of the replicates with an average angular error ranging from 2.7° ~ 9°. In this case, DiST requires both large b-value and SNR to work well, otherwise it tends to under-select the number of fibers. This is because it is hard to distinguish two tensors with very close major axes. This is in contrast to the high angular resolution of the SN-lasso estimator rendered by the localization properties of needlets.
+
+We also considered a setting where the true FOD is not a mixture of Dirac functions, instead it is a continuous spherical density with two dominant peaks. This setting corresponds to the scenario where there are two major fiber bundles; However, within each bundle the fiber directions are not completely homogeneous. In this case, SN-lasso performs much better than DiST (Table S.6). Moreover, by comparing the results in Table S.6 and Table S.5 (first block), it can be seen that SN-lasso performs only slightly worse in this more challenging setting, whereas DiST performs much worse.
+
+These results demonstrate that SN-lasso leads to good FOD estimation and direction identification even when the crossing angle is as small as 30° as long as the b-value and SNR are sufficiently large. It also has overall the best performance among the competing methods with regard to these aspects cross a large range of settings. As large b-value and SNR are being advocated with the advancement of MRI technologies (Setsompop et al. 2013, Van Essen et al. 2013), SN-lasso holds promise in resolving even subtle fiber crossing patterns. In contrast, the other methods have difficulty in resolving small crossing angles. Specifically, DiST tends to under-select the fiber directions in such a case. As for the SH representation based methods, SH-ridge leads to overly smoothed estimates and consequent loss of directionality information, while SCSD estimators either tend to have large variability ( SCSD12, SCSD16) or overly smoothed estimates ( SCSD8). Consistent with the observations in Tournier et al. (2007), SCSD8 works better for large-to-moderate crossing angles and SCSD12, SCSD16 work better for small crossing angles. However, without prior knowledge of the crossing angle, in practice it would be hard to choose which SCSD estimator to use. In contrast, SN-lasso is able to automatically adjust for different crossing angles through the specification of the penalty parameter λ which is determined in a data driven way.
+
+3.2 Real D-MRI Data Experiments
+
+3.2.1 FOD estimation
+
+In this subsection, we examine FOD estimation by SN-lasso, SH-ridge and SCSD on the ROI described in Section 2.5 ( DiST only gives direction estimation, so we only discuss its tractography results in the next subsection). Moreover, we focus on the ROI at z-slice 40 as this subregion included several crossing fiber tracts as shown below.
+
+The FOD estimates on z-slice 40 are shown in Figure 6(b), where the FA map is drawn on the background and the size of the estimated FOD is modulated by mean diffusivity (MD; The larger the MD is, the smaller is the size of the depicted FOD estimate) for ease of visualization of the crossing pattern. It can be seen that, in the single fiber subregions, the SN-lasso estimates have sharp peaks consistent with the directions suggested by the fiber orientation colormaps. SCSD8 and SCSD12 are also able to preserve directionality pattern in such regions. However, in the crossing fiber regions, SCSD estimators tend to be very noisy, while SH-ridge leads to overly smoothed estimates causing loss of directionality information. In contrast, SN-lasso is able to correctly resolve crossing patterns as evidenced by the following observations.
+
+From Figure 6(a) FA and MD maps, the middle part of the ROI (highlighted by the white box) have both small FA and MD values. This is likely due to crossing fibers rather than being CSF since one defining feature of CSF is large MD values caused by faster water diffusion (Alexander et al. 2007). This is confirmed by the SN-lasso estimates shown at higher magnification in Figure 7, lower right panel, which showed the presence of three fibers in this subregion. On the other hand, the SCSD estimates on this subregion are noisy and show no clear pattern (Figure 7, upper right and lower left panels).
+
+In the following, we use a standard white matter atlas to argue that it is highly plausible that there are crossing fibers at this anatomical location for this subject. In Figure 5, we used the FSL Jüelich Histological Atlas to superimpose the following fiber tracts: corpus callosum (CC), cingulum bundle (CB), superior occipitofrontal fasciculus (SOF), and corticospinal tract (CT). The ROI is shown as a box superimposed over these slices. The anatomical directions of travel of these four tracts are left to right (i.e., from the left to right side of the figure), anterior to posterior (from top to bottom of the figure), anterior to posterior, and inferior to superior (from inside the page to outside of the page), respectively.
+
+In the upper right hand corner of the ROI at slice 40 (Figure 5), we see the cingulum bundle, which travels along the direction from the top to the bottom of the figure. Similarly, top-to-bottom directionality is present in the corresponding FOD estimates (Figure 6(b), lower right panel). In the lower right hand corner of the ROI at slice 40, we see a combination of the cingulum bundle which travels along the direction from the top to the bottom of the figure, and the corpus callosum, which travels along the direction from the left to the right of the figure. Similarly, the corresponding FOD estimates show a combination of top-to-bottom and left-to-right directionality. The corpus callosum covers a backward C shaped region and runs from left to right. Similarly, the corresponding backward C shaped region in Figure 6(b), lower right panel, shows left-to-right directionality. The left hand edge of the ROI shows the corticospinal tract, with its into-the-page, out-of-the page direction of travel. Similarly, the left hand edge of Figure 6(b), lower right panel, shows FOD estimates with this same directionality.
+
+The center of the ROI at slice 40 (subregion shown at higher magnification in Figure 7) can be plausibly hypothesized to be the location where the corticospinal tract, superior occipitofrontal fasciculus, and corpus callosum intersect. According to the atlas (Figure 5), the corticospinal tract begins to the left of the ROI in slice 39, and is shown progressing toward the center of the ROI by slice 41. Similarly, the corpus callosum is shown to the right of the central region in slice 39 but has progressed toward the left, to the center of the ROI, by slice 41. The superior occipitofrontal fasciculus is clearly shown just to the left of center of the ROI in slice 39, is faintly visible in slice 40, and is gone in slice 41. These are also corroborated by SN-lasso estimates on slices 39 and 41 (Figure 8). Each of these observations suggests that the three tracts were indeed on a course to intersect with each other in the center of the ROI at slice 40. Correspondingly, SN-lasso estimates for that region on slice 40 (Figures 6(b) and 7, lower right panels) show contributions from all 3 cardinal directions: left to right (corpus callosum), top to bottom (superior occipitofrontal fasciculus), and in-to-out (corticospinal tract).
+
+The middle to right portion of the ROI at slice 38 in Figure 5 is the CSF region according to the b0 image on the background (see also Figure S.14). The MD map (Figure 9(a), right panel) also indicates that this region is likely to be CSF by large MD values. This is corroborated by the fact that the SN-lasso estimates of FODs for many voxels in this subregion are isotropic, represented by green balls in Figure 9(b), lower right panel. In contrast, the other three estimators do not automatically identify isotropic voxels in this subregion and instead give noisy estimates with spurious peaks.
+
+3.2.2 Tractography results
+
+The reconstructed fiber trajectories are shown in Figures 10 and S.16 from two different perspectives. The major observations are as follows. All four tracts in the atlas (Figure 5) are clearly present in the tracking results based on the SN-lasso estimates: the blue trajectories correspond to CT, the red trajectories correspond to CC, the bigger bundle of green trajectories corresponds to CB and the smaller bundle of green trajectories corresponds to SOF. Moreover, among the five estimators, tracking based on the SN-lasso estimates showed the most coherent and least noisy trajectories. For example, the red trajectories (part of CC) form a more tightly grouped cluster of curves and they are more parallel to each other. The sizes of CC and SOF in the SN-lasso fiber traces are more consistent with the atlas than the fiber traces based on the other FOD estimators.
+
+The most prominent difference between SN-lasso based results and those based on the other estimators is that, in the lower right part of the region shown in Figure 10, SN-lasso based tracking showed no trajectories while tracking based on the other FOD estimators did show trajectories, including some combination of CC and SOF. This region corresponds to the right portion of the ROI shown on z-slices 37 and 38 of Figures 5 and S.14; based on these figures, the region does not contain white matter at all, but rather cerebrospinal fluid (CSF). Therefore, since it shows no fiber trajectories through this region, SN-lasso based tracking is more consistent with the atlas than tracking based on the other FOD estimators. Finally, tracking based on the SH estimates has the least coherent and the most noisy patterns.
+
+4 Discussion
+
+In this paper, we present a novel method for FOD estimation that is accurate, has low variability, preserves sharp features, and is computationally efficient. The effectiveness of the proposed method derives from utilization of a multiresolution spherical frame called needlets that admits stable and parsimonious representation of FODs. Estimation accuracy is gained by imposing a sparsity constraint on the needlet coefficients, together with a nonnegativity constraint on the estimated FOD. The proposed method mitigates difficulties faced by SH-ridge (Tournier et al. 2004) and SuperCSD (Tournier et al. 2007), two well-known FOD estimators based on the SH representation. Specifically, due to the global nature of the SH basis, SH-ridge tends to over-smooth the peaks, resulting in the loss of directionality information. In addition, SuperCSD tends to amplify spurious peaks in estimated FODs due to high variability. The proposed SN-lasso estimator also outperforms DiST (Wong et al. 2016), a method based on the discrete mixture model, which tends to under-estimate the number of fibers when the crossing angle is small.
+
+The localization properties of needlets are one of its major advantages over SH basis or tensor based methods, as the true FODs are expected to have localized peaks. Particularly, SN-lasso is able to achieve good angular resolution due to the localization properties of the needlets. A potential disadvantage of needlets is that unlike SH basis they do not form an orthonormal basis. Thus certain mathematical and computational conveniences are lost. Nevertheless, many properties are still retained as needlets form a tight frame. In terms of computation, the current implementation of SN-lasso is able to fit 100,000 voxels in a few hours on a server with 256 RMA and 72 cores. The codes will be disseminated through git repository.
+
+Experimental results on synthetic data suggest that the proposed method leads to better FOD estimation than the competing methods, particularly in terms of identification of major fiber directions. These results are consistent with the well-established statistical notion that a nonlinear shrinkage strategy allied with sparse representation is more efficient for signal recovery than a linear shrinkage strategy (Johnstone 2015, Tsybakov 2009). Moreover, the use of ℓ1 penalized regression by SN-lasso enables an effective bias-variance trade off.
+
+The proposed method is able to successfully reconstruct an FOD when the fiber crossing angle is as small as 30° provided that the b-value and SNR are sufficiently large (e.g., b = 3000, 5000s/mm2, SNR = 50). Resolving small crossing angles at relatively low b-values has been reported to be a challenging setting. For example, in Yeh &amp; Tseng (2013b), under b = 1500s/mm2, SNR = 20, n = 55, the best performing method has around 20° angular deviation at 45° crossing angle. On the other hand, with the fast advancement of D-MRI technologies, we are expecting larger b-values and SNR (Setsompop et al. 2013, Van Essen et al. 2013). The use of larger b-values for reconstruction of diffusion characteristics has also been previously advocated in the literature (Jensen et al. 2016, Jones et al. 2013, Roine et al. 2015) in anticipation of future technological advances. Therefore, the proposed method is promising in terms of resolving subtle fiber crossing patterns in settings that will become increasingly relevant over time. Moreover, it is able to effectively identify isotropic diffusion with a high degree of accuracy.
+
+In experiments on real 3T D-MRI data sets, the proposed method leads to more realistic descriptions of crossing fibers and better tractography results than competing methods at a relatively small number of gradient directions, indicating the practical value of our method for analyzing D-MRI data from current studies.
+
+Our use of multiresolution spherical wavelets bears some similarity to the dODF-sharpening strategy of Kezele et al. (2010) where a spherical wavelets transform due to Starck et al. (2006) is employed. However, the method of Kezele et al. (2010) is not directly applicable here since we aim to estimate the FOD (or fiber ODF) rather than dODF. Moreover, the spherical wavelets constructed by Starck et al. (2006) do not possess the spherical function representation characteristics and tight frame properties of needlets. Finally, while our needlets representation enables us to impose sparsity constraints, Kezele et al. (2010) uses the spherical wavelets transform only as a band-pass filter. Among alternative choices of spherical wavelets, the lifting scheme based wavelets constructed by Schröder &amp; Sweldens (1995) provide excellent spatial localization and ease of computation. However, since these wavelets are nonsmooth and consequently poorly localized in frequency, they are not optimal for FOD reconstruction since FODs have sharply localized features, which require frequency localization of the basis functions for a parsimonious representation.
+
+There are a few limitations of the proposed method. First, the FOD is only a convenient mathematical abstraction of the complex geometry of neuronal fiber organization within a voxel. Therefore, the identification of FOD peaks with the orientations of the fiber bundles may not hold in a strict physical sense. Nevertheless, since we are treating the FOD as a continuous function on S2 as opposed to a discrete mixture of point masses, the reconstructed FOD is arguably a more realistic descriptor of the local geometry of the fiber bundles. Second, we assume antipodal symmetry of the FOD following existing literature on FOD estimation. Such FODs may not represent diverging (“fanning”) configurations of fiber bundles very well. However, by using the original (not symmetrized) needlets, it is possible to extend our method to deal with scenarios involving fanning, bending of fiber tracts, and so on. Third, when estimating the FOD at a voxel, currently we only use data from that voxel. Since fibers tend to be spatially contiguous, incorporation of data from neighboring voxels in FOD estimation may further improve estimation accuracy.
+
+One avenue for future research is the extension of this method to multiple q-shell data. An emerging strength of such data is its ability to accommodate multiple cellular compartment models that separately quantify the contributions of free water, water bound within the myelin sheath, inter-axonal water, and other compartments to the D-MRI signal. As such, multiple q-shell data may be best modeled to allow for different FOD representations for different compartments, as in the NODDI scheme (Zhang et al. 2012), rather than a single spherical function as in our method. On the other hand, spherical needlets might provide accurate and robust representation of some of these signal components, possibly with specific coefficient penalties for specific components. Future experimentation should determine settings in which spherical needlets are useful for modeling components of the multiple q-shell D-MRI signal.
+
+Supplementary Material
+
+supplement
+
+This work is supported by the following grants: NIH 1R01EB021707, NIH P30DK072476, NSF DMS-1148643, NSF DMS-1407530, NSF IIS-1422218.
+
+Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IX-ICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Data were provided (in part) by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University.
+
+Figure 1 Two fiber crossing at 90°, 75°, 60° with b = 1000s/mm2, SNR = 20
+
+n = 41 gradient directions and ratio = 10. The lines indicate the true fiber directions, the opaque part in the plots corresponds to mean estimated FOD across 100 replicates, and the translucent part in the plots corresponds to mean plus two standard deviations of the estimated FOD.
+
+Figure 2 Two fiber crossing at 45° with b = 1000, 3000s/mm2, SNR = 20, 50
+
+n = 41 gradient directions and ratio = 10. The lines indicate the true fiber directions; the opaque part corresponds to mean estimated FOD across 100 replicates; and the translucent part corresponds to mean plus two standard deviations of the estimated FOD.
+
+Figure 3 Two fiber crossing at 30° with b = 3000, 5000s/mm2, SNR = 20, 50
+
+n = 41 gradient directions and ratio = 10. The lines indicate the true fiber directions; the opaque part corresponds to mean estimated FOD across 100 replicates; and the translucent part corresponds to mean plus two standard deviations of the estimated FOD.
+
+Figure 4 Two fiber crossing: Angular error, bias and success rate
+
+n = 41 gradient directions and ratio = 10. Blue – SH-ridge; Purple – SCSD8; Green – SCSD12; Black – SCSD16; Red – SN-lasso; Cyan – DiST
+
+Figure 5 ADNI application: White matter tracts from the Jülich Histological Atlas provided by FSL, superimposed on z-slices 37 - 42 of the b0 image provided by FSL
+
+Red – Corpus Callosum (CC); Green – Cingulum Bundle (CB); Yellow – Superior Occipitofrontal Fasciculus (SOF); Blue – Corticospinal Tract (CT). The ROI is indicated by the white box.
+
+Figure 6 ADNI application
+
+FOD estimates on z-slice 40. (a) From left to right: Fiber orientation colormap of z-slice 40 where the ROI is indicated by the white box; Colormap, FA map and MD map of the ROI. (b) FOD estimates.
+
+Figure 7 ADNI application
+
+FOD estimates on a 5 × 5 subregion on z-slice 40. This subregion is highlighted by the white boxes on Figure 6.
+
+Figure 8 ADNI application
+
+SN-lasso FOD estimates on the ROI at z-slices 39 and 41.
+
+Figure 9 ADNI application
+
+FOD estimates on z-slice 38. (a) From left to right: Fiber orientation colormap of z-slice 38 where the ROI is indicated by the white box; Colormap, FA map and MD map of the ROI. (b) FOD estimates.
+
+Figure 10 ADNI application
+
+Tractography on the ROI – Perspective I. CC – Corpus Callosum; CB – Cingulum Bundle; SOF – Superior Occipitofrontal Fasciculus; CT – Corticospinal Tract
+
+Highlights
+
+Novel application of a multiresolution spherical basis, called needlets, to fiber orientation distribution (FOD) estimation from diffusion MRI (D-MRI) data.
+
+Spherical needlets have excellent localization of FOD peaks and a stable and parsimonious representation of FODs through spherical deconvolution.
+
+We gain estimation accuracy and achieve bias-variance trade-off by imposing a sparsity constraint on the needlet coefficients, together with a nonnegativity constraint on the estimated FOD.
+
+Extensive synthetic and real data experiments suggest superior accuracy and robustness over competing techniques, including the ability to resolve fibers that cross at angles as small as 30 degrees.
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service to our customers we are providing this early version of the manuscript. The manuscript will undergo copyediting, typesetting, and review of the resulting proof before it is published in its final citable form. Please note that during the production process errors may be discovered which could affect the content, and all legal disclaimers that apply to the journal pertain.
+
+
+Aganj I Lenglet C Sapiro G Ugurbil K Harel N 2010 Reconstruction of the orientation distribution function in single and multiple shell Q-ball imaging within constant solid angle Magnetic Resonance in Medicine 64 554 566 20535807
+Akaike H 1974 A new look at the statistical model identification IEEE Transactions on Automatic Control 19 716 723
+Alexander AL Lee JE Lazar M Field AS 2007 Diffusion tensor imaging of the brain Neurotherapeutics 4 3 316 329 17599699
+Alexander DC 2005 Multiple-fiber reconstruction algorithms for diffusion MRI Annals of the New York Academy of Sciences 1064 113 133 16394152
+Andersson JL Sotiropoulos SN 2016 An integrated approach to correction for off-resonance effects and subject movement in diffusion mr imaging Neuroimage 125 1063 1078 26481672
+Assemlal HE Tschumperlé D Brun L 2009 Efficient and robust computation of PDF features from diffusion MR signal Medical Image Analysis 13 715 729 19665917
+Assemlal HE Tschumperlé D Brun L Siddiqi K 2011 Recent advances in diffusion MRI modeling : angular and radial reconstruction Medical Image Analysis 15 369 396 21397549
+Atkinson K Han W 2012 Spherical Harmonics and Approximations on the Unit Sphere: An Introduction Springer-Verlag Heidelberg
+Basser PJ Jones DK 2002 Diffusion tensor MRI: theory, experimental design and data analysis – a technical review NMR in Biomedicine 15 456 467 12489095
+Boyd S Parikh N Chu E Peleato B Eckstein J 2011 Distributed optimization and statistical learning via the alternating direction method of multipliers Foundations and Trends in Machine Learning 3 1 122
+Carmichael O Chen J Paul D Peng J 2013 Diffusion tensor smoothing through weighted Karcher means Electronic Journal of Statistics 7 1913 1956 25419264
+Cheng J Ghosh A Jiang T Deriche R 2010 Model-free and analytical EAP reconstruction via spherical polar fourier diffusion MRI Proceedings of the Medical Image Computing and Computer-Assisted Intervention (MICCAI) 590 597
+Daducci A Van De Ville D Thiran JP Wiaux Y 2014 Sparse regularization of fiber ODF reconstruction: from suboptimality of ℓ2 and ℓ1 priors to ℓ0 Medical Image Analysis 18 820 833 24593935
+Descoteaux M Deriche R Le Bihan D Mangin JF Poupon C 2011 Multiple q-shell diffusion propagator imaging Medical Image Analysis 15 603 621 20685153
+Descoteuax M Angelino E Fitzgibbons S Deriche R 2007 Regularized, fast and robust analytical Q-ball imaging Magnetic Resonance in Medicine 58 497 510 17763358
+Descoteuax M Deriche R Knosche T Anwander A 2009 Deterministic and probabilistic tractography based on complex fibre orientation distribution IEEE Transactions on Medical Imaging 28 269 286 19188114
+Driscoll JR Healy DM 1994 Computing Fourier transforms and convolutions on the 2-sphere Advances in Applied Mathematics 15 2 202 250
+Eickhoff SB Heim S Zilles K Amunts K 2006 Testing anatomically specified hypotheses in functional imaging using cytoarchitectonic maps Neuroimage 32 2 570 582 16781166
+Eickhoff SB Paus T Caspers S Grosbras MH Evans AC Zilles K Amunts K 2007 Assignment of functional activations to probabilistic cytoarchitectonic areas revisited Neuroimage 36 3 511 521 17499520
+Eickhoff SB Stephan KE Mohlberg H Grefkes C Fink GR Amunts K Zilles K 2005 A new spm toolbox for combining probabilistic cytoarchitectonic maps and functional imaging data Neuroimage 25 4 1325 1335 15850749
+Fan M 2015 A note on spherical needlets, Technical report University of California Davis arXiv:1508.05406
+Ghosh A Tsigaridas E Mourrain B Deriche R 2014 A polynomial approach for extracting the extrema of a spherical function and its application in diffusion MRI Medical Image Analysis 17 503 514
+Górski KM Hivon E Banday AJ Wandelt BD Hansen FK Reinecke M Bartelman M 2005 HEALPix : a framework for high resolution discretization, and fast analysis of data distributed on the sphere Astrophysical Journal 622 759 771
+Gudbjartsson H Patz S 1995 The Rician distribution of noisy MRI data Magnetic Resonance in Medicine 34 910 914 8598820
+Hahn KR Prigarin S Heim S Hasan K 2006 Random noise in diffusion tensor imaging, its destructive impact and some corrections Weickert J Hagen H Visualization and Processing of Tensor Fields Springer 107 117
+Jenkinson M Bannister P Brady M Smith S 2002 Improved optimization for the robust and accurate linear registration and motion correction of brain images Neuroimage 17 2 825 841 12377157
+Jenkinson M Beckmann CF Behrens TE Woolrich MW Smith SM 2012 FSL NeuroImage 62 782 790 21979382
+Jenkinson M Smith S 2001 A global optimisation method for robust affine registration of brain images Medical image analysis 5 2 143 156 11516708
+Jensen JH Russell Glenn G Helpern JA 2016 Fiber ball imaging NeuroImage 124 824 833 26432187
+Jensen J Helpern J Ramani A Lu H Kaczynski K 2005 Diffusional kurtosis imaging: the quantification of non-Gaussian water diffusion by means of magnetic resonance imaging Magnetic Resonance in Medicine 53 1432 1440 15906300
+Jian B Vemuri BC 2007 A unified computational framework for deconvolution to reconstruct multiple fibers from diffusion weighted MRI IEEE Transactions on Medical Imaging 26 1464 1471 18041262
+Johnstone 2015 Function Estimation in Gaussian Noise: Sequence Models Draft of monograph available at http://statweb.stanford.edu/~imj/
+Johnstone IM Paul D 2014 Adaptation in some linear inverse problems Stat 3 187 199
+Jones DK Knosche TR Turner R 2013 White matter integrity, fiber count, and other fallacies : the do’s and don’ts of diffusion mri NeuroImage 73 239 254 22846632
+Kerkyacharian G Petrushev P Picard D Willer T 2007 Needlet algorithms for estimation in inverse problems Electronic Journal of Statistics 1 30 76
+Kezele I Descoteaux M Poupon C Poupon F Mangin JF 2010 Spherical wavelet transform for ODF sharpening Medical Image Analysis 14 332 342 20207188
+Landman BA Bogovic JA Wan H ElShahaby FEZ Bazin PL Prince JL 2012 Resolution of crossing fibers with constrained compressed sensing using diffusion tensor MRI NeuroImage 59 2175 2186 22019877
+Le Bihan D 1995 Diffusion and Perfusion Magnetic Resonance Imaging Raven Press
+Le Bihan D Mangin J-F Poupon C Clark AC Pappata S Molko N Chabriat H 2001 Diffusion tensor imaging : concepts and applications Journal of Magnetic Resonance Imaging 13 534 546 11276097
+Lenglet C Campbell JSW Descoteaux M Haro G Savadjiev P Wassermann D Anwander A Deriche R Pike GB Sapiro G Siddiqi K Thompson P 2009 Mathematical methods for diffusion MRI processing NeuroImage 45 S111 S122 19063977
+Liu C Bammer R Acar B Moseley M 2004 Characterizing non-Gaussian diffusion by using generalized diffusion tensors Magnetic Resonance in Medicine 51 924 937 15122674
+Lu H Jensen JH Ramani A Helpern JA 2006 Three-dimensional characterization of non-gaussian water diffusion in humans using diffusion kurtosis NMR in Biomedicine 19 236 247 16521095
+Mallat S 1999 A Wavelet Tour of Signal Processing 2nd Academic Press
+Marinucci D Peccati G 2011 Random Fields on the Sphere Representation, Limit Theorems and Cosmological Applications Cambridge University Press
+Michailovich O Rathi Y Dolui S 2011 Spatially regularized compressed sensing for high angular resolution diffusion imaging IEEE Transactions on Medical Imaging 30 1100 1115 21536524
+Michailovich O Rathi Y Shenton ME 2010 On approximation of orientation distributions by means of spherical ridgelets IEEE Transactions on Image Processing 19 461 477 19887312
+Mori S 2007 Introduction to Diffusion Tensor Imaging Elsevier
+Narcowich FJ Petrushev P Ward JD 2006a Decomposition of Besov and Triebel-Lizorkin spaces on the sphere Journal of Functional Analysis 238 530 564
+Narcowich FJ Petrushev P Ward JD 2006b Localized tight frames on spheres SIAM Journal of Mathematical Analysis 38 574 594
+Oz¨arslan E Shepherd T Vemuri B Blackband S Mareci TH 2006 Resolution of complex tissuemicroarchitecture using the diffusion orientation transform (DOT) NeuroImage 31 1086 1103 16546404
+Parker GD Marshall D Rosin PL Drage N Richmond S Jones DK 2013 A pitfall in the reconstruction of fibre odfs using spherical deconvolution of diffusion MRI data NeuroImage 65 433 448 23085109
+Polzehl J Tabelow K 2008 Structural adaptive smoothing in diffusion tensor imaging : the R package dti, Technical report, Weierstrass Institute, Berlin Technical Report
+Rathi Y Michailovich O Setsompop K Bouix S S ME Westin C-F 2011 Sparse multi-shell diffusion imaging Medical Image Computing and Computer Assisted Interventions 14 2 58 65
+Roine T Jeurissen B Perrone D Aelterman J Philips W 2015 Informed constrained spherical deconvolution (iCSD) Medical Image Analysis 24 269 281 25660002
+Sakaie KE Lowe MJ 2007 An objective method for regularization of fiber orientation distributions derived from diffusion weighted-MRI NeuroImage 34 169 176 17030125
+Scherrer B Warfield SK 2010 Why multiple b-values are required for multi-tensor models. evaluation with a constrained log-euclidean model 2010 IEEE International Symposium on Biomedical Imaging: From Nano to Macro IEEE 1389 1392
+Schröder P Sweldens W 1995 Spherical wavelets: Texture processing EGRW 95
+Schwarz GE 1978 Estimating the dimension of a model The Annals of Statistics 6 461 464
+Setsompop K Kimmlingen R Eberlein E Witzel T Cohen-Adad J McNab JA Keil B Tisdall MD Hoecht P Dietz P Cauley SF Tountcheva V Matschl V Lenz VH Heberlein K Potthast A Thein H Van Horn J Toga A Schmitt F Lehne D Rosen BR Wedeen V Wald LL 2013 Pushing the limits of in vivo diffusion MRI for the Human Connectome Project NeuroImage 80 220 233 23707579
+Smith SM 2002 Fast robust automated brain extraction Human brain mapping 17 3 143 155 12391568
+Smith SM Jenkinson M Woolrich MW Beckmann CF Behrens TEJ Johansen-Berg H Bannister PR De Luca M Drobnjak I Flitney DE Niazy R Saunders J Vickers J Zhang Y De Stefano N Brady JM Matthews PM 2004 Advances in functional and structural MR image analysis and implementation as FSL NeuroImage 23 S1
+Sra S Nowozin S Wright SJ 2012 Optimization for Machine Learning Massachusetts Institute of Technology Press
+Starck JL Moudden Y Abrial P Nguyen M 2006 Wavelets, ridgelets, and curvelets on the sphere Astronomy and Astrophysics 446 1191 1204
+Tibshirani R 1996 Regression shrinkage and selection via the lasso Journal of Royal Statistical Society: Series B 58 267 288
+Tournier JD Calamante F Connelly A 2007 Robust determination of the fibre orientation distribution in diffusion MRI: Non-negativity constrained super-resolved spherical deconvolution NeuroImage 35 1459 1472 17379540
+Tournier JD Calamante F Gadian DG Connelly A 2004 Direct estimation of the fiber orientation density function from diffusion-weighted MRI data using spherical deconvolution NeuroImage 23 1176 1185 15528117
+Tournier JD Mori S Leemans A 2011 Diffusion tensor imaging and beyond Magnetic Resonance in Medicine 65 1532 1556 21469191
+Tsybakov AB 2009 Introduction to Nonparametric Estimation Springer
+Tuch DS 2004 Q-ball imaging Magnetic Resonance in Medicine 52 1358 1372 15562495
+Tuch DS Reese TG Wiegell MR Makris N Belliveau JW Wedeen VJ 2002 High angular resolution diffusion imaging reveals intravoxel white matter fiber heterogeneity Magnetic Resonance in Medicine 48 577 582 12353272
+Van Essen DC Smith SM Barch DM Behrens TE Yacoub E Ugurbil K Consortium W.-M.H 2013 The WU-Minn human connectome project: an overview NeuroImage 80 62 79 23684880
+Weeden VJ Hagmann P Tseng W Reese T Weisskoff R 2005 Mapping complex tissue architecture with diffusion spectrum magnetic resonance imaging Magnetic Resonance in Medicine 54 1377 1386 16247738
+Weeden VJ Wang R Schmahmann JD Benner T Tseng W Dai G Pandya D Hagmann P D’Arecuil H de Crespigny AJ 2008 Diffusion spectrum magnetic spectrum imaging (DSI) tractography of crossing fibers NeuroImage 41 1267 1277 18495497
+Wong RKW Lee TCM Paul D Peng J 2016 Fiber direction estimation, smoothing and tracking in diffusion MRI The Annals of Applied Statistics 10 1137 1156 28638497
+Wu YC Alexander AL 2007 Hybrid diffusion imaging NeuroImage 36 617 629 17481920
+Wu YC Field A Alexander AL 2008 Computation of diffusion function measures in q-space using magnetic resonance hybrid diffusion imaging IEEE Transactions on Medical Imaging 27 858 865 18541492
+Yeh FC Tseng WYI 2013a Sparse solution of fiber orientation distribution function by diffusion decomposition PLOS One 8 e75747 24146772
+Yeh FC Tseng WYI 2013b Sparse solution of fiber orientation distribution function by diffusion decomposition PloS one 8 10 e75747 24146772
+Yeh FC Weeden VJ Tseng WYI 2010 Generalized q-sampling imaging IEEE Transactions on Medical Imaging 29 1626 1635 20304721
+Zhang H Schneider T Wheeler-Kingshott CA Alexander DC 2012 NODDI: practical in vivo neurite orientation dispersion and density imaging of the human brain NeuroImage 61 1000 1016 22484410

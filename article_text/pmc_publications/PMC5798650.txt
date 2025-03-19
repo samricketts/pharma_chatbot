@@ -1,0 +1,627 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9215515
+20498
+Neuroimage
+Neuroimage
+NeuroImage
+1053-8119
+1095-9572
+
+27666385
+5798650
+10.1016/j.neuroimage.2016.08.027
+NIHMS908666
+Article
+Generalized reduced rank latent factor regression for high dimensional tensor fields, and neuroimaging-genetic applications
+Tao Chenyang ab
+Nichols Thomas E. c
+Hua Xue d
+Ching Christopher R.K. de
+Rolls Edmund T. bf
+Thompson Paul M. dg
+Feng Jianfeng abh*
+The Alzheimer’s Disease Neuroimaging Initiative1
+a Centre for Computational Systems Biology and School of Mathematical Sciences, Fudan University, Shanghai, PR China
+b Department of Computer Science, Warwick University, Coventry, UK
+c Department of Statistics, University of Warwick, Coventry, UK
+d Imaging Genetics Center, Institute for Neuroimaging &amp; Informatics, University of Southern California, Los Angeles, CA, USA
+e Interdepartmental Neuroscience Graduate Program, UCLA School of Medicine, Los Angeles, CA, USA
+f Oxford Centre for Computational Neuroscience, Oxford, UK
+g Departments of Neurology, Psychiatry, Radiology, Engineering, Pediatrics, and Ophthalmology, USC, Los Angeles, CA, USA
+h School of Life Science and the Collaborative Innovation Center for Brain Science, Fudan University, Shanghai 200433, PR China
+* Corresponding author at: Centre for Computational Systems Biology and School of Mathematical Sciences, Fudan University, Shanghai, PR China. jianfeng64@gmail.com (J. Feng)
+1 Data used in preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+26 9 2017
+22 9 2016
+01 1 2017
+05 2 2018
+144 Pt A 3557
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+We propose a generalized reduced rank latent factor regression model (GRRLF) for the analysis of tensor field responses and high dimensional covariates. The model is motivated by the need from imaging-genetic studies to identify genetic variants that are associated with brain imaging phenotypes, often in the form of high dimensional tensor fields. GRRLF identifies from the structure in the data the effective dimensionality of the data, and then jointly performs dimension reduction of the covariates, dynamic identification of latent factors, and nonparametric estimation of both covariate and latent response fields. After accounting for the latent and covariate effects, GRLLF performs a nonparametric test on the remaining factor of interest. GRRLF provides a better factorization of the signals compared with common solutions, and is less susceptible to overfitting because it exploits the effective dimensionality. The generality and the flexibility of GRRLF also allow various statistical models to be handled in a unified framework and solutions can be efficiently computed. Within the field of neuroimaging, it improves the sensitivity for weak signals and is a promising alternative to existing approaches. The operation of the framework is demonstrated with both synthetic datasets and a real-world neuroimaging example in which the effects of a set of genes on the structure of the brain at the voxel level were measured, and the results compared favorably with those from existing approaches.
+
+Dimension reduction
+Generalized linear model
+High dimensional tensor field
+Latent factor
+Least squares kernel machines
+Nuclear norm regularization
+Reduced rank regression
+Riemannian manifold
+
+1. Introduction
+
+The past decade has witnessed the dawn of the big data era. Advances in technologies in areas such as genomics and medical imaging, among others, have presented us with an unprecedentedly large volume of data characterized by high dimensionality. This not only brings opportunities but also poses new challenges to scientific research. Neuroimaging-genetics, one of the burgeoning interdisciplinary fields emerging in this new era, aims at understanding how the genetic makeup affects the structure and function of the human brain and has received increasing interest in recent years.
+
+Starting with candidate gene and candidate phenotype studies, imaging-genetic methods have made significant progress over the years (Thompson et al., 2013; Liu and Calhoun, 2014; Poline et al., 2015). Different strategies have been implemented to combine the genetic and neuroimaging information, producing many promising results (Hibar et al., 2015; Richiardi et al., 2015; Jia et al., 2016). Using a few summary variables of the brain features is the most popular approach in the literature (Joyner et al., 2009; Potkin et al., 2009; Vounou et al., 2010); voxel-wise and genome-wide association approaches offer a more holistic perspective and are used in exploratory studies (Hibar et al., 2011; Vounou et al., 2012); multivariate analyses have also been used to capture the epistatic and pleiotropic interactions, therefore boosting the overall sensitivity (Hardoon et al., 2009; Ge at al., 2015a,b). Apart from the population studies, family-based studies offer additional insights on the genetic heritability (Ganjgahi et al., 2015). Recently, a few probabilistic approaches have been proposed to jointly model the interactions between genetic factors, brain endophenotypes and behavior phenotypes (Batmanghelich et al., 2013, Stingo et al., 2013), and some Bayesian methods originally developed for eQTL studies can also be applied to imaging-genetic problems (Zhang and Liu, 2007; Jiang and Liu, 2015).
+
+The trend in imaging-genetics is to embrace brain-wide genome-wide association studies with multivariate predictors and responses, but this is challenged by the combinatorial complexity of the problem. For example, the probabilistic formulations do not scale well with dimensionality; and standard brute force massive univariate approaches (Stein et al., 2010a; Vounou et al., 2012) treat each voxel and predictor as independent units and compute pairwise significance, and the loss of spatial information and the colossal multiple comparison corrections involved have high costs in terms of sensitivity (Hua et al., 2015). Various attempts have been made to remedy this. Some approaches involve dimension reduction techniques, which either first embed genetic factors onto some lower dimensional space using methods such as principal component analysis (PCA) before subsequent analyses (Hibar et al., 2011), or jointly project genetic factors and imaging traits by methods such as parallel independent component analysis (pICA), canonical correlation analysis (CCA) and partial least square (PLS) (Liu et al., 2009; Le Floch et al., 2012, 2013). These methods often lack model interpretability. Other popular approaches enforce penalties or constraints to regularize the solutions, for example (group) sparsity or rank constraints (Wang et al., 2012a,b; Vounou et al., 2012; Lin et al., 2015; Huang et al., 2015). But they are usually difficult to compute and the significance of the findings cannot be directly evaluated.
+
+One path towards more efficient estimation for brain-wide association, both in the statistical and computational sense, is to exploit the inherent spatial structure from the neuroimaging data. Two prominent examples in this direction are random field theory based methods (Worsley et al., 1996, Penny et al., 2011; Ge et al., 2012) and functional based methods (Wahba, 1990; Ramsay and Silverman, 2005; Reiss and Ogden, 2010) where the smoothness of the data is considered. Random field methods are established as the core inferential tool in neuroimaging studies. These methods correct the statistical thresholds based on the smoothness estimated from the images, resulting in increased sensitivity. Functional based methods explicitly use smooth fields parametrized by smooth basis functions in the model, thereby regularizing the solution and simplifying the estimation at the same time. Related to functional methods are tensor-based methods (Zhou et al., 2013; Li, 2014) and wavelet-based methods (Van De Ville et al., 2007; Wang et al., 2014), where either low rank tensor factorization or a wavelet basis is used to approximate the spatial field of interest.
+
+Long overlooked in neuroimaging studies, including imaging-genetics, is the influence from unobservable latent factors (Bhattacharya and Dunson et al., 2011; Montagna et al., 2012). An illustrative cartoon is presented in Fig. 1 for a typical neuroimaging-genetic case, in which the effect of interest is usually small compared with the total variance. This is known as low signal to noise ratio (SNR). Large-scale multi-center collaborations have become a common practice in the neuroimaging community (Jack et al., 2008; Michael et al., 2012; Van Essen et al., 2013; Thompson et al., 2014) and increasing numbers of researchers are starting to pool data from different sources. The heterogeneity of the data introduces large unexplained variance originating from population stratification or cryptic relatedness, for example genetic background, medical history, traumatic experiences and environmental impacts. Such variance aggregates the SNR issue and confuses the estimation procedures if unaccounted for. However these confounding factors are usually difficult or costly to quantify, and therefore they are hidden from the data analysis in most, if not all, studies.
+
+To see how the latent factor-induced variance undermines the power of statistical procedures, let us take the most commonly used least squares regression as an example. Assume the model Y = Xβ + L + E, where Y is the response, X is the predictor of interest, β is the regression coefficient, L is the unobservable latent factor and E is the noise term. In the absence of knowledge regarding L, the alternative model Y=Xβ∼+E∼ is estimated instead, where E∼=L+E. Assuming independence between X, L and E, we have var[E∼]=var[L]+var[E], where var[·] measures the variance. Denote β^ the oracle estimator where the true model is fit with the knowledge of L and β∼^ the estimator for the alternative model, the asymptotic theory of least square estimator tells us β^∼N(β,var[E](X′X)−1) and β∼^∼N(β,var[E∼](X′X)−1) as the sample size goes to infinity, that is to say β∼^ is more variable than β^ and converges slowly to the population mean. See Fig. 2 for a graphical illustration.
+
+Solutions have been proposed to alleviate the loss of statistical efficiency caused by latent factors. In Zhu et al. (2014) the authors propose to dynamically estimate the latent factors from the observed data. However this approach is based on Markov chain Monte-Carlo (MCMC) sampling, and therefore the computational cost is prohibitive for high dimensional tensor field applications. In the eQTL literature, several methods that explicitly account for the hidden determinants have been developed. Following a Bayesian formulation, Stegle et al. (2010) factors out the hidden effect; Fusi et al. (2012), however, computes the ML estimate of hidden factors by marginalizing out the regression coefficients and then using the estimated hidden factors to construct certain covariance matrices for subsequent analyses. These studies are not concerned with the spatial structure and the inherent dimensionality of the model, and the results depend on the choice of parameters for the prior distributions. Additionally, these studies consider latent effect as “variance of no interest”, but as we will see in later sections, the latent structure also contains vital information and therefore should not be simply disregarded as unwanted variance.
+
+In this article, we formulate a new generalized reduced rank latent factor regression model (GRRLF) for high dimensional tensor fields. Our method exploits the spatial structure of the neuroimaging data and the low rank structure of the regression coefficient matrix, which computes the effective covariate space, improves the generalization performance and leads to efficient estimation. The model works for general tensor field responses which include a wide range of imaging modalities, i. e. MRI, EEG, PET, etc. Although motivated by imaging-genetic applications, the proposed GRRLF is thus widely applicable to almost all types of neuroimaging studies. The estimation is carried out via minimizing a properly defined loss function, which includes maximum likelihood estimation (MLE) and penalized likelihood estimation (PLE) as special cases.
+
+The contributions of this paper are four-fold. Firstly, we introduce field-constrained latent factor estimation for high dimensional tensor field regression analysis. It efficiently explains the covariance structure in the data caused by the hidden structures. Secondly, our model integrates dimension reduction, that not only improves the statistical efficiency but also facilitates model interpretability. Thirdly, we provide several implementations to efficiently compute the solution under constraints, including Riemannian manifold optimization (Absil et al., 2009) and nuclear norm regularization which are both based on manifold optimization. We highlight the flexibility of using manifold optimization to formulate neuroimaging problems, which can lead to further interesting applications. Lastly, we present an efficient kernel approach for brain-wide genome-wide association studies under the GRRLF framework and apply it to the ADNI dataset. Empirical results provide evidence that the kernel GRRLF approach is capable of capturing the interactions that can be missed in conventional studies.
+
+The rest of the paper is organized as follows. In Section 2, we detail the model formulation and estimation. In Section 3, the proposed method is evaluated with both synthetic and real-world examples and compared with other conventional approaches. Finally we conclude this paper with a summary and future prospects in Section 4. The real-world data used and detailed preprocessing steps are described in Appendix A. MATLAB scripts for GRRLF are available online from http://github.com/chenyang-tao/grrlf/.
+
+2. Materials and methods
+
+2.1. Model formulation
+
+Denote the Ω as the spatial domain of the brain and v as its spatial index, X, Y are the random vectors/fields of covariates and responses, we denote X={xi}i=1n and Y={yi,v|i=1,⋯,n,v∈Ω} the respective empirical sample where xi∈ℝp, yi,v∈ℝq and n is the sample size. Here p is the dimension of covariates and q is the number of image modalities (for example, yi,v is the 3×3 diffusion tensor from DTI imaging, the 3×1 tissue composition (WM, GM, CSF) from VBM analysis or the time series of a task response). All B∈ℝp ×d orthonormal matrices, i.e. B⊤B = Id, form a Riemannian manifold known as the Stiefel manifold and denoted as Sd(ℝp) while a less restrictive manifold requiring only diag(B⊤B) = Id is called the oblique manifold with the notation Od(ℝp). We call d the effective dimension of X w.r.t to Y if X⫫Y|B⊤X for some projection matrix B∈Sd(ℝp) where ⫫ stands for independence and ·|· is the conditioning operator. The voxel-wise model writes (1) yi,v=Φ∼vB⊤xi+Γ∼vli+ξi,v,
+
+where x is the covariate term, l∈ℝt is the latent factor, ξv∈ℝq is the noise, Φ∼v∈ℝq×d is the covariate regression coefficient matrix and Γ∼v∈ℝq×t the latent factor loading matrix.
+
+To understand model (1), let us consider a concrete example. Say for example, a researcher is interested in how substance abuse alters brain morphometry. The researcher has collected voxel-wise gray matter and white matter volumes (response yv∈ℝ2), and various evaluation scores related to substance abuse, including the Alcohol Use Disorders Identification Test (AUDIT) (Saunders et al., 1993), Fagerstrom Test for Nicotine Dependence (FTND) (Heatherton, 1991) and Substance Use Risk Profile Scale (SURPS) (Woicik et al., 2009) for a group of subjects. Each of these evaluations has several sub-scores and altogether the researcher has a 14 dimensional feature vector for each subject (covariate x∈ℝ14). These features are correlated, and it is expected that a low dimensional summary (effective covariate x∼=B⊤x∈ℝd, d ∈ [1,⋯,3]) is sufficient to explain the variations in brain morphometry caused by substance abuse. The researcher also collects covariates of no interest, such as age, gender and race, that correlate with the imaging features and will be modeled to remove their effect. The researcher is aware that population stratification and subjects’ medical history can affect brain tissue volumes, but unfortunately, the subjects are not genotyped and their individual files do not cover medical records therefore such information is unavailable (latent status l).
+
+For notational simplicity hereafter we assume q=1 so that we can write the brain-wide model in matrix form. Denote Nvox the number of voxels within Ω, then with Y∈ℝn×Nvox the observation matrix, X∈ℝn×p the covariate matrix, Φ∼∈ℝp×Nvox the covariate effect, L∈ℝn×t the latent status matrix, Γ∼∈ℝt×Nvox the latent response and E∈ℝn×Nvox the noise term, we have the matrix form of the brain-wide model (2) Y=XBΦ∼+LΓ∼+E,
+
+In the case {ξv} are i.i.d Gaussian variables, the maximal likelihood solution of GRRLF is (3) {Φ∼^,B^,Γ∼^,L^}=argminB,Φ∼,Γ∼,L‖Y−XBΦ∼−LΓ∼‖F2subjecttoB∈Sd(ℝp)andL∈Ot(ℝn),
+
+where ‖·‖Fro is the Frobenius norm. We note that the restriction on L is simply a normalization and (B,Φ∼) is an equivalent class under orthogonal transformations, i.e. if (B, Φ) is a solution then (BQ, Q⊤Φ) is also a solution for all unitary matrices Q∈ℝd ×d. More generally, GRRLF can be formulated as (4) {Φ∼^,B^,Γ∼^,L^}=argminB,Φ∼,Γ∼,Lℓ(X,Y|B,Φ∼,L,Γ∼)subjecttoB∈ℳ1,L∈ℳ2,
+
+where ℓ is some loss function and {ℳi}i=12 are some Riemannian manifolds to constrain the solution.
+
+2.2. Smoothing the tensor fields
+
+To more effectively exploit the spatial structures, further constraints can be enforced. For example, it is natural to assume the smoothness of tensor fields Φ∼ and Γ∼. In this work, we assume Φ∼ and Γ∼ can be approximated by linear combinations of some (smooth) basis functions as Φ∼v=∑b=1Nknothb(v)Φb,Γ∼v=∑b=1Nknothb(v)Γb,
+
+where {hb(⋅)}b=1Nknot is the set of basis functions, {Φb∈ℝq×d} and Γb∈ℝq×t are the coefficients, and here we have assumed both tensor fields have the same “smoothness” for notational clarity. Similar to model (2) the smoothed model can be written in the matrix form as (5) Y=XBΦH+LΓH+E,
+
+where Φ∈ℝd×Nknot and Γ∈ℝt×Nknot are the coefficient matrices, and we call H∈ℝNknot×Nvox the smoothing matrix. Φ∼=ΦH and Γ∼=ΓH are respectively referred to as the covariate response field and the latent response field, B∼=BΦ∈ℝp×Nknot as the covariate effect matrix and L∼=LΓ∈ℝn×Nknot as the latent effect matrix. Since Nknot &lt; &lt; Nvox, the smoothing operation can significantly reduce the number of parameters to be optimized. In this study we have used Gaussian radial basis functions (RBF) {hb(v)=exp(−‖v−vb‖22/2σ2)}b=1Nknot as basis functions, where vb ∈ Ω is the bth knot and σ2 is the bandwidth parameter. Other non-smooth basis functions can also be used if they are well justified for the application.
+
+Note that (4) is a very general formulation that encompasses many statistical models as special cases. In Table A1 we provide an inexhaustive list of loss function ℓ that lead to commonly used statistical models.
+
+2.3. Generalized cross-validation procedure
+
+GRRLF needs constraint parameters Θ to regularize its solution, therefore a parameter selection procedure is necessary to ensure good generalization performance. In the literature, a cross-validation (CV) procedure is often used to assess the generalizing performance of the parameters, by evaluating the loss with the validation set and the parameters estimated from the training set. However, for GRRLF the conventional CV procedure cannot be used, because the latent parameters are unique to the validation set, and as such, they cannot be estimated from the training set. Here we propose a generalized cross-validation (GCV) procedure to resolve this dilemma.
+
+Assuming that the training and validation sets are drawn from the same distribution, we know that for the latent component the latent response field Γ∼ is shared by both sets while the latent status variables L are different. Therefore given {B^,Φ^,Γ^}, we can estimate the latent status L of the validation set by minimizing the residual error ‖Ytest−XtestB^Φ^H−LΓ^H‖F2 of the validation set and using the minimal residual error as the generalizing performance score. The pseudo code for GCV is given in Algorithm 1.
+
+Algorithm 1 Generalized cross-validation procedure for GRRLF.
+
+Input: Xeval, Yeval, Xtext, Ytext, H, Θ		
+Output: ErrCV		
+(B∼^,L∼^):=GRRLF(Xeval,Yeval,H,Θ);		
+[U,∑,V]:=SVD(L∼^),Γ^:=V⊤;	/∗L∼^:=U∑V⊤∗/	
+R∼^test:=Ytest−XtestB∼^evalH;		
+L^test:=argminL‖R∼^test−LΓ^H‖F2;	/* Least squares */	
+ErrCV:=‖R∼^test−L^testΓ^H‖F2;		
+
+2.4. Estimation based on Riemannian manifold optimization
+
+Since (4) is a nonlinear optimization problem constrained on Riemannian manifolds it is difficult to optimize directly. A key observation is that individually optimizing {B, Φ, L, Γ} reduces to a linear problem, which suggests the use of the so-called block relaxation algorithm (De Leeuw, 1994; Lange, 2010) to alternately update {B, Φ, L, Γ} at each iteration until convergence. In this work, we use the manopt toolbox (Boumal et al., 2014) to efficiently solve the manifold optimization problem (4). Manopt provides a general framework for solving Riemannian manifold optimization problems, which grants the modeler the freedom of specifying the constraints for the model without worrying about the implementation details and still use an efficient solver. We remark that while the general purpose solver relieves the burden from the modeler, the computational efficiency can be significantly improved by using a customized solver w.r.t the loss ℓ. Here we detail the implementation details of our customized solver for (3).
+
+The key idea of GRRLF is to improve the estimation of weak signals by accounting for the strong signals. Therefore, if the covariate signal or the latent signal is of interest, and there is no prior knowledge of which signal is “dominating”, a choice on which component is used to start the iteration should be made. For example, if the covariate effect is dominating but the latent effect is estimated first, then part of the covariate effect might be erroneously interpreted as latent effect. Here we propose to base our decision on the generalizing performance from GCV. If the ‘latent first’ strategy is favored by GCV, we further test for the association between covariates and estimated latent status variables, using dependency tests such as CCA or more general Hilbert–Schmidt independence criteria (HSIC) (Gretton et al., 2007). If a significant association is detected between the covariates and the latent status variables, the previous decision is overruled and, instead, we estimate the covariate effect first. The complete estimation procedure is summarized in Algorithm 2, and hereafter we refer to it as the general manifold GRRLF implementation (GM-GRRLF). More sophisticated procedures, that control for the dependency between covariates and latent components, are discussed in later sections.
+
+Algorithm 2 GM-GRRLF.
+
+	
+
+2.5. Model selection
+
+The performance of GRRLF depends on the parameters (d,t), denoting the effective dimension of the covariates and latent factors. In the absence of prior knowledge of (d,t), we can use the Akaike information criterion (AIC) (Akaike, 1974), the Bayesian information criterion (BIC) (Schwarz et al., 1978) or generalized cross-validation described above to dynamically determine these two parameters. Likelihood models can use *IC (and possibly also a χ2-test) to select (d,t) while for other more general models the GCV approach is preferred. For (3), fast determination of (d,t) can be achieved by combining RRR and PCA. The sequence of RRR and PCA is determined based on generalized cross validation. Both RRR and PCA involve solving an eigenvalue problem and the magnitude of the eigenvalues provides information about the inherent structural dimensionality of the data. Assuming the eigenvalues estimated are sorted in descending order, the ‘elbow’ or ‘jump point’ of the eigenvalue curve is used as an estimate of the rank/structural dimensionality.
+
+2.6. Constrained nuclear norm formulation of GRRLF
+
+In this section we present an alternative formulation of GRRLF using the nuclear norm regularization (NNR), which has a global optima and can be solved with convex optimization techniques. NNR is a powerful tool restoring the low rank structure of matrices with noisy or incomplete observations and is widely used in machine learning applications (Yuan et al., 2007; Koren et al., 2009; Candès and Tao, 2010).
+
+Notice that solving (5) is a nonlinear optimization problem, and its solutions can be easily trapped in local optima. However, solving model (6) Y=XB∼H+L∼H+E
+
+for convex loss function f(·) with respect to B∼ and L∼ is easy because there exists a global minimum that can be easily approached with standard optimization tools. But this nice property is no longer valid with the rank constraints applied, because (1) the manifold has changed and the geodesics is different, so f (·) may no longer be convex; (2) the feasible solution domain may no longer be a convex set. To overcome such difficulties, an alternative formulation that produces effective low rank solutions while keeping the convexity of the problem is desired. NNR fulfills such needs.
+
+For a matrix A∈ℝn ×m, its nuclear norm (NN)‖A‖∗ is defined as the ℓ1 norm of its singular values {σh}h=1min(n,m), or equivalently as ‖A‖∗=tr(AA⊤) thus also known as the trace norm. It can be shown for matrix completion problems, penalizing the nuclear norm of the solution matrices is equivalent to thresholding the singular values thus producing low rank results (Chen et al., 2013). Thus for GRRLF, we can similarly write down its NNR formulation as (7) (B∼^,L∼^)=argminB∼,L∼‖Y−XB∼H−L∼H‖F2+λ1‖B∼‖∗+λ2‖L∼‖∗,
+
+where λ1 and λ2 are regularization parameters. Since ‖·‖* does not admit an analytical expression, in this study we optimize the following alternative form (8) (B∼^,L∼^)=argmin‖B∼‖≤t1,‖L∼‖≤t2‖Y−XB∼H−L∼H‖F2,
+
+where t1 and t2 are the NN constraints, therefore (8) becomes a constrained optimization problem. By extending the results of Jaggi et al. (2010) we prove that (8) is equivalent to a convex optimization problem on the domain of fixed-trace positive semi-definite (PSD) matrices and present the pseudo code for estimation in Algorithm 3, where we have used notation Aa:bc:d for extracting the sub-matrix of A with row a to b and column to c to d. The details are provided in Appendix C.
+
+Algorithm 3 NNR-GRRLF.
+
+	
+
+2.7. An efficient kernel GWAS extension
+
+The model developed so far focuses on the candidate approach, i.e. a set of variables of interest are grouped into the candidate predictor x and then we proceed with the model estimation. However, in modern neuroimaging-genetic studies, a genome wide association study (GWAS) is often performed, which means testing the association with the imaging phenotypes for a colossal number of candidate genes/SNPs (typically anywhere from thousands to millions). Estimating the complete model for each candidates incurs a heavy computational burden, a practice often to be avoided even in conventional univariate GWAS studies (Eu-ahsunthornwattana et al., 2014). Also an accurate yet efficient statistical testing procedure is required to assign the significance level to the observed association.
+
+Inspired by the works of Liu et al. (2007) and Ge et al. (2012), we propose to address the challenge of an efficient GRRLF-GWAS implementation by integrating the powerful least squares kernel machines (LSKM) under the small effect assumption. For convenience we will refer to the genetic candidates as ‘genes’ in the following exposition. Specifically, the model writes yi,v=hv(k)(gi(k))+ΦvB⊤xi+Γvli+ξi,v(k),
+
+where k ∈ {1,…,pg} is the index for the genes, g(k) is the data for the kth gene, h(k)(·) is the nonparametric function defined on the kth genetic data in some function space ℋk, ξi,v(k) is the gene-specific residual component and the rest follows the previous definitions, except that we have shifted our interest from x to g. We will suppress the index i, k and v for clarity whenever the context is clear. The function space ℋ is determined by the semi-positive definite kernel function κ(g, g′) defined on the genetic data and we call the matrix K defined by Kij = κ(gi, gj) the kernel matrix. The small effect assumption basically states that the gene induced variance var[h (g)] is small compared with the gene-specific residual variance var[ξ] and ignoring it does not significantly bias the estimation for non-genetic parameters in the model. So, instead of estimating the complete model for each gene, the non-genetic parameters are estimated once under the full null model where h(k) equals zero for all k. Then a score test is performed using the empirical kernel matrix K(k) and the estimated residual component ξ^ for each gene k, for example, in the case of univariate response, Q(k):=12σ^2ξ^⊤K(k)ξ^,
+
+where Q(k) is the test score following a mixed chi-square distribution under the null hypothesis with some mild conditions and σ^2 is the estimated variance of the residual ξ. The mixed Chi-square is approximated by a scaled Chi-square with moment matching and the significance level is assigned based on the parametric approximation (Hua and Ghosh, 2014). Note however that the validity of using the parametric approximation hinges on its closeness to the null distribution, which should always be examined in practice. If the approximation deviates from the empirical null, the later should be used. Statistical correction procedures should be invoked after the computation of significance maps to control for the false positives. For example, Bonferroni or FDR can be used for the gene-wise correction, and the peak inference or cluster size inference for the spatial correction. Consult Appendix H for detailed discussions.
+
+2.8. Independence between the covariate effect and the latent effect
+
+In some applications the independence between the covariate effect and the latent effect is assumed. In the simplest case of two zero mean Gaussian variables ξ and ζ, independence is equivalent to vanishing covariance between the variables, i. e. cov[ξ, ζ] = 0. For their empirical samples ξ,ζ∈ℝn and ζ, this means the asymptotic orthogonality limn→∞n−1ξ⊤ζ = 0. Now let us assume covariate variable X∈ℝp and latent status L∈ℝt are jointly zero mean Gaussian variables and their covariance matrices are of full rank. Then for their empirical sample X∈ℝn×p and L∈ℝn×t, the orthogonality condition writes X⊤L =O and L⊤1n = 0, where the columns of X have already been centralized. This brings (p + 1) × t linear equality constraints to L so it can be reparameterized to L′∈ℝ(n−p−1)×t, then we restrict Γ instead of L′ to some bounded manifold (for example the oblique manifold) and carry out the GM-GRRLF estimation.
+
+For more general cases, for example non-Gaussian state variables, we propose to encourage the independence by penalizing the loss function (likelihood in most cases) with a measure of dependency ϒ(·,·) between the covariate variable X and latent status L, which generalizes the concept of “orthogonality” in the Gaussian case. More specifically, we optimize the model (9) ℓ(B,Φ,L,Γ|X,Y)+λϒ(X,L),
+
+where λ is the regularization parameter that balances the trade off. A good candidate for ϒ(·,·) is the square loss mutual information (Karasuyama and Sugiyama, 2012). We note however, ϒ(·,·) usually has its own parameter to be optimized, and solving (9) can be extremely expensive.
+
+3. Results
+
+3.1. Synthetic examples
+
+For clarity, we use a 1-D synthetic example to illustrate the proposed method.2 The synthetic data are generated as follows: Nknot = 10 knots and Nvox = 100 artificial voxels are placed uniformly on interval Ω = [0, 1] and kernel bandwidth set to σ = 0.1, we set p = 10, q = 1, d = 2, t = 2, B = [I2; O] (so only the first two dimensions of the covariate are contributing), X∼N(0,Ip), Φ∼N(0,Iq×d×Nknot), Γ∼N(0,Iq×t×Nknot), L∼N(0,It) and ξv∼N(0,Iq) independent from other voxels unless otherwise specified. For each simulation n=100 samples are drawn. We use nonparametric permutations to obtain the p-values for the sensitivity studies. Specifically, the sum of squared error (sse) is used as the test statistic and the empirical p-value is determined by pemp = max(#{sseb ≤ sse0}, 1)/mperm where #{·} denotes the counting measure, mperm the number of permutation runs, b = 1,…,mperm the permutation index, sseb=∑i,v‖e^i,vb‖2, e^i,vb denote the residual estimated at voxel v for sample i with the bth permuted X and b=0 refers to the original X.
+
+We first experiment with the NNR implementation of GRRLF. We set the candidate parameter set for nuclear norm constraints ti to {20, 21, …,215}, and we stop the iteration when either of the following criteria is satisfied: the number of iterations reaches k=3000;
+
+the improvement of the current iteration is less than 10−5 compared with the average of previous 10 iterations.
+
+The performance is evaluated by the relative mean square error (RMSE) defined by RMSE=‖A−A^‖F‖A‖F.
+
+Fig. 3(a and b) respectively visualizes the optimization procedure and the regularization path of the solution matrices’ nuclear norm, and only the results for parameter pairs (t1, t2) satisfying t1 = t2 are shown. For tight constraints (with small ti), the solutions converge rapidly and the optimal solutions are achieved on the boundary of the feasible domain. Slow convergence is observed for larger ti, and as the constraints are relaxed the solutions move away from the boundary.
+
+Fig. 4 gives an example of the regularization paths of the leading singular values of the NNR-GRRLF solution matrices. To facilitate visualization we have used the normalized SVs defined by σ∼h=σh/∑h′σh′, where {σh} are the original SVs. Under the nuclear norm constraints, the solution matrices show sparsity with respect to their SVs. We call the number of SVs that are bounded away from zero as the “effective rank” (ER) of the matrix; as the nuclear norm constraints are relaxed, ER grows.
+
+Fig. 5 gives an example of a GCV RMSE heatmap for parameter selection. The RMSE on the training sample drops as the NN constraints are relaxed, as more flexibilities are allowed for the model. Interestingly for a wide range of parameter settings the RMSE on the validation sample is smaller than that on the training sample, which seems contradictory for CV procedures. This is because with our modified CV procedure, nuclear norm of the latent coefficient matrix is no longer bounded;
+
+the latent response field  Γ∼=ΓH is well approximated, although  L∼=LΓ is not because of the nuclear norm constraint.
+
+In practice a relatively large region of the parameter space can show similar good generalization performance (for example see Fig. 5(b)). This is because the framework is robust to a small level of over relaxation, and the latent part of the model can compensate for the modeling error from the covariate part, to some extent. In the spirit of Occam’s razor, we want to keep the simplest model. This means that the model with the tightest constraints (smallest ti, with the latent constraint t2 is prioritized) should be preferred when the validation RMSE is tied.
+
+For GM-GRRLF, we compare AIC, BIC and RRR-PCA for automatic model selection. We perform experiments on the selection of coefficient rank d and latent dimension t. All combinations in {(d′, t′)|d′, t′ = 1,…,4} are tested with all experiments repeated for m=100 times and the results are presented in Fig. 6. In Fig. 6(a), the mean raw score and mean rank of AIC and BIC are shown. AIC gives more confusing results, as it is difficult to choose between (1, 3) and (2, 2). In such ties we opt for the model with the larger coefficient rank because in the absence of predictive information, the latent factor part of the model will try to interpret the signal as a latent contribution. AIC also tends to favor models that are larger than the original model. BIC seems to be a better choice as it successfully identifies the true structural dimensionality at its minimum value. As can be seen in Fig. 6(b), RRR-PCA also performs well in that it successfully identifies t and narrows down the choice of d to 2 or 3. Taking into account that RRR-PCA is much more computationally efficient than *IC based model selection methods, it is therefore favorable in neuroimaging studies. One can also use the GCV procedure to identify the appropriate model order.
+
+We now compare the two different implementations of GRRLF (GM and NNR) with voxel-wise least-square regression (LSR) and whole field reduced rank regression (RRR). LSR corresponds to the massive univariate approaches most commonly used in neuroimaging studies, and RRR corresponds to those methods that only consider spatial correlations. For GM-GRRLF and RRR the regression coefficient rank, latent factor number and kernel bandwidth are set to the ground truth. Fig. 7 presents an illustrative example: the upper panel gives the smooth response curves corresponding to the effective covariate space and latent space while the lower left figure visualizes three noisy field realizations. In Fig. 7(d), the estimated covariate response curves for an unseen sample using different methods are shown. As can be seen, LSR gave the most noisy estimate as it disregards all spatial information while RRR gave a much smoother estimate by considering the covariance structure. However both of them were susceptible to the influence of latent responses, which drove their estimates away from the true response. Overall GRRLF methods showed more robustness against the latent influences, and GM-GRRLF gives the best result. The inferior performance of NNR-GRRLF compared with GM-GRRLF can be caused by (1) the regularization parameter setting needs further refining; (2) part of the covariate signal may have been misinterpreted as the latent signal.
+
+In Table 1 we present the computational cost for the above methods. We notice that despite NNR having a much more elegant formulation, it is computationally much more costly than the other alternatives (it takes roughly six CPU hours while all others take less than 1.5 s). This is because there is no direct correspondence between the rank and nuclear norm, thus one has to traverse the parameter space to identify the optimal parameter setting, via the costly GCV procedure. Smarter parameter space traversing strategies may significantly cut the cost, but it still takes tens of seconds to compute the generalization error for a fixed parameter pair—still more expensive than other methods.3 The redundant parameterization of NNR-GRRLF also drags its efficiency and makes it less scalable than GM-GRRLF. We note that there are a few nuclear norm regularization optimization algorithms that are more efficient compared with the Jaggi–Hazan algorithm (Avron et al., 2012, Zhang et al., 2012b; Mishra et al., 2013; Chen et al., 2013; Hsieh and Olsen, 2014); however, these algorithms are mostly specific to certain problems and thus cannot be easily extended to solve GRRLF. We therefore leave the topic of more efficient NNR-GRRLF optimization for future research, and we present some discussions on a few possible directions in Appendix D. In the following experiments, we will exclude NNR-GRRLF due to its excessive computational burden.
+
+To better see how this robustness can improve the estimate and in turn boost sensitivity, we varied the intensity of the covariate response and the latent response. For the covariate response experiment, we benchmarked the performance under the null, low SNR and high SNR cases, where B is scaled by 0, 0.1 and 1 respectively while fixing other settings. For the latent response experiment, we similarly test the none, weak and strong latent influence via scaling V by 0, 0.5 and 2, which accounts for 0%, 16.7% and 73.3% of the total variance respectively. All experiments were repeated for m=500 times to ensure stability and for the sensitivity study we ran mperm = 100 permutations to empirically estimate p-values, further details are provided in the Appendix. The results are summarized in Fig. 8. Fig. 8(a–d) gives the p-value distributions from the sensitivity experiment. The distribution of p-values from all three methods fall within expected region for the null case in Fig. 8(a), confirming the validity of the permutation procedure. Fig. 8(c and d) show that GRRLF significantly improves the sensitivity over RRR and LSR. Fig. 8(b) provides a box plot of the squared difference between the estimated response and expected response on a log scale for different latent response intensities. In all cases GRRLF gives the best estimate followed by RRR. It is interesting to observe that while RRR gives a better parameter estimate compared with LSR, the latter appears to be more sensitive in our experiments.
+
+3.2. Real-world data
+
+736 Caucasian subjects with both genetic and tensor based morphometry (TBM) data from ADNI1 (http://adni.loni.usc.edu) are used in the current analysis. Similar to previous investigations (Stein et al., 2010a; Hibar et al., 2011; Ge et al., 2012), only age and gender are included as covariates. We use LS-PCA to estimate the dimensionality of the latent space and then alternate between least square and PCA to decompose the image Y into the covariate component C, the latent component L and the residual component R, i.e. Y = C + L + R. We call J = R + L the joint component. We have chosen the LS-PCA implementation to demonstrate because this is the simplest form of GRRLF, computationally efficient and there is no parameter to be tuned, which makes it more likely to be used in practice compared with other more sophisticated implementations. Then we apply the LSKM to estimate the gene-wise genetic effect on J, L and R respectively for each voxel. A total of 26, 664 genes and 29, 479 voxels enter the study. We thresholded the significance image with threshold p &lt; 10−3 and use the largest cluster size (in RESEL units) as the test statistic. All p-values, including those of the voxel-level LSKM test score and the largest cluster size statistics, were determined via nonparametric permutations. As a post hoc validation step, we searched the Genevisible database (Nebion, 2014; Hruz et al., 2008) for the top genes identified in each category to examine whether they are highly expressed in neuron-related tissues (HENT).4 Consult Appendix F for more details on the study sample, data preprocessing and statistical analyses. The latent factor identification results are visualized in Fig. 9 and the GWAS results are tabulated in Table 2.
+
+Fig. 9(a) indicates that the first three eigencomponents are the dominant parts of J, and thus we identify them as the latent components, i.e. t=3. Fig. 9(b) gives the spatial maps of the decomposed latent components, and interestingly they seem to respectively correspond to white matter, ventricles and gray matter. For the GWAS analysis, smaller p-values are obtained for the top hits in factorized analyses. While no gene from the above three analyses survived stringent Bonferroni correction, three of the genes, all from the factorized GWAS analyses, survived the FDR significance level q=0.2 suggested by Efron (2010). More than half of the top entries identified in the factorized analyses have been reported to be relevant in neuronal researches, indicating that the results from the factorized analyses are biologically relevant.
+
+The top hit in Table 2 is CACNA1C (overlapping with DCP1B), an L-type voltage gated calcium channel subunit gene well known for its psychiatric disease susceptibility (PGC et al., 2013). The significance map between CACNA1C and the TBM map is overlaid on the population template in Fig. 10, and it can be seen that the voxels susceptible to this influence are clustered within the orbitofrontal cortex, and overlapping gyrus rectus and olfactory regions, which include the caudal orbitofrontal cortex Brodmann area 13 (Öngür et al., 2003). We further conducted SNP-wise association for all the imputed SNPs within 500 KB of CACNA1C’s coding region. Only SNPs that have a minor allele frequency over 0.1 are included. The result is presented in Fig. 11. The peak association is achieved at SNP rs2470446 (maf=0.47), which is imputed. For the genotyped SNPs, rs2240610 (maf=0.49) yields the largest association. No association is observed between rs2240610 and the Alzheimer or dementia diagnostic state of the subjects (all p &gt; 0.05). In the following we use DCP1B as a surrogate for CACNA1C as the majority of CACNA1C SNPs lie outside the genetic hot spot. We extract the first eigen-component of the largest voxel cluster associated with DCP1B (CACNA1C) and plot them against the genotype of SNP rs2240610. Subjects with genotype ‘AA’ have significantly different responses compared with the other two genotypes (t-test, p = 8.55 × 10−10), which have similar responses compared with each other (t-test, p=0.50). This result suggests that the recessive model is appropriate for the genetic effect. A similar distribution is observed for the mean response of the cluster.
+
+4. Discussion
+
+In this paper, we propose a general framework of reduced rank latent factor regression for neuroimaging applications. In summary, we (1) reduce the variance of the covariate effect estimate by simultaneously (a) projecting the predictors onto a lower dimensional effective subspace and (b) conditioning on the latent components that are dynamically estimated; (2) we use additional constraints such as smoothness of the response field to regularize the solution; (3) we recast the problem into a sequence of block-manifold optimization problems and effectively solve them by Riemannian manifold optimization; (4) we present an alternative nuclear norm regularization based formulation of GRRLF with which the global optimum can be achieved; (5) we present a least squares kernel machines based procedure for brain-wide GWAS conditioning on the latent factors.
+
+Our method exploits the structured nature of the imaging data to better factorize the signal observed. The application of our method to a real-world dataset suggests that this factorization improves upon the sensitivity over existing brain-wide GWAS methods and gives biologically plausible results. The most significant gene identified, CACNA1C, is a widely recognized multi-spectrum psychiatric risk factor and has been intensively studied. Our result lends further evidence for the pleiotropic role it plays. Most of the top genes that we identified are found to be either relevant to psychiatric diseases or highly expressed in neuronal tissues, lending plausibility to our framework.
+
+4.1. Methodology assessment
+
+Our method reports two genes surviving the FDR threshold at q=0.2 while previous work has not fund any (Hibar et al., 2011). We note our imaging-genetic solution is closely related to Ge et al. (2012) where they use analytical approximation of LSKM statistics, extreme value theory (EVT) and random field theory (RFT) to make inferences. Different from Ge et al. (2012), our null simulations fail to support the use of these analytical approximations, so only permutation-based results are reported in the current study. None of the top genes identified from the residual component study have been reported in Ge et al. (2012) and Hibar et al. (2011) while there are a few overlaps for the genes from the joint and latent component study. This suggests that conditioning for the hidden variables might be important to reveal certain otherwise buried signals.
+
+While GRRLF can be implemented in various forms, the key idea underlying our framework is three-fold: (1) using the structure of brain imaging to estimate the latent components; (2) conditioning on the latent component to reduce the variance of covariate effect of interest; (3) estimating the effective dimensionality of the covariate further reduces variance. An interesting comparison can be made with the linear mixed model (LMM) which has recently gained popularity in GWAS studies (Eu-ahsunthornwattana et al., 2014), where a kinship matrix, estimated from either pedigree or genome sequences, is used to structure the covariance matrix for genetic random effects. LMM deals with univariate response so it can only look into the kinship matrix for structured unexplained variance, while for neuroimaging data the richness of the structural information allows further decomposition of the observed signals. Current large scale multi-center neuroimaging collaborations often use comprehensive survey to capture as much population variance as possible and researchers are compelled to include more predictors in their model to factor out the variances in the data. However, the price paid is the degrees of freedom (DOF) and therefore more uncertainty in estimating the effect of interest. Enforcing proper regularizations, in our case constraining the effective dimensions of the predictors, serves to balance the trade-off between the explained variance and DOF.
+
+The three sets of results just presented show that each decomposition scheme has its advantages and that they are complementary to each other. The residual component approach is more sensitive to weak signals that would otherwise be dominated by a large latent component effect. The latent component approach has the advantage that it acts to reduce noise, but may not detect local effects. The joint component approach is useful if there are contributions of both global and local effects. We therefore suggest that the results with all three approaches should be compared with each dataset analyzed.
+
+4.2. Biological significance
+
+CACNA1C is known as one of the risk genes for a wide spectrum of psychiatric disorders including bipolar disease, schizophrenia, and major depression and autism. Its association with susceptibility to psychiatric disorders has been consistently confirmed by several large-scale genome-wide association studies (PGC et al., 2013) thus making it one of the most replicable results in psychiatric genetics. A series of human brain imaging and behavioral studies have shown morphological and functional alterations in individuals carrying the CACNA1C risk allele on a macroscopic level (Bigos et al., 2010; Franke et al., 2010; Zhang et al., 2012a; Tesli et al., 2013; Erk et al., 2014), and it has been experimentally confirmed that the risk variant will also affect cellular level electrophysiology using induced human neuron cell lines (Yoshimizu et al., 2014). An Australian twin study has previously reported CACNA1C to be significantly associated with white matter integrity and function as a hub in the expression network belonging to the enriched gene ontology category “synapse” (Chiang et al., 2012). Previous studies on the ADNI dataset have also reported significant genetic interactions for CACNA1C using Positron Emission Tomography (PET) imaging (Koran et al., 2014) and LASSO screening with candidate phenotypes (Yang et al., 2015), which all involve certain ‘conditioning’ for the contribution from CACNA1C to be detected. Animal AD models have confirmed several results from human studies (Hopp et al., 2014) and related pathways have been identified as a therapeutic target (Liang and Wei, 2015) for AD. Interestingly, a recent multi-site large-scale voxel level functional connectivity study, which included 939 subjects, has revealed that functional connectivity patterns in the orbitofrontal cortex region are significantly altered in depression patients (Cheng et al., 2016). Also gray matter volume reductions are reported in the same area in depression patients (Ballmaier et al., 2014). The results from these studies are consistent with the assumption that CACNA1C affects depression susceptibility through the orbitofrontal region, a hypothesis to be tested in future studies.
+
+ELFN1 has been implicated to be associated with seizures and ADHD in both human clinical samples and animal models (Tomioka et al., 2014; Dolan and Mitchell, 2013). The expression of ELFN1 localizes mostly to excitatory postsynaptic sites (Sylwestrak and Ghosh, 2012) and recent studies show that the ELFN1 gene specifically controls short-term plasticity, which denotes changes in synaptic strength that last up to tens of seconds, at some synapse types (Blackman et al., 2013). Data from the Allen’s Brain Atlas (Hawrylycz et al., 2012); http://human.brain-map.org) also show that ELFN1 is highly expressed in the cortical regions (Fig. 12(a)), consistent with the ELFN1 significance map we obtained from the ADNI dataset (Fig. 12(b)).
+
+GRIN2B encodes the N-methyl-D-aspartate (NMDA) glutamate receptor NR2B subunit and is well known to be involved in learning and memory (Tang et al., 1999), structural plasticity of the brain (Lamprecht and LeDoux, 2004) and excitotoxic cell death (Parsons et al., 2007), and has age-dependent prevalence in the synapse (Yashiro and Philpot, 2008). Therefore, the relationship between NR2B subunit gene GRIN2B variants and AD has attracted a large amount of attention and interest. Many studies have confirmed that the NR2B subunit is down-regulated significantly in susceptible regions of AD brains (Bi and Sze, 2002; Farber et al., 1997; Hynd et al., 2004). Actually GRIN2B is already a therapeutic target in Alzheimer’s disease and has also been indicated by several studies in the literature (Jiang and Jia, 2009; Stein et al., 2010b).
+
+The gene PGM1 encodes the protein Phosphoglucomutase-1. The level of this enzyme was found to be significantly altered in the hippocampus of patients who suffer from AD compared with control hippocampus using two-dimensional gel electrophoresis and mass spectrometry techniques (Boyd-Kimball et al., 2007). Down-regulation of this gene might have an effect on memory and cognitive functions in human brains.
+
+The pygopus gene of Drosophila encodes an essential component of the Armadillo (β-catenin) transcription factor complex of canonical wnt signaling (Schwab et al., 2007). The wnt signaling pathway has been implicated in a wide spectrum of physiological processes during the development of the central nervous system and assumes some roles in mature synapses that could cause cognitive deficiencies (Oliva et al., 2013). A recent study has pointed out that aberrant wnt signaling pathway function is associated with medial temporal lobe structures of Alzheimer’s disease and PYGO1 is differentially expressed in an AD population using post-mortem brain samples (Riise et al., 2015).
+
+FAM216A has been reported to be a risk gene for neurodegenerative diseases from an integrated multi-cohort transcriptional meta-analysis study using 1, 270 post-mortem central nervous system tissue samples (Li et al., 2014). AP2B1 is reported to be differentially expressed in a rat model for schizophrenia (Zhou et al., 2010). CHRNA family genes have been implicated as susceptible targets in autism spectrum disorders (Lee et al., 2012). EFHC1 mutations are known to cause juvenile myoclonic epilepsy (Suzuki et al., 2004; Stogmann et al., 2006; Noebels et al., 2012). CCDC34 has been previously reported to be associated with ADHD and autism (Shinawi et al., 2011) and it locates next to the gene BDNF which is known to be a risk factor for psychiatric disorders (Petryshen et al., 2010). RSU1P2 is the pseudogene of RSU1, i.e. a DNA sequence that is similar to the functioning gene RSU1 but nonetheless unable to produce functional protein products and only assuming regulatory roles. It is reported that RSU1 has a conserved role regulating reward related phenotypes such as ethanol consumption, ranging from Drosophila to humans (Ojelade et al., 2015).
+
+4.3. Future directions
+
+The current study provides for advances in a number of directions. On the biological side, a few interesting assumptions have been made combining the results from the ADNI dataset and existing studies. These assumptions can be checked on the data from other phases of the ADNI project, for example ADNI GO and ADNI2, or other population samples. The proposed method can also be applied to longitudinal recordings from the ADNI dataset, where brain-wide genome-wide imaging-genetic investigations are rare due to the fact that the observed phenotype is a function of time, i.e. a one-dimensional tensor, thus unsuited for most neuroimaging-genetic solutions.
+
+On the methodological side, many aspects can be further improved in the future. For example, we do not deal with the identifiability issue of the model to maximize the generality of the formulation. More stringent constraints are expected to theoretically ensure the identifiability under certain assumptions, which is left for future investigations. Pragmatically it will be interesting to compare the empirical performance of GRRLF with latent factors estimated from different models, say ICA. More computationally efficient estimation procedures, and more sensitive yet less expensive statistical tests are also important topics for future exploration.
+
+The authors would like to thank the two reviewers and the editor for their insightful comments, especially for bringing the NNR to our attention. CY Tao is supported by the China Scholarship Council (CSC) and National Natural Science Foundation of China (Nos. 11101429 and 11471081). TE Nichols is supported by the Wellcome Trust (100309/Z/12/Z) and NIH R01 EB015611-01. J.F. Feng is a Royal Society Wolfson Research Merit Award holder and he is also partially supported by the National High Technology Research and Development Program of China (No. 2015AA020507) and the Key Project of Shanghai Science &amp; Technology Innovation Plan (No. 15JC1400101). The research is partially supported by the National Centre for Mathematics and Interdisciplinary Sciences (NCMIS) of the Chinese Academy of Sciences and Key Program of the National Natural Science Foundation of China (No. 91230201), and the Shanghai Soft Science Research Program (No. 15692106604). Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimers Association; Alzheimers Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Disease Cooperative Study at the University of California, San Diego. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California. The support and resources from the Apocrita HPC system at Queen Mary University of London are gratefully acknowledged. The authors would also like to thank Prof. C.L. Leng, Prof. G. Schumann, Dr. T. Ge, Dr. S. Desrivières, Dr. T.Y. Jia, Dr. L. Zhao, Dr. W. Cheng and Dr. B. Xu for fruitful discussions.
+
+Appendix A. Connection to other models
+
+Different choices of loss function ℓ, covariate dimension d and latent dimension t of (4) give different commonly used statistical models. In Table A1 ‖·‖Fro denotes the Frobenius norm, η(·), τ (·)and α(·) are the functions charactering the exponential family distributions (McCullagh and Nelder, 1989), ϒ(·) certain dependency measure (Suzuki and Sugiyama, 2013; Gretton et al., 2005), ϑ(·) certain independence measure (Bach and Jordan, 2003; Hyvärinen et al., 2004; Smith et al., 2012), Ψ(·) the basis functions of some functional space (Ramsay and Silverman, 2005) and {λi} the regularization parameters (Zou and Hastie, 2005).
+
+Table A1 Connection to other models.
+
+ℓ	d	t	Statistical model	
+‖Y−XBΦ‖Fro2	&lt;p	0	Reduced rank regression	
+−ϒ (Y, XBΦ)	&lt;p	0	Supervised dimension reduction	
+−η(Φ)·τ (Y, X) + α (Φ)	p	0	GLM (exponential family)	
+‖Y−XΦ‖Fro2+λ1‖Φ‖1+λ2‖Φ‖22	p	0	Lasso/elastic net	
+‖Y−Ψ(X)BΦ‖Fro2	&lt;|Ψ|	0	Functional PCA	
+‖Y−LΓ‖Fro2	0	Any	Generalized PCA	
+−ϑ(YΓ⊤)	0	Any	ICA	
+
+Appendix B. Reduced rank regression
+
+Here we detail the implementation of reduced rank regression (Izenman, 1975). Assume that X and Y have been demeaned. For Y ∈ ℝq, X ∈ ℝp, rank-d reduced rank regression intends to find the A ∈ ℝq×d, B ∈ ℝd×p that minimizes E[‖Y−ABX‖22]. Denote ΣXX the covariance matrix of X and ΣYX the cross-covariance matrix between Y and X. Denote ∑=∑YX∑XX−1∑YX⊤  and Σ = VΛV⊤ its eigen-decomposition, where V is a unitary matrix and Λ a diagonal matrix with non-negative entries in descending order. Denote Vd ∈ ℝq×d the first d columns of V, then the solution of reduced-rank regression with rank d is A∗=Vd,B∗=Vd⊤∑YX∑XX−1.
+
+Appendix C. Nuclear norm regularized GRRLF
+
+First we prove solving (8) is a convex optimization problem.
+
+Lemma 1
+
+(Jaggi et al., 2010 Lemma 1). For any nonzero matrix X ∈ ℝn×m and t ∈ ℝ, ‖X‖∗≤t2 iff there exists A∈SPSDn and B∈SPSDn, such that (AXX⊤B)≽0 and tr(A) + tr(B) = t.
+
+Lemma 2
+
+(Laurent and Vallentin, 2012). SPSDn is a cone.
+
+Lemma 3
+
+Define SPSDn(t):={A∈SPSDn|tr(A)=t}, then SPSDn(t) is a convex set.
+
+Proof
+
+For A, B∈SPSDn(t) and ω ∈ [0, 1], for C = ωA + (1 − ω)B, we have tr(C)=tr(ωA+(1−ω)B)=ωtr(A)+(1−ω)tr(B)=t,
+
+therefore C∈SPSDn(t), which concludes the proof.□
+
+Theorem 1
+
+f(X1,…,XK) is a convex function, where Xk∈ℝnk×mk, k ∈ [K]. let {tk|k = [K]} be a set of positive real numbers, then the nuclear norm regularized problem (C.1) (X1∗,…,XK∗)=argmin‖Xk‖∗≤tk/2f(X1,…,XK)
+
+is equivalent to the convex problem (C.2) (Z1∗,…,ZK∗)=argminZk∈SPSDnk+mk(tk)f∼(Z1,…,ZK),
+
+where Zk=(AXX⊤B) and f∼(Z1,…,ZK):=f(X1,…,XK).
+
+Proof
+
+Since the Cartesian product of convex sets is also a convex set, so by Lemma 3 we know ∏⊗SPSDnk×mk(tk) is a convex set. And the convexity of f∼ is inherited from f. The proof is completed by applying Lemma 1 to obtain the bound of ‖Xk‖*, k ∈ [K].□Setting K=2 in Theorem 1 proves the convexity of (8).
+
+Now we elaborate how to efficiently compute the solutions given the NN constraint t1 and t2. First we extend B∼ and L∼ to ZB=(AB∼B∼⊤C) and ZL=(CL∼L∼⊤D), where ZB∈SPSD(p+m)(t1), ZL∈SPSDn+m(t2). Let Z∼B=t1−1ZB, Z∼L=t2−1ZL, Xt = t1X, Bt=t1−1B∼, Lt=t2−1L∼, define f∼(Z∼B,Z∼L)=ft(Bt,Lt,t2)=‖Y−XtBtH−t2LtH‖F2=f(B,L).
+
+Notice tr(Z∼B)=tr(Z∼L)=1, so we can use the Hanzan algorithm (Hazan, 2008) to optimize f∼(Z∼B,Z∼L) over SBL:=SPSDp+m(1)×SPSDn+m(1). Let Rt = Y − XBtH − t2LtH, we have ∇Btft=2X ⊤RtH ⊤, ∇Ltft=2t2RtH ⊤. Let vB=MaxEV(−∇Btft) and vL=MaxEV(∇Lt), where MaxEV(A) computes the eigenvector corresponds to the maximal eigenvalue of A∈SPSDn; by Hazan algorithm ΔBt:=vBvB ⊤−Bt and ΔLt:=vLvL ⊤−Lt are the search directions for Z∼B and Z∼L respectively. By minimizing ft∼(Bt,Lt,α):=f(Bt+αΔBt,Lt+αΔLt) with respect to learning rate alpha, we have the optimal learning rate given by (C.3) α∗=〈MB,ΔBt〉F+〈ML,ΔLt〉F〈NB,ΔBt〉F+〈NL,ΔLt〉F,
+
+where DBL=(XtΔBt+t2ΔLt)Φ,MB=Xt⊤RtΦ⊤,ML=t2RtΦ⊤,NB=Xt⊤DBLΦ⊤,NL=t2DBLΦ⊤.
+
+To further speed up the computation we adopt the “hot start” strategy, that the solution of (t1(1),t2(1)) is used to initialize the optimization for nearby parameter pair (t1(2),t2(2)).
+
+Notice ∇ZBf∼ and ∇ZLf∼ are always symmetric matrices of the block form (0GG⊤0), of which the eigenvectors are also symmetric: whenever (v⊤, w⊤)⊤ is the eigenvector for eigenvalue λ, (v⊤, −w⊤)⊤ is the eigenvector for eigenvalue −λ. Also it is easy to see v and w are the eigenvectors for GG⊤ and G⊤G respectively, with the eigenvalue λ2. These factor will break down the computation of MaxEV(−Δ□ ft) into computing the principal eigenvectors5 for two lower order matrices GG⊤ and G⊤G respectively. This can be easily achieved via Lanczos method, Ritz approximation or simply the power iteration. Further speedup can be achieved for “tall” matrices by squaring the lower order matrix product.
+
+Appendix D. Further discussions on NNR implementations
+
+In this section we present some discussions on the NNR implementation to motivate more efficient algorithms. First we define the notation of SVD-thresholding operators. Consider the singular value decomposition of Y ∈ ℝp×q, (D.1) Y=UDVT,
+
+where U and V are respectively p×h and q×h orthonormal matrices with h = min(p, q) known as the left and right singular vectors, and diagonal matrix D consists of non-increasing non-negative diagonal elements d known as the singular values of Y. For any λ ≥ 0, the hard SVD-thresholding operator is defined as (D.2) ℋλ(Y)=Uℋλ(D)VT,ℋλ(D)=diag({diIdi&gt;λ}),
+
+where I· is the indicator function, and the soft SVD-thresholding operator (D.3) Sλ(Y)=USλ(D)VT,Sλ(D)=diag({(di−λ)+}),
+
+where x+ = max (0, x) denotes the non-negative part of x. The following theorem shows that a connection can be established between the SVD-thresholding operation and solving the simplest form of NNR optimization.
+
+Theorem 2
+
+(Proposition 2.1, Chen et al., 2013). For any λ ≥ 0 and Y ∈ ℝp×q, the hard/soft SVD-thresholding operators can be characterized as (D.4) ℋλ(Y)=argminC{‖Y−C‖F2+λ2r(C)},
+
+(D.5) Sλ(Y)=argminC{‖Y−C‖F2+λ‖C‖∗},
+
+where r(C) denotes the rank of matrix C. This theorem suggests that instead of taking the slow gradient descend, one can benefit from applying the soft SVD-thresholding operator to the observation matrix Y to obtain the exact solution, which involves solving the full SVD of Y. Unfortunately this one-step solution cannot be directly applied to NNR-GRRLF. This is because: (1) there are two matrices instead of one that are involved in the objective function, with different norm constraints; (2) we have also an additional covariate matrix X and a smoothing matrix H that complicates the objective function.
+
+However, with some reformulations to the problem we can decouple the two matrices involved and apply the above SVD scheme in a step-wise fashion. Using the trick developed in Ji and Ye (2009), we can reduce the convergence rate from Jaggi–Hanzan’s O(1/k) to the optimal rate of O(1/k2). But this improved convergence rate does not necessarily imply faster computation in practice because it invokes higher per-iteration cost. We now present the details below.
+
+First consider the minimization of the smooth loss function without the trace norm regularization: (D.6) minWf(W).
+
+Let αk = 1/βk be the step size for iteration k, the gradient step for solving the smooth problem (D.7) Wk=Wk−1−1βk∇f(Wk−1)
+
+can be reformulated equivalently as a proximal regularization of the linearized function of f(W) at Wk−1 as (D.8) Wk=argminWPβk(W,Wk−1),
+
+where Pβk(W,Wk−1)=f(Wk−1)+〈W−Wk−1,∇f(Wk−1)〉+βk2‖W−Wk−1‖F2,
+
+and 〈A, B〉 = tr(ATB) denotes the matrix inner product. The above Pβk can be considered as a linear approximation of the function f at point Wk−1 regularized by a quadratic proximal term. Based on this equivalence, the optimization problem (D.9) minW(f(W)+λ‖W‖∗)
+
+for λ≥0 can be solved with the following iterative step: (D.10) Wk=argminWPβk(W,Wk−1)+λ‖W‖∗
+
+By ignoring W-independent terms, we arrive at a new objective (D.11) Qβk(W,Wk−1)=βk2‖W−(Wk−1−1βk∇f(Wt−1))‖F2+λ‖W‖∗,
+
+and Wk=argminWQβk(W,Wk−1).
+
+(D.12) Wk=argminWQβk(W,Wk−1).
+
+The key idea behind the above formulation is that by exploiting the structure of the trace norm solution (that can be computed exactly), it can be proven the convergence rate of the regularized objective is the same as that of the gradient descend of f(W). The Nesterov gradient approach can be further exploited to achieve the optimal convergence rate of O(1/k2). Readers are referred to Ji and Ye (2009) for details.
+
+Back to GRRLF, let us denote G(B∼,L∼)=‖Y−XB∼H−L∼H‖F2 then using the idea above we can decouple the term B∼ and L∼ in the objective function as (D.13) P∼βk(B∼,L∼,B∼k−1,L∼k−1)=βk2(‖B∼−(B∼k−1−1βk∇BG(B∼k−1,L∼k−1))‖F2+‖L∼−(L∼k−1−1βk∇LG(B∼k−1,L∼k−1))‖F2),
+
+and define a new surrogate objective function at each iteration as (D.14) Q∼βk(B∼,L∼,B∼k−1,L∼k−1)=P∼βk+λ1‖B∼‖∗+λ2‖L∼‖∗=Q∼βkB+Q∼βkL,
+
+where (D.15) Q∼βkB=‖B∼−(B∼k−1−1βk∇BG(B∼k−1,L∼k−1))‖F2+2λ1βk‖B∼‖∗,
+
+(D.16) Q∼βkL=‖L∼−(L∼k−1−1βk∇LG(B∼k−1,L∼k−1))‖F2+2λ2βk‖L∼‖∗.
+
+Therefore solving for (D.14) reduces to the application of soft SVD thresholding to (D.15) and (D.16) independently.
+
+The gain in convergence rate is however not for free. In each iteration a full SVD needs to be solved instead of a partial SVD that is required by the JH algorithm. Additionally, we can no longer compute an optimal step size for each iteration as that in JH. To summarize, while we can expect a theoretically optimal solver for NNR-GRRLF, the best implementation is application dependent and relies on careful tuning.
+
+Appendix E. GM-GRRLF specifications for the synthetic experiment
+
+While we used the GCV procedure to decide which component is estimated first in the estimation error experiment, we replaced the costly GCV with a simpler heuristic thresholding strategy when computing the empirical p-values in the sensitivity experiment to save time. We first estimate the percentage of variance contributed by the covariates with voxel-wise least squares, if the covariate signal proportion exceeds a specified threshold, the covariate effect will be estimated first in the iterative GM-GRRLF. We set the variance threshold to 20% in this experiment, which gave very similar estimation error distribution compared with that of GCV (not shown). We used the HSIC to test for the association between covariates and estimated latent components, and set the association significance threshold to pthres = 10−3.
+
+Appendix F. ADNI study design and subjects
+
+The data used in the preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (http://www.adni.loni.usc.edu). The ADNI was launched in 2003 as a public–private partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to test whether serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of mild cognitive impairment (MCI) and early Alzheimer’s disease (AD). Determination of sensitive and specific markers of very early AD progression is intended to aid researchers and clinicians to develop new treatments and monitor their effectiveness, as well as lessen the time and cost of clinical trials. The Principal Investigator of this initiative is Michael W. Weiner, MD, VA Medical Center and University of California—San Francisco. ADNI is the result of efforts of many co-investigators from a broad range of academic institutions and private corporations, and subjects have been recruited from over 50 sites across the U. S. and Canada. The initial goal of ADNI was to recruit 800 adults, ages 55–90, to participate in the research, approximately 200 cognitively normal older individuals to be followed for 3 years, 400 people with MCI to be followed for 3 years and 200 people with early AD to be followed for 2 years. For up-to-date information, see http://www.adni-info.org. 818 subjects were genotyped as part of the ADNI study. However, only 736 unrelated Caucasian subjects identified by self-report and confirmed by MDS analysis (Stein et al., 2010a) were included to reduce population stratification effects. Volumetric brain differences were assessed in 176 AD patients (80 female/96 male; 75.47 ± 7.54 years old), 356 MCI subjects (126 female/230 male; 75.03 ± 7.25 years old), and 204 healthy elderly subjects (94 female/110 male; 76.04 ± 4.98 years old).
+
+Appendix G. Data preprocessing
+
+G.1. MRI images
+
+High-resolution structural brain MRI scans were acquired at 58 ADNI sites with 1.5 T MRI scanners using a sagittal 3D MP-RAGE sequence developed for consistency across sites (Jack et al., 2008) (TR=2400 ms, TE=1000 ms, flip angle=8°, field of view=24 cm, final reconstructed voxel resolution=0.9375 × 0.9375 × 1.2 mm3). Images were calibrated with phantom-based geometric corrections to ensure consistency across scanners. Additional image corrections included (Jack et al., 2008): (1) correction of geometric distortions due to gradient nonlinearity, (2) adjustment for image intensity inhomogeneity due to B1 field non-uniformity using calibration scans, (3) reducing residual intensity inhomogeneity, and (4) geometric scaling according to a phantom scan acquired for each subject to adjust for scanner- and session-specific calibration errors. Images were linearly registered with 9 parameters to the International Consortium for Brain Imaging template (ICBM-53) (Mazziotta et al., 2001) to adjust for differences in brain position and scaling.
+
+For TBM analysis, a minimal deformation template was first created for the healthy elderly group to serve as an unbiased average template image to which all other images were warped using a nonlinear inverse-consistent elastic intensity-based registration algorithm (Leow et al., 2005). Volumetric tissue differences were assessed at each voxel in all individuals by calculating the determinant of the Jacobian matrix of the deformation, which encodes local volume excess or deficit relative to the mean template image. The maps of volumetric tissue differences were then down-sampled using trilinear interpolation to 4 × 4 × 4 mm3 isotropic voxel resolution for computational efficiency. After resampling, 29, 479 voxels remained in the brain mask. The percentage volumetric difference relative to a population-based brain template at each voxel served as a quantitative measure of brain tissue volume difference for genome-wide association.
+
+G.2. Genetic data
+
+Genome-wide genotype data were collected at 620,901 markers on the Human610-Quad BeadChip (Illumina, Inc., San Diego, CA). For details on how genetic data were processed, please see Saykin et al. (2010) and Stein et al. (2010a). Different types of markers were genotyped (including copy number probes), but only SNPs were used in this analysis. Due to the filtering based on Illumina GenCall quality control measures, individual subjects have some residual missing genotypes at random SNPs throughout the dataset. We performed imputation using the software, Mach (version 1.0), to infer the haplotype phase and automatically impute the missing genotype data (Li et al., 2009). The genetic tags are translated into corresponding Reference SNP cluster ID (rsid) with a dictionary used in imputation. Chromosome positions of the rsids are mapped according to the GRCh38.p2 reference assembly. We use the gene annotations from Ensembl release 79 (Cunningham et al., 2015), which also mapped to GRCh38.p2 reference assembly, to define the start and end position of the genes. All SNPs fall into the same gene region are considered as belonging to the same gene. We use only the SNPs that have been physically genotyped on the 22 autosomes for the gene grouping and after that, a total of ngene = 26, 664 genes were left for analysis. Only SNPs with imputed minor allele frequency (MAF) ≥0.1 are used for the single-locus experiment on the target gene.
+
+Appendix H. Statistical methods for ADNI data analysis
+
+We use a modified version of the LSKM-based vGWAS proposed in Ge et al. (2012) in the ADNI data analysis, which is detailed below.
+
+H.1. Fitted model and choice of kernel
+
+Since only gender and age are supplied as covariates, the dimension reduction on covariates is unnecessary in this particular case. So we fit the following simplified null model for the GWAS analysis on ADNI data yi,v=xi⊤βv+li,v+ξi,v,
+
+where i = 1,…,n is the subject index, v ∈ Ω is the voxel index, y is the image phenotype, x is the covariates, l the latent effect and ξ the residual component. We use a generalized identity by state (IBS) function as the kernel function in this study, which is defined as κ(g1,g2)=1−‖g1−g2‖1/(2ng),
+
+where gi∈[0,2]ng for i=1,2 is the genetic data and ng is the number of SNPs on gene g. To expedite the computation, we use incomplete Cholesky decomposition (ICL) (Bach and Jordan, 2003) to give low rank approximation LL⊤ of the kernel matrix K. We restrict the maximum allowed rank to r=50 and the results are similar to those using original kernel matrix (data not shown).
+
+H.2. Null distribution of the LSKM test score
+
+The test score Q of LSKM follows a mixed Chi-square distribution under certain assumptions (see Liu et al., 2007 for details). With the Satterthwaite method (matching the first two moments), the distribution of the test score Q can be approximated by equating the mean and variance of the scaled chi-square variable κχν2. Specifically, κ=I∼ττ/2e∼, ν=2e∼2/I∼ττ, where I∼ττ=Iττ−Iτσ2Iσ2σ2−1Iτσ2, Iττ=tr((P0K)2), Iτσ2=tr(P0KP0)/2, Iσ2σ2=tr(P02)/2 and e∼=tr(P0K)/2 and P0 is the residual forming matrix defined as P0=I−X(X⊤X)−1X⊤.
+
+We note however, these assumptions, such as the normality of the residuals, can be easily violated in practice. Also the fitness of the approximation, especially at the tail, depends on how well the moment matched distribution in the scaled Chi-square family resembles the originally mixed Chi-square. Thus researchers need to check the validity of the use of parametric approximation with their data. Unfortunately our null simulations suggest that with the kernel matrices derived from empirical genetic data, the p-values evaluated using the approximated scaled Chi-square is severely inflated at the tail, see Fig. 13(a) for the distribution of p-values using empirical kernel matrices from the ADNI1 dataset and i.i.d standard Gaussian variables as responses. To correct for the inflation, we use nonparametric permutation to evaluate the p-value under the null instead of the scaled Chi-square approximation. The subject index of ξ^v is independently shuffled for each voxel v, then the test score Qvnull is calculated using the shuffled ξ^v for each voxel v⋅{Qvnull}v∈Ω is considered as Nvox independent test scores under the null hypothesis thus giving the empirical null distribution. Then it is used to calculate the empirical p-values for the test scores as pemp(Q)=max{#{Qvnull≥Q}Nvox,1Nvox}.
+
+We further used generalized Pareto distribution (GPD) (Coles et al., 2001; Knijnenburg et al., 2009) to approximate the tail of the empirical distribution. The largest 1% of {Qvnull} is used for the maximum likelihood estimation of GPD parameters and then the p-values for the tail statistics are evaluated using the estimated parameters. The results of the GPD approximated p-values are presented in Fig. 13(b). The GPD approximated tail p-values are also prone to inflation when they are smaller than 10−4. In this regard, no peak inference is conducted in this study, as the results are unreliable. We report only the result of cluster-size based inference with cluster-forming threshold set to pthres = 10−3, where the inflation is negligible.
+
+H.3. Cluster size based inference
+
+In this study, the maximum cluster size S in RESEL for each gene is used as the test statistics. RESEL stands for RESolution ELement (Worsley et al., 1992), which represents a virtual voxel with size [FWHMX, FWHMY, FWHMZ]. In the stationary case, RESEL count R is the number of such virtual voxels that fit into the search volume V R=V∏u∈X,Y,ZFWHMu.
+
+In the nonstationary case (Hayasaka et al., 2004), voxel-wise Resels Per Voxel (RPV) statistics is defined as RPVv=∑v∈Ω|Ω|−1V∏u∈X,Y,ZFWHMu(v),
+
+where |Ω| is the voxel count and Rn=∑vRPVv generalizes RESEL count R in stationary case. Simply put, RESEL count is a measure of volume normalized by the smoothness of image. Specifically, we use SPM’s spm_est_smoothness function in SPM 8 to estimate the RPV image. Then we construct all clusters the using spm_bwlabel function with the connectivity pattern criterion set to ‘edge’. The cluster size is calculated by integrating RPV for each cluster. For each gene, the maximum cluster size is reported. To construct the null distribution of the maximum cluster size, we shuffled the subject index and then permute the rows and columns of the kernel matrices accordingly. For each gene, 20 null statistics were calculated. Then the Mperm=20Ngene null statistics were pooled together to give an empirical null distribution {Sbnull}b=1Mperm. The empirical p-value of the cluster size S is given as pempclu(S)=max{#{Sbnull≥S}Mperm,1Mperm}.
+
+We found that the number of permutations we ran is unable to give sufficient samples for the estimation of tail distribution of maximum cluster size using GPD (data not shown), so only the empirical p-value is reported.
+
+Fig. 1 An illustrative cartoon for latent influence in imaging-genetic studies. Low variance genetic effects could be dominated by large variance latent effects. (For simplicity we omit the fixed effect term from the covariates in this illustrative cartoon.)
+
+Fig. 2 An illustrative example for how the latent factor induced variance undermines the statistical efficiency of least squares estimator. The color coded region are the distribution of the oracle estimator β^ (red) and the alternative estimator β∼^ (purple) under different sample sizes, with the nonzero population mean β. The oracle estimator requires smaller sample size to achieve the desired sensitivity. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 3 NNR-GRRLF model estimation with Jaggi–Hazan algorithm. (a) Convergence curve of the normalized mean square error for different constraints. (b) Nuclear norm constraint vs. nuclear norm of the solution matrices, blue solid line for the covariate coefficient matrix, green solid line for the latent coefficient matrix and red dash line is the nuclear norm upper bound with respect to the constraint. Here we have fixed t1 = t2. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 4 Regularization path for the (normalized) leading singular values with respect to the nuclear norm constraint. (a) Regularization path for t1 with t2 fixed. (b) Regularization path for t2 with t1 fixed. The X-axis spans the six leading singular values and the Y-axis indicates their (normalized) magnitude; different regularization parameters are color coded. It can be seen the effective rank of the solution grows with the nuclear norm constraint. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 5 Residual heatmaps for nuclear norm regularization parameter selection. (a) Relative mean square error for the training sample. (b) Relative mean square error for the validation sample. The Y-axis corresponds to the covariate coefficient constraint t1 and the X-axis corresponds to the latent coefficient constraint t2. The green arrow points at the parameter pair with minimal validation error. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 6 (a) Mean raw and rank map for AIC and BIC. (b) Box plot of eigenvalues from RRR-PCA. *IC procedures identifies model order with lowest score as optimal while RRR-PCA bases its decision on the jumping point of eigenvalues. AIC slightly over estimates the model order and BIC makes the right decision, RRR-PCA gives an fair estimate with much less cost compared with *IC methods.
+
+Fig. 7 A 1-D example of GRRLF model. (a) True covariate response fields Φ∼. (b) True latent factor response fields Γ∼. (c) Observed responses for three randomly selected samples. (d) Estimated response using GM-GRRLF, NNR-GRRLF, RRR and LSR together with the ground truth expected response for an unseen sample. (dotted: ground truth, red: GM-GRRLF, brown: NNR-GRRLF, green: RRR, purple: LSR) This demonstrates GRRLF is robust to the latent influences while common solutions fail. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 8 (a) log10 P–P plot of p-values under null model, shaded region corresponds to the 95% confidence interval under null. (b) Box plot of estimation error with different latent intensity. (c) Histogram of p-values and box plot of estimation error for low SNR case. (d) Histogram of p-values and box plot of estimation error for high SNR case. GRRLF demonstrates improved sensitivity and reduced estimation error compared to its commonly used alternatives under various experimental setups.
+
+Fig. 9 (a) Eigenvalues from PCA with or without the covariates. (b) Spatial maps of the first three latent factors. First three eigencomponents encode significantly more variances compares with other eigencomponents thus being identified as the latent components.
+
+Fig. 10 Significance map of CACNA1C, color coded with −log10(p). Voxels susceptible to the genetic influence from CACNA1C are clustered within the orbitofrontal cortex. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 11 Regional SNP-wise cluster size analyses for CACNA1C. Inset: distribution of first principal coordinate of the voxels within the largest cluster according to the genotype of SNP rs2240610.
+
+Fig. 12 (a) ELFN1 expression profile from Allen Brain Atlas. (b) Significance map of ELFN1, color coded with −log10(p). Cortical regions show elevated ELFN1 expression and they are also under the genetic influence of the same gene. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper.)
+
+Fig. 13 Expected and observed distribution of p-values in log10 scale. (a) Uncorrected p-values. (b) Corrected p-values. Black solid: expected p-value, black dash: expected 95% confidence interval, blue solid: median of the observed p-value, blue dash: observed 95% interval. Uncorrected p-values from the LKSM Satterthwaite approximation gives much more false positives than expected thus cannot be directly reported. (For interpretation of the references to color in this figure caption, the reader is referred to the web version of this paper).
+
+Table 1 Computation time for different methods.
+
+Method	LSR	RRR	GM-GRRLF	NNR-GRRLF	
+Time	&lt; 0.01 s	&lt; 0.01 s	1.20 s	2.09 × 104 2 s	
+
+Table 2 GWAS results.
+
+Chr.	Gene name	SNPs	Cluster size (in RESEL)	p uc	q fdr	Nearby genes	HENT	Related functions	
+Joint component J								
+1	PGM1	16	1.89	7.69E−05	7.66E−01		NO	AD	
+11	CCDC34	8	1.72	1.20E−04	7.66E−01	BDNF	NO	Psychiatric disorder risk factora	
+14	CTD-2555O16.1	3	1.59	1.56E−04	7.66E−01		N/A		
+14	TEX21P	5	1.51	2.16E−04	7.66E−01		N/A		
+6	EFHC1	16	1.5	2.21E−04	7.66E−01		NO	Neuroblasts migration, epilepsy	
+12	RP11-421F16.3	2	1.42	3.45E−04	7.66E−01	TM7SF3	NO		
+2	CHRNA1	3	1.42	3.49E−04	7.66E−01		NO	Autism	
+3	MARK2P14	2	1.42	3.51E−04	7.66E−01		NO		
+16	RP11-488I20.8	1	1.37	4.31E−04	7.66E−01	LINC01566	YES		
+15	ISLR	1	1.36	4.31E−04	7.66E−01		NO		
+Latent component L								
+12	GRIN2B	179	3.99	7.50E−06	2.00E−01		YES	Learning, memory, AD, etc.	
+7	AC074389.7	1	3.09	2.63E−05	3.50E−01	ELFN1	NO	Seizure, ADHD	
+8	HPYR1	1	2.26	4.50E−05	4.00E−01		YES		
+7	ELFN1	6	1.62	6.75E−05	4.40E−01		NO	Seizure, ADHD	
+12	RSRC2	4	1.38	8.25E−05	4.40E−01		NO		
+2	CHRNA1	3	1.06	1.14E−04	4.93E−01		NO	Autism	
+17	TAC4	2	0.85	1.29E−04	4.93E−01		NO		
+11	RP11-872D17.8	9	0.4	2.63E−04	7.81E−01	PRG2/3,SLC43A3	NO		
+1	EMC1	8	0.35	4.63E−04	7.81E−01		YES		
+17	AP2B1	27	0.35	4.63E−04	7.81E−01		NO	Schizophrenia	
+Residual component R								
+12	RP5-1096D14.6	2	2.51	9.38E−06	1.25E−01	CACNA1C	YES	Psychiatric disease risk factor a	
+12	DCP1B	12	2.48	9.38E−06	1.25E−01	CACNA1C	NO	Psychiatric disease risk factor a	
+15	PYGO1	10	1.79	8.06E−05	5.36E−01		NO	Wnt signaling pathway, AD	
+11	DOC2GP	1	1.72	1.05E−04	5.36E−01		N/A		
+6	GLYATL3	7	1.71	1.05E−04	5.36E−01		N/A		
+2	MREG	36	1.63	1.41E−04	5.36E−01		NO		
+4	ZGRF1	9	1.62	1.41E−04	5.36E−01		NO		
+12	FAM216A	2	1.58	1.73E−04	5.75E−01		YES	Neurodegenerative disease	
+10	CEP164P1	16	1.52	2.44E−04	7.22E−01		N/A		
+10	RP11-285G1.15	22	1.47	3.13E−04	8.28E−01	RSU1P2	YES	Substance addictionb	
+GWAS results, showing the distinct findings between joint, latent and residual component. “Nearby Genes”, those genes that lie in close vicinity (within a few hundred KB) of the primary gene that has showed significant association, in some cases the genes are co-located so the nearby genes can also be regarded as the primary gene; “HENT”, the primary gene (or the nearby gene if such information is not available for the primary gene) is highly expressed in neuron-related tissues (see main text for detailed definition).
+
+a The function is related to the nearby gene(s).
+
+b the function is related to the functioning gene. We have highlighted genes that are statistical significant after multiple comparison and underlined genes of particular interest.
+
+2 Imaging a ray shooting through the brain, and we are looking at the responses from the voxels along the trajectory of the ray.
+
+3 The computation time is also very much dependent on the stopping criteria, and therefore some compromises in the solution accuracy can also reduce the cost.
+
+4 Neuron-related tissues are defined as neuronal cells or brain tissues. YES: neuron-related tissues among the top 5 out of 381 tissue types in terms of expression level, NO: otherwise, N/A: information not available for the gene.
+
+5 Principal eigenvector is the eigenvector with respect to the largest eigenvalue in absolute value.
+
+The authors report no conflict of interest.
+
+
+Absil PA Mahony R Sepulchre R 2009 Optimization Algorithms on Matrix Manifolds Princeton University Press Princeton, New Jersey
+Akaike H 1974 A new look at the statistical model identification IEEE Trans Autom Control 19 6 716 723
+Avron H Kale S Kasiviswanathan S Sindhwani V 2012 Efficient and practical stochastic subgradient descent for nuclear norm regularization arXiv preprint arXiv: 1206.6384
+Bach FR Jordan MI 2003 Kernel independent component analysis J Mach Learn Res 3 1 48
+Ballmaier M Toga AW Blanton RE Sowell ER Lavretsky H Peterson J Pham D Kumar A 2014 Anterior cingulate, gyrus rectus, and orbitofrontal abnormalities in elderly depressed patients: an mri-based parcellation of the prefrontal cortex Am J Psychiatry
+Batmanghelich NK Dalca AV Sabuncu MR Golland P 2013 Joint modeling of imaging and genetics Information Processing in Medical Imaging: Conference 766 77
+Bhattacharya A Dunson DB 2011 Sparse Bayesian infinite factor models Biometrika 98 2 291 23049129
+Bi H Sze CI 2002 N-methyl-D-aspartate receptor subunit nr2a and nr2b messenger rna levels are altered in the hippocampus and entorhinal cortex in Alzheimer’s disease J Neurol Sci 200 1 11 18 12127670
+Bigos KL Mattay VS Callicott JH Straub RE Vakkalanka R Kolachana B Hyde TM Lipska BK Kleinman JE Weinberger DR 2010 Genetic variation in cacna1c affects brain circuitries related to mental illness Arch General Psychiatry 67 9 939 945
+Blackman AV Abrahamsson T Costa RP Lalanne T Sjöström PJ 2013 Target-cell-specific short-term plasticity in local circuits Front Synaptic Neurosci 5
+Boumal N Mishra B Absil PA Sepulchre R 2014 Manopt, a matlab toolbox for optimization on manifolds J Mach Learn Res 15 1 1455 1459
+Candès EJ Tao T 2010 The power of convex relaxation: near-optimal matrix completion IEEE Trans Inf Theory 56 5 2053 2080
+Chen K Dong H Chan KS 2013 Reduced rank regression via adaptive nuclear norm penalization Biometrika ast036
+Cheng W Rolls ET Qiu J Liu W Tang Y Huang CC Wang X Zhang J Lin W Medial reward and lateral non-reward orbitofrontal cortex circuits change in opposite directions in depression Brain 2016 in press 10.1093/brain/aww255
+Chiang MC Barysheva M McMahon KL de Zubicaray GI Johnson K Montgomery GW Martin NG Toga AW Wright MJ Shapshak P 2012 Gene network effects on brain microstructure and intellectual performance identified in 472 twins J Neurosci 32 25 8732 8745 22723713
+Coles S Bawa J Trenner L Dorazio P 2001 An Introduction to Statistical Modeling of Extreme Values 208 Springer London
+Cunningham F Amode MR Barrell D Beal K Billis K Brent S Carvalho-Silva D Clapham P Coates G Fitzgerald S 2015 Ensembl 2015 Nucleic acids Res 43 D1 D662 D669 25352552
+De Leeuw J 1994 Block-relaxation algorithms in statistics Information Systems and Data Analysis Springer Berlin, Heidelberg 308 324
+Dolan J Mitchell KJ 2013 Mutation of elfn1 in mice causes seizures and hyperactivity PloS one
+Efron B 2010 Large-scale Inference: Empirical Bayes Methods for Estimation, Testing, and Prediction 1 Cambridge University Press Cambridge
+Erk S Meyer-Lindenberg A Schmierer P Mohnke S Grimm O Garbusow M Haddad L Poehland L Mühleisen TW Witt SH 2014 Hippocampal and frontolimbic function as intermediate phenotype for psychosis: evidence from healthy relatives and a common risk variant in cacna1c Biol Psychiatry 76 6 466 475 24411473
+Eu-ahsunthornwattana J Miller EN Fakiola M Jeronimo SMB Blackwell JM Cordell HJ 2, W. T. C. C. C 2014 Comparison of methods to account for relatedness in genome-wide association studies with family-based data PLoS Genet 10 7 e1004445 URL: http://dx.doi.org/10.1371%2Fjournal.pgen.1004445 25033443
+Farber NB Newcomer JW Olney JW 1997 The glutamate synapse in neuropsychiatric disorders. Focus on schizophrenia and Alzheimer’s disease Prog Brain Res 116 421 437
+Franke B Vasquez AA Veltman JA Brunner HG Rijpkema M Fernández G 2010 Genetic variation in cacna1c, a gene associated with bipolar disorder, influences brainstem rather than gray matter volume in healthy individuals Biol Psychiatry 68 6 586 588 20638048
+Fusi N Stegle O Lawrence ND 2012 Joint modelling of confounding factors and prominent genetic regulators provides increased accuracy in genetical genomics studies PLoS Comput Biol 8 1 e1002330 22241974
+Ganjgahi H Winkler AM Glahn DC Blangero J Kochunov P Nichols TE 2015 Fast and powerful heritability inference for family-based neuroimaging studies NeuroImage 115 256 268 25812717
+Ge T Feng J Hibar DP Thompson PM Nichols TE 2012 Increasing power for voxel-wise genome-wide association studies: the random field theory, least square kernel machines and fast permutation procedures Neuroimage 63 2 858 873 22800732
+Ge T Nichols TE Ghosh D Mormino EC Smoller JW Sabuncu MR Initiative ADN 2015a A kernel machine method for detecting effects of interaction between multidimensional variable sets: an imaging genetics application Neuroimage 109 505 514 25600633
+Ge T Nichols TE Lee PH Holmes AJ Roffman JL Buckner RL Sabuncu MR Smoller JW 2015b Massively expedited genome-wide heritability analysis (megha) Proc Natl Acad Sci 112 8 2479 2484 25675487
+Gretton A Fukumizu K Teo CH Song L Schölkopf B Smola AJ 2007 A kernel statistical test of independence Advances in Neural Information Processing Systems 20 MIT Press Cambridge, MA 585 592
+Gretton A Herbrich R Smola A Bousquet O Schölkopf B 2005 Kernel methods for measuring independence J Mach Learn Res 6 2075 2129
+Hardoon DR Ettinger U Mourão-Miranda J Antonova E Collier D Kumari V Williams SC Brammer M 2009 Correlation-based multivariate analysis of genetic influence on brain volume Neurosci Lett 450 3 281 286 19028548
+Hawrylycz MJ Lein ES Guillozet-Bongaarts AL Shen EH Ng L Miller JA van de Lagemaat LN Smith KA Ebbert A Riley ZL 2012 An anatomically comprehensive atlas of the adult human brain transcriptome Nature 489 7416 391 399 22996553
+Hayasaka S Phan KL Liberzon I Worsley KJ Nichols TE 2004 Nonstationary cluster-size inference with random field and permutation methods Neuroimage 22 2 676 687 15193596
+Hazan E 2008 Sparse approximate solutions to semidefinite programs LATIN 2008: Theoretical Informatics Springer Berlin, Heidelberg 306 316
+Heatherton T 1991 The fagerstrom test for nicotine dependence, a revision of the fagerstrom tolerance questionnaire Br J Addict 86 9 1119 1127 1932883
+Hibar DP Stein JL Kohannim O Jahanshad N Saykin AJ Shen L Kim S Pankratz N Foroud T Huentelman MJ 2011 Voxelwise gene-wide association study (vgenewas): multivariate gene-based association testing in 731 elderly subjects Neuroimage 56 4 1875 1891 21497199
+Hibar DP Stein JL Renteria ME Arias-Vasquez A Desrivières S Jahanshad N Toro R Wittfeld K Abramovic L Andersson M 2015 Common genetic variants influence human subcortical brain structures Nature 520 7546 224 229 25607358
+Hopp S DAngelo H Royer S Kaercher R Adzovic L Wenk G 2014 Differential rescue of spatial memory deficits in aged rats by l-type voltage-dependent calcium channel and ryanodine receptor antagonism Neuroscience 280 10 18 25224829
+Hruz T Laule O Szabo G Wessendorp F Bleuler S Oertle L Widmayer P Gruissem W Zimmermann P 2008 Genevestigator v3: a reference expression database for the meta-analysis of transcriptomes Adv Bioinform 2008
+Hsieh CJ Olsen P 2014 Nuclear norm minimization via active subspace selection Proceedings of the 31st International Conference on Machine Learning (ICML-14) 575 583
+Hua WY Ghosh D 2014 Equivalence of kernel machine regression and kernel distance covariance for multidimensional trait association studies arXiv preprint arXiv: 1402.2679
+Hua WY Nichols TE Ghosh D Initiative ADN 2015 Multiple comparison procedures for neuroimaging genomewide association studies Biostatistics 16 1 17 30 24963012
+Huang M Nichols T Huang C Yu Y Lu Z Knickmeyer RC Feng Q Zhu H 2015 Fvgwas: fast voxelwise genome wide association analysis of large-scale imaging genetic data NeuroImage 118 613 627 URL 〈http://www.sciencedirect.com/science/article/pii/S1053811915004255〉 26025292
+Hynd MR Scott HL Dodd PR 2004 Differential expression of n-methyl-D-aspartate receptor nr2 isoforms in Alzheimer’s disease J Neurochem 90 4 913 919 15287897
+Hyvärinen A Karhunen J Oja E 2004 Independent Component Analysis 46 John Wiley &amp; Sons New York
+Izenman AJ 1975 Reduced-rank regression for the multivariate linear model J Multivar Anal 5 2 248 264
+Jack CR Bernstein MA Fox NC Thompson P Alexander G Harvey D Borowski B Britson PJ Whitwell LJ Ward C 2008 The Alzheimer’s disease neuroimaging initiative (adni): mri methods J Magn Reson Imaging 27 4 685 691 18302232
+Jaggi M Sulovsk M 2010 A simple algorithm for nuclear norm regularized problems Proceedings of the 27th International Conference on Machine Learning (ICML-10) 471 478
+Ji S Ye J 2009 An accelerated gradient method for trace norm minimization Proceedings of the 26th Annual International Conference on Machine Learning ACM New York 457 464
+Jia T Macare C Desrivières S Gonzalez DA Tao C Ji X Ruggeri B Nees F Banaschewski T Barker GJ 2016 Neural basis of reward anticipation and its genetic determinants Proc Natl Acad Sci 201503252
+Jiang B Liu JS 2015 Bayesian partition models for identifying expression quantitative trait loci J Am Stat Assoc 110 512 1350 1361 http://dx.doi.org/10.1080/01621459.2015.1049746 29056798
+Jiang H Jia J 2009 Association between nr2b subunit gene (grin2b) promoter polymorphisms and sporadic Alzheimers disease in the north Chinese population Neurosci Lett 450 3 356 360 18983893
+Joyner AH Bloss CS Bakken TE Rimol LM Melle I Agartz I Djurovic S Topol EJ Schork NJ Andreassen OA 2009 A common mecp2 haplotype associates with reduced cortical surface area in humans in two independent populations Proc Natl Acad Sci 106 36 15483 15488 19717458
+Karasuyama M Sugiyama M 2012 Canonical dependency analysis based on squared-loss mutual information Neural Netw 34 46 55 22831849
+Knijnenburg TA Wessels LF Reinders MJ Shmulevich I 2009 Fewer permutations, more accurate p-values Bioinformatics 25 12 i161 i168 19477983
+Koran MEI Hohman TJ Thornton-Wells TA 2014 Genetic interactions found between calcium channel genes modulate amyloid load measured by positron emission tomography Human Genet 133 1 85 93 24026422
+Koren Y Bell R Volinsky C 2009 Matrix factorization techniques for recommender systems Computer 8 30 37
+Lamprecht R LeDoux J 2004 Structural plasticity and memory Nat Rev Neurosci 5 1 45 54 14708003
+Lange K 2010 Numerical Analysis for Statisticians Springer Science &amp; Business Media New York
+Laurent M Vallentin F 2012 Semidefinite Optimization 〈page.mi.fu-berlin.de/fmario/sdp/laurentv.pdf〉
+Le Floch É Guillemot V Frouin V Pinel P Lalanne C Trinchera L Tenenhaus A Moreno A Zilbovicius M Bourgeron T 2012 Significant correlation between a set of genetic polymorphisms and a functional brain network revealed by feature selection and sparse partial least squares Neuroimage 63 1 11 24 22781162
+Le Floch E Trinchera L Guillemot V Tenenhaus A Poline J-B Frouin V Duchesnay E 2013 Dimension reduction and regularization combined with partial least squares in high dimensional imaging genetics studies New Perspectives in Partial Least Squares and Related Methods Springer New York 147 158
+Lee TL Raygada MJ Rennert OM 2012 Integrative gene network analysis provides novel regulatory relationships, genetic contributions and susceptible targets in autism spectrum disorders Gene 496 2 88 96 22306264
+Leow A Huang SC Geng A Becker J Davis S Toga A Thompson P 2005 Inverse consistent mapping in 3d deformable image registration: its construction and statistical properties Information Processing in Medical Imaging Springer Berlin, Heidelberg 493 503
+Li MD Burns TC Morgan AA Khatri P 2014 Integrated multi-cohort transcriptional meta-analysis of neurodegenerative diseases Acta Neuropathol Commun 2 93 25187168
+Li X 2014 Tensor Based Statistical Models with Applications in Neuroimaging Data Analysis Ph D thesis North Carolina State University URL: 〈http://www.lib.ncsu.edu/resolver/1840.16/9568〉
+Li Y Willer C Sanna S Abecasis G 2009 Genotype imputation Annu Rev Genom Human Genet 10 387
+Liang L Wei H 2015 Dantrolene, a treatment for Alzheimer disease? Alzheimer Dis Assoc Disord 29 1 1 5 25551862
+Lin D Li J Calhoun VD Wang YP 2015 Detection of genetic factors associated with multiple correlated imaging phenotypes by a sparse regression model 2015 IEEE 12th International Symposium on Biomedical Imaging (ISBI), IEEE 1368 1371
+Liu D Lin X Ghosh D 2007 Semiparametric regression of multidimensional genetic pathway data: least-squares kernel machines and linear mixed models Biometrics 63 4 1079 1088 18078480
+Liu J Calhoun VD 2014 A review of multivariate analyses in imaging genetics Front Neuroinform 8
+Liu J Pearlson G Windemuth A Ruano G Perrone-Bizzozero NI Calhoun V 2009 Combining fmri and snp data to investigate connections between brain function and genetics using parallel ica Human Brain Mapp 30 1 241 255
+Mazziotta J Toga A Evans A Fox P Lancaster J Zilles K Woods R Paus T Simpson G Pike B 2001 A probabilistic atlas and reference system for the human brain: international consortium for brain mapping (icbm) Philos Trans R Soc B: Biol Sci 356 1412 1293 1322
+McCullagh P Nelder JA 1989 Generalized Linear Models 37 CRC Press New York
+Michael M Damien F Maarten M Stewart M 2012 The adhd-200 consortium: a model to advance the translational potential of neuroimaging in clinical neuroscience Front Syst Neurosci 6
+Mishra B Meyer G Bach F Sepulchre R 2013 Low-rank optimization with trace norm penalty SIAM J Optim 23 4 2124 2149
+Montagna S Tokdar ST Neelon B Dunson DB 2012 Bayesian latent factor regression for functional and longitudinal data Biometrics 68 4 1064 1073 23005895
+Nebion A 2014 Genevisible 〈http://genevisible.com/〉 (accessed 28.09.15)
+Noebels JL Avoli M Rogawski MA Olsen RW Delgado-Escueta AV Grisar T Lakaye B de Nijs L LoTurco J Daga A 2012 Myoclonin1/efhc1 in cell division, neuroblast migration, synapse/dendrite formation in juvenile myoclonic epilepsy Jasper’s Basic Mechanisms of the Epilepsies [Internet] 4th National Center for Biotechnology Information US
+Ojelade SA Jia T Rodan AR Chenyang T Kadrmas JL Cattrell A Ruggeri B Charoen P Lemaitre H Banaschewski T 2015 Rsu1 regulates ethanol consumption in drosophila and humans Proc Natl Acad Sci 112 30 E4085 E4093 26170296
+Oliva CA Vargas JY Inestrosa NC 2013 Wnts in adult brain: from synaptic plasticity to cognitive deficiencies Front Cell Neurosci 7
+Öngür D Ferry AT Price JL 2003 Architectonic subdivision of the human orbital and medial prefrontal cortex J Comp Neurol 460 3 425 449 12692859
+Parsons CG Stöffler A Danysz W 2007 Memantine: a nmda receptor antagonist that improves memory by restoration of homeostasis in the glutamatergic system—too little activation is bad, too much is even worse Neuropharmacology 53 6 699 723 17904591
+Penny WD Friston KJ Ashburner JT Kiebel SJ Nichols TE 2011 Statistical Parametric Mapping: The Analysis of Functional Brain Images Academic Press London
+Petryshen TL Sabeti PC Aldinger KA Fry B Fan JB Schaffner S Waggoner SG Tahl AR Sklar P 2010 Population genetic study of the brain-derived neurotrophic factor (bdnf) gene Mol Psychiatry 15 8 810 815 19255578
+PGC 2013 Identification of risk loci with shared effects on five major psychiatric disorders: a genome-wide analysis Lancet 381 9875 1371 1379 23453885
+Poline JB Breeze J Frouin V 2015 Imaging genetics with fmri fMRI: From Nuclear Spins to Brain Functions Springer New York 699 738
+Potkin SG Turner JA Guffanti G Lakatos A Fallon JH Nguyen DD Mathalon D Ford J Lauriello J Macciardi F 2009 A genome-wide association study of schizophrenia using brain activation as a quantitative phenotype Schizophr Bull 35 1 96 108 19023125
+Ramsay JO Silverman BW 2005 Functional Data Analysis 2nd Springer Series in Statistics Springer New York 6
+Reiss PT Ogden RT 2010 Functional generalized linear models with images as predictors Biometrics 66 1 61 69 19432766
+Richiardi J Altmann A Milazzo AC Chang C Chakravarty MM Banaschewski T Barker GJ Bokde AL Bromberg U Büchel C 2015 Correlated gene expression supports synchronous activity in brain networks Science 348 6240 1241 1244 26068849
+Riise J Plath N Pakkenberg B Parachikova A 2015 Aberrant wnt signaling pathway in medial temporal lobe structures of Alzheimers disease J Neural Transm 1 16 25476585
+Saunders JB Aasland OG Babor TF Fuente JRDL Grant M 1993 Development of the alcohol use disorders identification test (audit): who collaborative project on early detection of persons with harmful alcohol consumption—ii Addiction 88 6 791 804 8329970
+Saykin AJ Shen L Foroud TM Potkin SG Swaminathan S Kim S Risacher SL Nho K Huentelman MJ Craig DW 2010 Alzheimer’s disease neuroimaging initiative biomarkers as quantitative phenotypes: genetics core aims, progress, and plans Alzheimer’s Dement 6 3 265 273 20451875
+Schwab KR Patterson LT Hartman HA Song N Lang RA Lin X Potter SS 2007 Pygo1 and pygo2 roles in wnt signaling in mammalian kidney development BMC Biol 5 1 15 17425782
+Schwarz G 1978 Estimating the dimension of a model Ann Stat 6 2 461 464
+Shinawi M Sahoo T Maranda B Skinner S Skinner C Chinault C Zascavage R Peters SU Patel A Stevenson RE 2011 11p14.1 microdeletions associated with adhd, autism, developmental delay, and obesity Am J Med Genet Part A 155 6 1272 1280
+Smith SM Miller KL Moeller S Xu J Auerbach EJ Woolrich MW Beckmann CF Jenkinson M Andersson J Glasser MF 2012 Temporally-independent functional modes of spontaneous brain activity Proc Natl Acad Sci 109 8 3131 3136 22323591
+Stegle O Parts L Durbin R Winn J 2010 A bayesian framework to account for complex non-genetic factors in gene expression levels greatly increases power in eqtl studies PLoS Comput Biol 6 5 e1000770 20463871
+Stein JL Hua X Lee S Ho AJ Leow AD Toga AW Saykin AJ Shen L Foroud T Pankratz N 2010a Voxelwise genome-wide association study (vgwas) Neuroimage 53 3 1160 1174 20171287
+Stein JL Hua X Morra JH Lee S Hibar DP Ho AJ Leow AD Toga AW Sul JH Kang HM 2010b Genome-wide analysis reveals novel genes influencing temporal lobe structure with relevance to neurodegeneration in Alzheimer’s disease Neuroimage 51 2 542 554 20197096
+Stingo FC Guindani M Vannucci M Calhoun VD 2013 An integrative bayesian modeling approach to imaging genetics J Am Stat Assoc 108 503 876 891
+Stogmann E Lichtner P Baumgartner C Bonelli S Assem-Hilger E Leutmezer F Schmied M Hotzy C Strom T Meitinger T 2006 Idiopathic generalized epilepsy phenotypes associated with different efhc1 mutations Neurology 67 11 2029 2031 17159113
+Sultana R Boyd-Kimball D Cai J Pierce WM Klein JB Merchant M Butterfield DA 2007 Proteomics analysis of the Alzheimer’s disease hippocampal proteome J Alzheimer’S Dis: JAD 11 2 153 164 17522440
+Suzuki T Delgado-Escueta AV Aguan K Alonso ME Shi J Hara Y Nishida M Numata T Medina MT Takeuchi T 2004 Mutations in efhc1 cause juvenile myoclonic epilepsy Nat Genet 36 8 842 849 15258581
+Suzuki T Sugiyama M 2013 Sufficient dimension reduction via squared-loss mutual information estimation Neural Comput 25 3 725 758 23272920
+Sylwestrak EL Ghosh A 2012 Elfn1 regulates target-specific release probability at ca1-interneuron synapses Science 338 6106 536 540 23042292
+Tang YP Shimizu E Dube GR Rampon C Kerchner GA Zhuo M Liu G Tsien JZ 1999 Genetic enhancement of learning and memory in mice Nature 401 6748 63 69 10485705
+Tesli M Skatun KC Ousdal OT Brown AA Thoresen C Agartz I Melle I Djurovic S Jensen J Andreassen OA 2013 Cacna1c risk variant and amygdala activity in bipolar disorder, schizophrenia and healthy controls PloS One 8 2 e56970 23437284
+Thompson PM Ge T Glahn DC Jahanshad N Nichols TE 2013 Genetics of the connectome Neuroimage 80 475 488 23707675
+Thompson PM Stein JL Medland SE Hibar DP Vasquez AA Renteria ME Toro R Jahanshad N Schumann G Franke B 2014 The enigma consortium: large-scale collaborative analyses of neuroimaging and genetic data Brain Imaging Behav 8 2 153 182 24399358
+Tomioka NH Yasuda H Miyamoto H Hatayama M Morimura N Matsumoto Y Suzuki T Odagawa M Odaka YS Iwayama Y 2014 Elfn1 recruits presynaptic mglur7 in trans and its loss results in seizures Nat Commun 5
+Van De Ville D Seghier ML Lazeyras F Blu T Unser M 2007 Wspm: wavelet-based statistical parametric mapping Neuroimage 37 4 1205 1217 17689101
+Van Essen DC Smith SM Barch DM Behrens TE Yacoub E Ugurbil K Consortium, W.-M.H. 2013 The wu-minn human connectome project: an overview Neuroimage 80 62 79 23684880
+Vounou M Janousova E Wolz R Stein JL Thompson PM Rueckert D Montana G Initiative ADN 2012 Sparse reduced-rank regression detects genetic associations with voxel-wise longitudinal phenotypes in Alzheimer’s disease Neuroimage 60 1 700 716 22209813
+Vounou M Nichols TE Montana G Initiative ADN 2010 Discovering genetic associations with high-dimensional neuroimaging phenotypes: a sparse reduced-rank regression approach Neuroimage 53 3 1147 1159 20624472
+Wahba G 1990 Spline Models for Observational Data 59 Siam
+Wang H Nie F Huang H Kim S Nho K Risacher SL Saykin AJ Shen L 2012a Identifying quantitative trait loci via group-sparse multitask regression and feature selection: an imaging genetics study of the adni cohort Bioinformatics 28 2 229 237 22155867
+Wang H Nie F Huang H Risacher SL Saykin AJ Shen L 2012b Identifying disease sensitive and quantitative trait-relevant biomarkers from multidimensional heterogeneous imaging genetics data via sparse multimodal multitask learning Bioinformatics 28 12 i127 i136 22689752
+Wang X Nan B Zhu J Koeppe R 2014 Regularized 3d functional regression for brain image data via haar wavelets Ann Appl Stat 8 2 1045 1064 26082826
+Woicik PA Stewart SH Pihl RO Conrod PJ 2009 The substance use risk profile scale: a scale measuring traits linked to reinforcement-specific substance use profiles Addict Behav 34 12 1042 1055 19683400
+Worsley KJ Evans AC Marrett S Neelin P 1992 A three-dimensional statistical analysis for cbf activation studies in human brain J Cereb Blood Flow Metab 12 6 900 918 1400644
+Worsley KJ Marrett S Neelin P Vandal AC Friston KJ Evans AC 1996 A unified statistical approach for determining significant signals in images of cerebral activation Human Brain Map 4 1 58 73
+Yang T Wang J Sun Q Hibar D Jahanshad N Liu L Wang Y Zhan L Thompson P Ye J 4 2015 Detecting genetic risk factors for Alzheimer’s disease in whole genome sequence data via lasso screening 2015 IEEE 12th International Symposium on Biomedical Imaging (ISBI) 985 989
+Yashiro K Philpot BD 2008 Regulation of nmda receptor subunit expression and its implications for ltd, ltp, and metaplasticity Neuropharmacology 55 7 1081 1094 18755202
+Yoshimizu T Pan J Mungenast A Madison J Su S Ketterman J Ongur D McPhie D Cohen B Perlis R 2014 Functional implications of a psychiatric risk variant within cacna1c in induced human neurons Mol Psychiatry 20 162 169 http://dx.doi.org/10.1038/mp.2014.143 25403839
+Yuan M Ekici A Lu Z Monteiro R 2007 Dimension reduction and coefficient estimation in multivariate linear regression J R Stat Soc: Ser B (Stat Methodol) 69 3 329 346
+Zhang Q Shen Q Xu Z Chen M Cheng L Zhai J Gu H Bao X Chen X Wang K 2012a The effects of cacna1c gene polymorphism on spatial working memory in both healthy controls and patients with schizophrenia or bipolar disorder Neuropsychopharmacology 37 3 677 684 22012475
+Zhang X Schuurmans D Yu Y-l 2012b Accelerated training for matrix-norm regularization: a boosting approach Advances in Neural Information Processing Systems 2906 2914
+Zhang Y Liu JS 2007 Bayesian inference of epistatic interactions in case–control studies Nat Genet 39 9 1167 1173 17721534
+Zhou H Li L Zhu H 2013 Tensor regression with applications in neuroimaging data analysis J Am Stat Assoc 108 502 540 552 24791032
+Zhou K Yang Y Gao L He G Li W Tang K Ji B Zhang M LI Y Yang J 2010 Nmda receptor hypofunction induces dysfunctions of energy metabolism and semaphorin signaling in rats: a synaptic proteome study Schizophrenia Bull 38 3 579 591 http://dx.doi.org/10.1093/schbul/sbq132
+Zhu H Khondker Z Lu Z Ibrahim JG 2014 Bayesian generalized low rank regression models for neuroimaging phenotypes and genetic markers J Am Stat Assoc 109 507 977 990
+Zou H Hastie T 2005 Regularization and variable selection via the elastic net J R Stat Soc: Ser B (Stat Methodol) 67 2 301 320

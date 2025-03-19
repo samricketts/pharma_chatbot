@@ -1,0 +1,193 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9215515
+20498
+Neuroimage
+Neuroimage
+NeuroImage
+1053-8119
+1095-9572
+
+34958950
+9802006
+10.1016/j.neuroimage.2021.118822
+NIHMS1856372
+Article
+Privacy-preserving harmonization via distributed ComBat
+Chen Andrew A. ab*
+Luo Chongliang c
+Chen Yong c1
+Shinohara Russell T. ab1
+Shou Haochang ab1
+Alzheimer’s Disease Neuroimaging Initiative2
+a Penn Statistics in Imaging and Visualization Center, Department of Biostatistics, Epidemiology, and Informatics, University of Pennsylvania, Philadelphia, PA 19104, United States
+b Center for Biomedical Image Computing and Analytics, University of Pennsylvania, Philadelphia, PA 19104, United States
+c Department of Biostatistics, Epidemiology and Informatics, University of Pennsylvania, Philadelphia, PA 19104, United States
+1 These authors contributed equally to this work.
+
+2 Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+* Corresponding author at: Penn Statistics in Imaging and Visualization Center, Department of Biostatistics, Epidemiology, and Informatics, University of Pennsylvania, Philadelphia, PA 19104, United States, andrewac@pennmedicine.upenn.edu (A.A. Chen).
+22 12 2022
+3 2022
+25 12 2021
+30 12 2022
+248 118822118822
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Challenges in clinical data sharing and the need to protect data privacy have led to the development and popularization of methods that do not require directly transferring patient data. In neuroimaging, integration of data across multiple institutions also introduces unwanted biases driven by scanner differences. These scanner effects have been shown by several research groups to severely affect downstream analyses. To facilitate the need of removing scanner effects in a distributed data setting, we introduce distributed ComBat, an adaptation of a popular harmonization method for multivariate data that borrows information across features. We present our fast and simple distributed algorithm and show that it yields equivalent results using data from the Alzheimer’s Disease Neuroimaging Initiative. Our method enables harmonization while ensuring maximal privacy protection, thus facilitating a broad range of downstream analyses in functional and structural imaging studies.
+
+Harmonization
+Distributed analysis
+Site effect
+ComBat
+Privacy-preserving
+
+pmc1. Introduction
+
+Sharing data across medical institutions enables large-scale clinical research with more generalizable and impactful results. However, directly transferring data across organizations presents a number of issues including patient privacy concerns, incompatibility of data formats, and hardware limitations. In many cases, these concerns prevent data aggregation in their complete form. This distributed data setting has motivated several adaptations of common methods that operate without the need to share original data across sites. Recent developments have included distributed clustering (İnan et al., 2007), logistic regression (Duan et al., 2020a), Cox regression (Duan et al., 2020b), principal component analysis (Al-Rubaie et al., 2017), and deep learning (Shokri and Shmatikov, 2015).
+
+In neuroimaging, performing analyses across multiple institutions and scanners can introduce systematic measurement errors, which are often called scanner effects. These effects can be introduced by several scanner properties including scanner manufacturer, model, magnetic field strength, head coil, voxel size, acquisition parameters, and a wide range of other differences across scanners (Han et al., 2006; Kruggel et al., 2010; Reig et al., 2009; Wonderlick et al., 2009). Differences can even persist when scanners have the exact same model and manufacturer (Shinohara et al., 2017).
+
+Distributed analysis methods generally do not account for potential scanner effects or other types of batch effects. However, these effects are important to address and can otherwise lead to spurious associations and scanner-specific data properties that are easily detected using a classifier (Fortin et al., 2018; Glocker et al., 2019).
+
+To mitigate scanner effects, a wide range of statistical harmonization techniques have been tested in neuroimaging data. Many of these methods address scanner effects in the mean and variance of voxel intensities or derived features (Fortin et al., 2018; 2016). Among these, ComBat (Johnson et al., 2007) has become a popular harmonization method and has been tested in both structural and functional imaging (Bartlett et al., 2018; Fortin et al., 2017; Marek et al., 2019; Yu et al., 2018). However, none of these methods can be directly applied to distributed data.
+
+To enable harmonization in distributed data, we introduce distributed ComBat (d-ComBat), a distributed algorithm for performing ComBat. We apply our algorithm to the Alzheimer’s Disease Neuroimaging Initiative (ADNI) dataset and show that our method yields identical results to applying ComBat while having the full data at a single location. Our investigation enables additional downstream distributed methods to be applied on harmonized data and fulfills the needs for running a complete distributed analysis pipeline in multi-site neuroimaging studies.
+
+2. Methods
+
+2.1. Distributed ComBat
+
+ComBat (Fortin et al., 2018; 2017; Johnson et al., 2007) seeks to remove scanner effects in the mean and variance of neuroimaging data in an empirical Bayes framework. To handle the distributed data setting, we propose d-ComBat as an algorithm that yields adjusted data identical to the original ComBat method. Let yij = (yij1, yij2, …, yijV )T, i = 1, 2, …, K, j = 1, 2, …, ni denote the V -dimensional vectors of observed data where i indexes scanner, j indexes subjects within scanners, ni is the number of subjects acquired on scanner i, and V is the number of features. For simplicity, we assume each site uses a different scanner and the data are collected from K sites. However, our algorithm could be easily extended to allow varying number of scanners per site. Our goal is to harmonize the data from these N=∑i=1Kni subjects across the K scanners without pooling data at a single processing site. ComBat assumes that the V features v = 1, 2, …, V follow (1) yijv=αv+xijTβv+γiv+δiveijv,
+
+where αv is the intercept, xij is the vector of covariates, βv is the vector of regression coefficients, γiv is the mean scanner effect, and δiv is the variance scanner effect. The errors eijv are assumed to follow eijv~N(0,σv2).
+
+The original ComBat contains two steps. The first is to standardize the original features by removing the covariate effects and scaling each residuals by its total variance. The second step involves estimating the scanner effects γ and δ using an empirical Bayes framework and removing them from the original data. We propose a distributed algorithm for each of the two steps in the next two sections.
+
+Standardization
+
+The original implementation of ComBat first standardizes the mean and variance of data across scanners via feature-wise least-squares estimation. The standardized data are calculated as zijv=yijv−α^v−Xijβ^vσ^v
+
+However, in the distributed setting we do not have direct access to the entire dataset and cannot directly compute estimates for the intercepts αv, regression coefficients βv, scanner-specific mean shifts γiv or population standard deviations σv for each feature. To address this problem, we propose an estimation procedure that only requires computation and transmission of deidentified summary statistics between distributed sites and a central location. As in the original ComBat methodology, estimation is performed under the constraint ∑i=1Kniγ^iv=0 to ensure identify-ability.
+
+For each feature, define θv=(αv,βvT,γ1v,γ2v,…,γK−1,v)T. Then we can rewrite the data across all N subjects (y11v,…,y1n1v,y21v,…,y2n2v,…,yKnMv)T as yv = Wθ+ ev where W=[W1⋮WK]=[1n1X11n1⋯0n10n1⋮⋮⋮⋮⋮1nM−1XK−10nK−1⋯1nK−10nK−11nKXK−n1/nK1nK⋯−nK−2/nK1nK−nK−1/nK1nK]
+
+The ordinary least squares estimate can be obtained via θ^v=(WTW)−1(WTyv)=(∑i=1KWiTWi)−1(∑i=1KWiyv). By decomposing the estimation into site-specific summary statistics WiTWi and Wiyv,θ^v can be obtained by computing these summary statistics and sending them to a central location. Construction of Wi and calculation of these summary statistics are simple for i = 1, 2, …, K − 1 since they are just the usual design matrices Xi concatenated with an intercept column and scanner-specific columns of ones. To standardize the variance of the data, the marginal variance is estimated as σ^v2=1N∑ij(yijv−α^v−Xijβ^v−γ^iv2), v = 1, 2, …, V, which is decomposable by site.
+
+Empirical Bayes adjustment
+
+The key step in ComBat involves use of empirical Bayes estimates of site-specific location and scale parameters to remove site effects while pooling information across features. ComBat assumes that the prior distributions γiv~N(γi,τi2) and δiv2~InverseGamma(λi,vi) where hyper-parameter estimates γ¯i, τ¯i, λ¯i, and v¯i are obtained via method of moments. ComBat then finds the conditional posterior means γiv* and δiv*, computed iteratively through γiv*=niτ¯i2γ^iv+δiv2γ¯ivniτ¯i2+δiv2*
+
+δiv2*=v¯i+12∑j(Zijv−γiv*)2ni2+λ¯i−1
+
+Each site’s mean and variance parameter estimates are computed from data within that site and so this step is distributed by its nature. The ComBat-adjusted data is then obtained within each site via yijvComBat=σ^vδiv*(zijv−γ^iv*)+α^v+Xijβ^v
+
+Algorithm
+
+In the distributed setting, ComBat only requires two back-and-forth communications between sites and a central location for estimation of the standardization parameters. We propose the d-ComBat algorithm and illustrate our method in Fig. 1. Initiation - broadcast from central site: The central analysis site chooses identification numbers for each scanner and communicates these to each location.
+
+Local computation at collaborative sites for mean parameters. Each site locally computes scanner-specific summary statistics WiTWi and Wi yv to the central site (Fig. 1 a).
+
+These summary statistics are then sent back to the central site.
+
+Aggregation at central site and broadcast. From the scanner-specific summary statistics, the central site computes θ^v.
+
+The central site then sends θ^v to each location (Fig. 1 a).
+
+Distributed data harmonizations. To obtain the global variance estimate, each site transfers ∑j(yijv−α^v−Xijβ^v−γ^iv2) to the central location, which then sends back σ^v (Fig. 1 b).
+
+The remaining ComBat steps are performed within each site to obtain yiComBat at every location (Fig. 1 c).
+
+2.2. ADNI data analysis
+
+Data for our primary analysis are obtained from ADNI (http://adni.loni.usc.edu/ and processed using the ANTs longitudinal single-subject template pipeline (Tustison et al., 2019) with code available on GitHub (https://github.com/ntustison/CrossLong). All participants in the ADNI study gave informed consent and institutional review boards approved the study at all contributing institutions.
+
+First, we obtain raw T1-weighted images from the ADNI-1 database, which were acquired using MPRAGE for Siemens and Philips scanners and a works-in-progress version of MPRAGE on GE scanners (Jack et al., 2010). For each subject, we estimate a template from all the image time-points. Each normalized timepoint image undergoes rigid spatial normalization to this single-subject template followed by processing via a single image cortical thickness pipeline consisting of brain extraction (Avants et al., 2010), denoising (Manjón et al., 2010), N4 bias correction (Tustison et al., 2010), Atropos n-tissue segmentation (Avants et al., 2011), and registration-based cortical thickness estimation (Das et al., 2009). We include the 62 cortical thickness values from the baseline scans in our primary dataset.
+
+We then identified scanner based on information contained within the Digital Imaging and Communications in Medicine (DICOM) headers for each scan. We consider subjects to be acquired on the same scanner if they share the scanner site, scanner manufacturer, scanner model, head coil, and magnetic field strength. In total, this definition yields 142 distinct scanners of which 78 had less than three subjects and were removed from analyses. The final sample consists of 505 subjects across 64 scanners, with 213 subjects imaged on scanners manufactured by Siemens, 70 by Philips, and 222 by GE. These 64 scanners are divided across 53 distinct ADNI sites. The sample has a mean age of 75.3 (SD 6.70) and includes 278 (55%) males, 115 (22.8%) Alzheimer’s disease (AD) patients, 239 (47.3%) late mild cognitive impairment (LMCI), and 151 (29.9%) cognitively normal (CN) individuals.
+
+2.3. Comparison with ComBat
+
+We conduct an experiment to compare d-ComBat and ComBat applied on the full data available at a single location. To emulate a distributed data setting, we treat each of the 53 ADNI sites as separate locations and only enable sharing of summary statistics with a central location. We then apply d-ComBat to this data while including age, sex, and disease status as covariates. For the reference ComBat-adjusted data, we apply ComBat including the same covariates while all of the data is housed at a single site.
+
+We also compare these two ComBat outputs by comparing their parameter estimates, harmonized output data, and run time. Parameter estimates are compared through the maximum difference between the two sets of estimates. We then compare the harmonized data within each site and report the maximum error across all sites. For run time, we compare the ComBat run time with the time elapsed across all d-ComBat steps, including calculations at the central location.
+
+3. Results
+
+We ran d-ComBat and ComBat in R on a laptop computer running macOS Catalina version 10.15.7 with a 2.3 GHz 8-Core Intel Core i9 processor. d-ComBat ran in 387 ms across all sites and steps versus ComBat which took 40 ms. The average run time within each site was 7.04 ms and the central site took 6 ms to compute the necessary estimates.
+
+Fig. 2 compares the empirical Bayes parameter estimates and regression coefficients obtained from each method, showing no visible differences across all parameters. The maximum percent differences between estimates were 4.17 × 10−10 for location parameters, 1.72 × 10−13 for scale parameters, and 1.19 × 10−11 for regression coefficients.
+
+The harmonized data were identical between the two methods. We found that the maximum percent difference between any two data points across the 53 locations was 2.75 × 10−13.
+
+4. Discussion
+
+Challenges in data sharing across institutions have inspired distributed algorithms for statistical analysis and machine learning. We contribute to this growing base of methods by introducing distributed ComBat for harmonization of data housed in clinical sites. To the best of our knowledge, this is the first harmonization method adapted for this setting. Compared to ComBat, we demonstrate that d-ComBat yields identical parameter estimates and harmonized output data.
+
+Unlike ComBat, d-ComBat requires two round of communications with a central location, which requires coordination and sharing of deidentified summary statistics between sites. These additional steps result in greater total run time across all sites, but very short run times at each site. In practice, the execution time of d-ComBat will also depend on the transfer speed of summary statistics to the central location and the speed of individuals running the code at each site. The total time to run d-ComBat is likely greater than running ComBat while having data at a single location, but this additional time is expected given the complexities of a distributed data setting. Further investigation into approximating the standardization step in one communication step could greatly improve the ease of using d-ComBat.
+
+For distributed Combat, only aggregated statistics are communicated, and the re-identification risk for the patients is expected to be low. In the future, we plan to formally quantify the re-identification risk rigorously, and enhance our algorithms via techniques including differential privacy (Dwork et al., 2016; Dwork and Roth, 2014; Wasserman and Zhou, 2010). Future studies could also adapt other harmonization methods for distributed data, including extensions of ComBat for longitudinal data (Beer et al., 2020), nonlinear associations (Pomponio et al., 2020), and covariance effects (Chen et al., 2021).
+
+5. Software
+
+All of the postprocessing analysis was performed in the R statistical software (V3.6.1). Distributed ComBat is implemented in R ( https://github.com/andy1764/Distributed-ComBat). Reference implementations for ComBat are available in R and Matlab (https://github.com/Jfortin1/ComBatHarmonization) and in Python (https://github.com/Jfortin1/neuroCombat).
+
+Acknowledgements
+
+This work was supported by the National Institute of Neurological Disorders and Stroke (grant numbers R01 NS085211 and R01 NS060910), the National Multiple Sclerosis Society (RG-1707-28586), the National Institute of Mental Health (R01 MH123550), and a seed grant from the University of Pennsylvania Center for Biomedical Image Computing and Analytics (CBICA). The content is solely the responsibility of the authors and does not necessarily represent the official views of the funding agencies.
+
+Yong Chen’s research was supported in part by Patient-Centered Outcomes Research Institute (PCORI) Project Program Award (ME-2019C3-18315). All statements in this report, including its findings and conclusions, are solely those of the authors and do not necessarily represent the views of the Patient-Centered Outcomes Research Institute (PCORI), its Board of Governors or Methodology Committee.
+
+The majority of the data used in this paper are derived from the ADNI study. Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.;Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.;Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Fig. 1. Distributed ComBat illustration.
+
+The procedure to perform distributed ComBat harmonization is outlined as follows. a, Each site sends its deidentified summary statistics to a central site for estimation of regression coefficients which are then passed back to the sites. b, Each site sends summary statistics to a central site for estimation of the population variance which is then passed back to the sites. c, The sites can then use the global regression coefficients and variance estimates to perform the remaining ComBat steps and obtain harmonized data.
+
+Fig. 2. Distributed ComBat parameter estimates.
+
+Scatter plots compare parameter estimates from distributed ComBat versus those obtained from ComBat with all data at one location. a and b show empirical Bayes point estimates for location and scale respectively. c displays the regression coefficients obtained from each method.
+
+Declaration of Competing Interest
+
+The authors declare no competing interests.
+
+Credit authorship contribution statement
+
+Andrew A. Chen: Formal analysis, Conceptualization, Software, Investigation, Writing – original draft. Chongliang Luo: Methodology, Writing – review &amp; editing. Yong Chen: Methodology, Writing – review &amp; editing. Russell T. Shinohara: Supervision, Conceptualization, Writing – review &amp; editing. Haochang Shou: Supervision, Conceptualization, Writing – review &amp; editing.
+
+
+References
+
+Al-Rubaie M , Wu P , Chang JM , Kung S , 2017. Privacy-preserving PCA on horizontally-partitioned data. In: Proceedings of the IEEE Conference on Dependable and Secure Computing, pp. 280–287. doi:10.1109/DESEC.2017.8073817.
+Avants B , Klein A , Tustison N , Woo J , Gee JC , 2010. Evaluation of open-access, automated brain extraction methods on multi-site multi-disorder data. In: Proceedings of the 16th Annual Meeting for the Organization of Human Brain Mapping.
+Avants BB , Tustison NJ , Wu J , Cook PA , Gee JC , 2011. An open source multivariate framework for n-tissue segmentation with evaluation on public data. Neuroinformatics 9 (4 ), 381–400. doi:10.1007/s12021-011-9109-y.21373993
+Bartlett EA , DeLorenzo C , Sharma P , Yang J , Zhang M , Petkova E , Weissman M , McGrath PJ , Fava M , Ogden RT , Kurian BT , Malchow A , Cooper CM , Trombello JM , McInnis M , Adams P , Oquendo MA , Pizzagalli DA , Trivedi M , Parsey RV , 2018. Pretreatment and early-treatment cortical thickness is associated with SSRI treatment response in major depressive disorder. Neuropsychopharmacology 43 (11 ), 2221–2230. doi:10.1038/s41386-018-0122-9.29955151
+Beer JC , Tustison NJ , Cook PA , Davatzikos C , Sheline YI , Shinohara RT , Linn KA , 2020. Longitudinal ComBat: a method for harmonizing longitudinal multi-scanner imaging data. NeuroImage 220 , 117129. doi:10.1016/j.neuroimage.2020.117129.32640273
+Chen AA , Beer JC , Tustison NJ , Cook PA , Shinohara RT , Shou H , 2021. Removal of scanner effects in covariance improves multivariate pattern analysis in neuroimaging data. Human Brain Mapping 858415. doi:10.1002/hbm.25688.
+Das SR , Avants BB , Grossman M , Gee JC , 2009. Registration based cortical thickness measurement. NeuroImage 45 (3 ), 867–879. doi:10.1016/j.neuroimage.2008.12.016.19150502
+Duan R , Boland MR , Liu Z , Liu Y , Chang HH , Xu H , Chu H , Schmid CH , Forrest CB , Holmes JH , Schuemie MJ , Berlin JA , Moore JH , Chen Y , 2020a. Learning from electronic health records across multiple sites: a communication-efficient and privacy-preserving distributed algorithm. J. Am. Med. Inform. Assoc. 27 (3 ), 376–385. doi:10.1093/jamia/ocz199.31816040
+Duan R , Luo C , Schuemie MJ , Tong J , Liang CJ , Chang HH , Boland MR , Bian J , Xu H , Holmes JH , Forrest CB , Morton SC , Berlin JA , Moore JH , Mahoney KB , Chen Y , 2020b. Learning from local to global: an efficient distributed algorithm for modeling time-to-event data. J. Am. Med. Inform. Assoc. 27 (7 ), 1028–1036. doi:10.1093/jamia/ocaa044.32626900
+Dwork C , McSherry F , Nissim K , Smith A , 2016. Calibrating noise to sensitivity in private data analysis. J. Priv. Confid. 7 (3 ), 17–51. doi:10.29012/jpc.v7i3.405.
+Dwork C , Roth A , 2014. The algorithmic foundations of differential privacy. Found. Trends® Theor. Comput. Sci. 9 (3–4 ), 211–407. doi:10.1561/0400000042.
+Fortin J-P , Cullen N , Sheline YI , Taylor WD , Aselcioglu I , Cook PA , Adams P , Cooper C , Fava M , McGrath PJ , McInnis M , Phillips ML , Trivedi MH , Weissman MM , Shinohara RT , 2018. Harmonization of cortical thickness measurements across scanners and sites. NeuroImage 167 , 104–120. doi:10.1016/j.neuroimage.2017.11.024.29155184
+Fortin J-P , Parker D , Tunç B , Watanabe T , Elliott MA , Ruparel K , Roalf DR , Satterthwaite TD , Gur RC , Gur RE , Schultz RT , Verma R , Shinohara RT , 2017. Harmonization of multi-site diffusion tensor imaging data. NeuroImage 161 , 149–170. doi:10.1016/j.neuroimage.2017.08.047.28826946
+Fortin J-P , Sweeney EM , Muschelli J , Crainiceanu CM , Shinohara RT , 2016. Removing inter-subject technical variability in magnetic resonance imaging studies. NeuroImage 132 , 198–212. doi:10.1016/j.neuroimage.2016.02.036.26923370
+Glocker B , Robinson R , Castro DC , Dou Q , Konukoglu E , 2019. Machine learning with multi-site imaging data: an empirical study on the impact of scanner effects. arXiv:1910.04597 [cs, eess, q-bio]
+Han X , Jovicich J , Salat D , van der Kouwe A , Quinn B , Czanner S , Busa E , Pacheco J , Albert M , Killiany R , Maguire P , Rosas D , Makris N , Dale A , Dickerson B , Fischl B , 2006. Reliability of MRI-derived measurements of human cerebral cortical thickness: the effects of field strength, scanner upgrade and manufacturer. NeuroImage 32 (1 ), 180–194. doi:10.1016/j.neuroimage.2006.02.051.16651008
+İ nan A , Kaya SV , Saygın Y , Savaş E , Hintoğlu AA , Levi A , 2007. Privacy preserving clustering on horizontally partitioned data. Data Knowl. Eng. 63 (3 ), 646–666. doi:10.1016/j.datak.2007.03.015.
+Jack CR , Bernstein MA , Borowski BJ , Gunter JL , Fox NC , Thompson PM , Schuff N , Krueger G , Killiany RJ , DeCarli CS , Dale AM , Weiner MW , 2010. Update on the MRI core of the Alzheimer’s disease neuroimaging initiative. Alzheimer’s Dement. J. Alzheimer’s Assoc. 6 (3 ), 212–220. doi:10.1016/j.jalz.2010.03.004.
+Johnson WE , Li C , Rabinovic A , 2007. Adjusting batch effects in microarray expression data using empirical Bayes methods. Biostatistics 8 (1 ), 118–127. doi:10.1093/bio-statistics/kxj037.16632515
+Kruggel F , Turner J , Muftuler LT , Alzheimer’s Disease Neuroimaging Initiative, 2010. Impact of scanner hardware and imaging protocol on image quality and compartment volume precision in the ADNI cohort. NeuroImage 49 (3 ), 2123–2133. doi:10.1016/j.neuroimage.2009.11.006.19913626
+Manjón JV , Coupé P , Martí-Bonmatí L , Collins DL , Robles M , 2010. Adaptive non-local means denoising of MR images with spatially varying noise levels. J. Magn. Reson. Imaging JMRI 31 (1 ), 192–203. doi:10.1002/jmri.22003.20027588
+Marek S , Tervo-Clemmens B , Nielsen AN , Wheelock MD , Miller RL , Laumann TO , Earl E , Foran WW , Cordova M , Doyle O , Perrone A , Miranda-Dominguez O , Feczko E , Sturgeon D , Graham A , Hermosillo R , Snider K , Galassi A , Nagel BJ , Ewing SWF , Eggebrecht AT , Garavan H , Dale AM , Greene DJ , Barch DM , Fair DA , Luna B , Dosenbach NUF , 2019. Identifying reproducible individual differences in childhood functional brain networks: an ABCD study. Dev. Cognit. Neurosci. 40 , 100706. doi:10.1016/j.dcn.2019.100706.31614255
+Pomponio R , Erus G , Habes M , Doshi J , Srinivasan D , Mamourian E , Bashyam V , Nasrallah IM , Satterthwaite TD , Fan Y , Launer LJ , Masters CL , Maruff P , Zhuo C , Völzke H , Johnson SC , Fripp J , Koutsouleris N , Wolf DH , Gur R , Gur R , Morris J , Albert MS , Grabe HJ , Resnick SM , Bryan RN , Wolk DA , Shinohara RT , Shou H , Davatzikos C , 2020. Harmonization of large MRI datasets for the analysis of brain imaging patterns throughout the lifespan. NeuroImage 208 , 116450. doi:10.1016/j.neuroimage.2019.116450.31821869
+Reig S , Sánchez-González J , Arango C , Castro J , González-Pinto A , Ortuño F , Crespo-Facorro B , Bargalló N , Desco M , 2009. Assessment of the increase in variability when combining volumetric data from different scanners. Hum. Brain Mapp. 30 (2 ), 355–368. doi:10.1002/hbm.20511.18064586
+Shinohara RT , Oh J , Nair G , Calabresi PA , Davatzikos C , Doshi J , Henry RG , Kim G , Linn KA , Papinutto N , Pelletier D , Pham DL , Reich DS , Rooney W , Roy S , Stern W , Tummala S , Yousuf F , Zhu A , Sicotte NL , Bakshi R , Cooperative t.N. , 2017. Volumetric analysis from a harmonized multisite brain MRI study of a single subject with multiple sclerosis. Am. J. Neuroradiol. 38 (8 ), 1501–1509. doi:10.3174/ajnr.A5254.28642263
+Shokri R , Shmatikov V , 2015. Privacy-preserving deep learning. In: Proceedings of the 22nd ACM SIGSAC Conference on Computer and Communications Security. Association for Computing Machinery, New York, NY, USA, pp. 1310–1321. doi:10.1145/2810103.2813687.
+Tustison NJ , Avants BB , Cook PA , Zheng Y , Egan A , Yushkevich PA , Gee JC , 2010. N4ITK: improved N3 bias correction. IEEE Trans. Med. Imaging 29 (6 ), 1310–1320. doi:10.1109/TMI.2010.2046908.20378467
+Tustison NJ , Holbrook AJ , Avants BB , Roberts JM , Cook PA , Reagh ZM , Duda JT , Stone JR , Gillen DL , Yassa MA , Initiative f. t.A.D.N. , 2019. Longitudinal mapping of cortical thickness measurements: an Alzheimer’s disease neuroimaging initiative-based evaluation study. J. Alzheimers Dis. 71 (1 ), 165–183. doi:10.3233/JAD-190283.31356207
+Wasserman L , Zhou S , 2010. A statistical framework for differential privacy. J. Am. Stat. Assoc. 105 (489 ), 375–389. doi:10.1198/jasa.2009.tm08651.
+Wonderlick J , Ziegler D , Hosseini-Varnamkhasti P , Locascio J , Bakkour A , van der Kouwe A , Triantafyllou C , Corkin S , Dickerson B , 2009. Reliability of MRI-derived cortical and subcortical morphometric measures: effects of pulse sequence, voxel geometry, and parallel imaging. NeuroImage 44 (4 ), 1324–1333. doi:10.1016/j.neuroimage.2008.10.037.19038349
+Yu M , Linn KA , Cook PA , Phillips ML , McInnis M , Fava M , Trivedi MH , Weissman MM , Shinohara RT , Sheline YI , 2018. Statistical harmonization corrects site effects in functional connectivity measurements from multi-site fMRI data. Hum. Brain Mapp. 39 (11 ), 4213–4227. doi:10.1002/hbm.24241.29962049

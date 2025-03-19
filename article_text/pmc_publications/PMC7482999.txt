@@ -1,0 +1,206 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101492570
+35639
+Proc IEEE Int Symp Biomed Imaging
+Proc IEEE Int Symp Biomed Imaging
+Proceedings. IEEE International Symposium on Biomedical Imaging
+1945-7928
+1945-8452
+
+32922658
+7482999
+10.1109/isbi45749.2020.9098641
+NIHMS1626561
+Article
+ENRICHING STATISTICAL INFERENCES ON BRAIN CONNECTIVITY FOR ALZHEIMER’S DISEASE ANALYSIS VIA LATENT SPACE GRAPH EMBEDDING
+Ma Xin †
+Wu Guorong ‡*
+Kim Won Hwa †
+† Department of Computer Science and Engineering, University of Texas at Arlington
+‡ Department of Psychiatry, University of North Carolina - Chapel Hill
+* Department of Computer Science, University of North Carolina - Chapel Hill
+8 9 2020
+22 5 2020
+4 2020
+11 9 2020
+2020 16851689
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+We develop a graph node embedding Deep Neural Network that leverages statistical outcome measure and graph structure given in the data. The objective is to identify regions of interests (ROIs) in the brain that are affected by topological changes of brain connectivity due to specific neurodegenerative diseases by enriching statistical group analysis. We tackle this problem by learning a latent space where statistical inference can be made more effectively. Our experiments on a large-scale Alzheimer’s Disease dataset show promising result identifying ROIs that show statistically significant group differences separating even early and late Mild Cognitive Impairment (MCI) groups whose effect sizes are very subtle.
+
+Index Terms—
+
+Brain Connectivity
+Alzheimer’s Disease
+Group Analysis
+Statistical Inference
+
+1. INTRODUCTION
+
+Statistical group analysis is a fundamental component in many neuroimaging studies to identify specific regions in the brain that are associated with various brain diseases such as Alzheimer’s Disease (AD) [1, 2], Autism [3], Parkinson’s Disease [4, 5] and others. The premise is that the distribution of imaging measures from different groups (e.g., dementia vs. controls) should be significantly different depending on the regions of interest (ROI) affected by the diseases. Given a population of neuroimages or imaging measures that can be stratified into two (or more) groups, performing statistical tests (e.g., t-test) at each location (either voxel-wise or region-wise) allows us to discover structural/functional alterations in the brain that are related to neuro-diseases.
+
+While such regional analyses have rich history of yielding successful neuroscientific discoveries, the interest is shifting towards identifying joint functionality of different ROIs as a brain network (represented as a graph) which may help better understand the human brain behavior [6, 7, 8, 9]. Given a brain network (either functional or structural), one can design a local “descriptor” for each ROI (i.e., feature) that inherits the structure of an individual brain network. Then, statistical group analyses on the descriptor can be performed at each ROI, given a set of brain networks. Such approach again identifies specific ROIs one after another that are affected by topological variation in the brain connectivity caused by a disease.
+
+Unfortunately, despite of being a concrete hypothesis driven from a strong human observation, it is often difficult to obtain a statistically meaningful result with imaging data when either the sample-size of a dataset or the effect-size between groups is too small. Moreover, multiple tests must be with high-dimensional images which result in inevitable false-positives [10, 11]. Bonferroni or False Discovery Rate (FDR) [12, 13] are often used to correct for such type-I error but the criteria becomes too conservative for p-values to survive. Therefore, it is important to design a sensitive method that works even under severe under-sampled conditions.
+
+Traditionally, the most popular technique to make a statistical analysis more sensitive is to perform filtering (e.g., smoothing) of data [14, 15]. From a signal processing perspective, a filtering operation increases signal-to-noise ratio and improves results in its downstream analyses. However, from a machine learning perspective, we can interpret filtering as deriving a new representation of the data via data transform which is better suited for its downstream analyses. In this sense, if a flexible representation of ROI descriptors from brain connectivities can be derived, they may be used to improve results from group analyses, up to the level that several ROIs survive multiple comparisons correction. There exist human-driven descriptors such as clustering coefficient [16, 17], nodal efficiency [18], node2vec [19, 20], which are not optimized for a statistical analysis for small datasets. Most of the data-driven methods with Deep Learning, unfortunately, mainly focus on diagnosis [21, 22, 23], which emphasize on global mapping between the network characteristics and clinic outcomes.
+
+Here, we cast the classic problem of feature representation learning in a traditional clustering view — the problem of maximizing inter-class distance and minimizing intra-class distance [24, 25]. The key is to embed features at each ROI of a brain connectivity to a new space that is well-suited to distinguish different groups. Let us consider a cohort that comprises of brain connectivities from several groups. We first define an ROI descriptor based on a network structure using node2vec [19], and design a novel Deep Neural Network (DNN) that learns a new representation of the descriptors for group separation. To be more specific, in the latent space trained by the DNN, only the ROIs that exhibit the true group differences should be identifiable and the rest should remain as unidentifiable. This is important since most of disease-specific symptoms do not appear across the whole brain but rather manifest sparsely in a few ROIs. Interestingly, such a problem is fundamentally equivalent to optimizing on statistical outcomes such as t-statistics which in turn is converted to p-values, whose details will be explained in a later section.
+
+One important note here is that the given major task is statistical inference, which lands us to focus on enhancing the sensitivity of statistics within the dataset at hand, rather than tuning for the generalization of the model in separating training-testing phases. This may seem as a circular analysis if we were to make predictions, however, this is not our case. In this regime, our contributions throughout this paper are: 1) a proposal of a graph embedding neural network to transform ROIs in individual brain connectivities to a latent space based on statistical outcomes, 2) extensive experiments on a large-scale structural brain connectivity dataset to validate our framework. Our experiments on Alzheimer’s Disease Neuroimaging Initiative (ADNI) dataset yield improved result over conventional baselines, and successfully pin-point those ROIs that are highly associated with progression of AD.
+
+2. METHOD
+
+To enrich a group analysis of brain connectivity, we propose a novel Neural Network model that improves group separation of graphs as well as identifies those nodes which play significant roles. We explain its details in the followings.
+
+2.1. Model Description
+
+As shown in Fig. 1, our model consists of three components: 1) graph node embedding, 2) DNN and 3) Fusion layer. In the graph node embedding stage, each node in a graph is transformed to a vector, i.e., change of domain from an arbitrary graph to a set of vectors. Then, we train a DNN to learn a better representation of the nodes for group separation based on a statistical measure, and the Fusion layer selects those nodes that are playing major roles in separating different groups.
+
+Given a graph G = {V, E} with a set of nodes V and edges E, each node can be characterized by related arbitrary topological structure. A graph G with N number of nodes is typically given as an adjacency matrix AN×N, whose (i, j)-th element denotes weight between the i-th and the j-th nodes. Given a G, we employ node2vec which extracts node descriptors using the topology of G as a vector based on Random Walker [19]. An operation in node2vec with A yields (1) e=node2vec(A)
+
+where each row of e∈ℝN×k is a vector embedding of each node in a k-dimensional space.
+
+Of course, these vector representations can be directly used for statistical group analysis; however, our objective is to find a better representation that improves the results from the group analysis. Therefore, we develop a new DNN framework that uses this vector representation as an input. The DNN, a fully connected artificial neural network, transforms е into a latent space, and the fusion layer later screens out non-significant nodes in the graph.
+
+To avoid overfitting, ℓ2-norm regularization is applied to both DNN and Fusion layers. We assume that only a subset of the graph nodes will affect their downstream statistical inference tasks, hence ℓ1-norm regularizer is applied in the Fusion layer for sparsity. We also assume that the original structure of the input graph is maintained in the latent space, which defines our graph regularization (GR). With these constraints, the loss function of our model is given as (2) L=Lstats+αRl2+βRl1+γRG
+
+where Lstats indicates the clustering loss calculated using statistical methods (e.g., Hotelling’s T2-test), Rl1 and Rl2 represent traditional ℓ1-norm and ℓ2-norm regularizations. RG is a GR which guarantees that the transformed features in the latent space maintain the structures of the input graphs. α, β and γ are hyper-parameters to balance regularizations. In the following subsections, we fully describe two main loss terms, i.e., Lstats and RG, which play the major roles in our model.
+
+2.2. Statistical Loss
+
+Given a set of graphs G={G1,G2,…,GM} with M graphs, we first extract vector representations of each node еi in each graph. These еi are inputted to a DNN to find a latent space where group analysis of the graph data becomes more effective. The graph embedding set in the latent space is represented as O={O1,O2,…,OM} where Oi∈ℝN×d and d is the dimension of the latent space. In order to improve the result from a group analysis, we need to find the proper representations Oi which should be based on a criteria for better group separation. For this, we rely on a statistical outcome such as t-statistics as a measure of clustering.
+
+Let us first consider the simplest case with two-sample t-test on only two groups on a single node with univariate measurements, unequal group size and variance. Given a set of measurements U1 and U2 from two groups (i.e., group 1 and group 2), the t-test yields a resultant t-statistics as (3) t=U¯1−U¯2sU12/n1+sU22/n2
+
+where Ū1 and Ū2 are means, sU1 and sU2 are standard deviations and n1 and n2 are the number of samples in each group respectively. Looking at (3), we can intuitively see that it quantifies the distance between the center of two groups (i.e., mean) divided by the shrinkage of individual groups (i.e., variation). In order to have better group separation, it is necessary to maximize inter-cluster distance and minimize intra-cluster distance, which can be efficiently done by maximizing the t-statistics — the ratio between the two distances.
+
+Recall that the t-statistic above is defined with univariate measurements, however, our measurements are multivariate representations of each node in a latent space. The generalization of the t-test to a multivariate case is Hotelling’s T2-test, which computes T2-statistics by incorporating the covariance structure between different variables [26]. We naturally adopt T2-statistics to define the group separation loss for vector representation, and write the T2-statistic computed at each node by comparing two groups as Tn with node index n.
+
+We now consider a more practical setting with more than two groups. Given a set of classes/groups C, consider we select a pair of groups (i, j) that yields a set of Tn from statistical group analyses at each node given as a vector as (4) Ti,j=[T1,T2,…,TN]T, i∈C,j∈C\i.
+
+On the T, we assume that not all the nodes are separable for different classes/groups in the latent space, but rather there are only a few that significantly contributes to the group separation. For this, we introduce a Fusion layer to introduce sparsity in T. The Fusion layer is designed as a fully connected layer with weights ΘN×N, which is combined with a separate ℓ1-norm regularization. Finally, the loss Lstats is written as an inverse of sum of T across all group comparisons as (5) Lstats=1log(∑n=1N∑i∈C,j∈C\iPΘTi,j)
+
+where P is an index set of all possible pairs of groups. For a dataset with p groups, the number of group pairs is |P|=(p2).
+
+2.3. Graph Regularization
+
+Because of the complexity of latent space and the randomness in gradient based learning algorithms, we need constraints on those transformed feature maps O in latent space to obtain stable, robust and meaningful results. Although the DNN module in our model can fit complex non-linear functions, it still lacks in encoding structural information of graphs to restrict the latent space for efficiency. In order to restrict the latent space from the DNN, we introduce a GR on Oi. As mentioned earlier, in our model, given a graph Gi with undirected weighted adjacency matrix Ai, we obtain its corresponding embedding Oi∈ℝN×d in the latent space. Our GR is based on the similarity between an input graph Ai and its newly constructed graph using Oi. The intuition is that if two nodes n and m in the input graph are closely connected, in the latent space, the node embedding vector Oin and Oim should be similar to each other. The constructed graph is represented as a distance matrix, Di∈ℝN×N, calculated as (6) Di(m,n)=‖Oin−Oim‖l22, n,m=1,2,…,N
+
+Then the GR, RG, can be defined as (7) RG=∑i=1M∑n=1N∑m=1N(Di⊙Ai)(m,n)
+
+where ⊙ denotes the element-wise multiplication.
+
+Based on all the statistical loss and constraints mentioned so far, the overall objective function from (2) now becomes (8) L=1log(∑n=1N∑i∈C,j∈C\iPΘTi,j)+α∑W∈Wdnn∪{Θ}∥W∥l22+β∥Θ∥l1+γ∑i=1M∑n=1N∑m=1N(Di⊙Ai)(m,n)
+
+where Wdnn is the parameter set in DNN.
+
+3. EXPERIMENTAL RESULT
+
+We performed various experiments to verify the performance of our model by comparing it with baseline methods.
+
+3.1. Dataset
+
+We used ADNI dataset for our experiments, a public dataset for longitudinal AD study. Individual Diffusion Tensor Images (DTI) were processed by tractography pipeline to extract brain networks using Destrieux atlas with 148 ROIs. Each brain network is represented as an adjacency matrix whose elements denote number of neuron fiber tracts connecting two different ROIs. The dataset includes 5 classes: AD, Cognitively Normal (CN), Early Mild Cognitive Impairment (EMCI), Late Mild Cognitive Impairment (LMCI) and Significant Memory Concern (SMC), and the demographics of the ADNI dataset can be found in Table 1.
+
+3.2. Baseline Methods and Evaluation Criteria
+
+To evaluate the performance of our model, we compared it with various baselines: statistical group analysis (i.e., hypothesis testings) on graph features defined at each ROI such as 1) degree, 2) Clustering Coefficients, 3) vector embedding from node2vec. A group analysis was conducted at each ROI with the features above to derive p-values (t-test for univariate measures and Hotelling’s T2-test for multivariate cases), and these p-values were corrected for multiple comparisons using Bonferroni at α = 0.05. We checked the smallest resultant p-value as well as number of identified ROIs for evaluation.
+
+3.3. Hyper-parameters
+
+For node2vec representations (in 6 dimensional vector) at each node, we used random walk length lrw = 8 with 200 random walkers. DNN was trained at learning rate lr = 0.1, and α = 1e−3, β = 1e−5 and γ = 1e−6. The number of hidden nodes in the hidden layers of DNN were set to 64, 2000 and 64. The dimension of latent space was set to 4.
+
+3.4. Preclinical AD vs. Prodromal AD Analysis
+
+In this experiment, we merged CN and EMCI groups as Preclinical AD group and combined LMCI and AD groups as Prodromal AD group to compare their differences. Such aggregation makes the analysis simple with only two groups and will be used to validate our framework.
+
+Table 2 summarizes the performance of our framework compared to baselines for preclinical vs. prodromal AD analysis. When statistical inferences were made at each ROI using baseline methods, only degree revealed 3 ROIs and other node features did not detect any significant ROIs, even with multivariate representation using node2vec. However, when our model was used to embed the graphs into a latent space optimized for group analysis, we identified 15 statistically significant ROIs and achieved the smallest p-value among all the experiments. All the detected ROIs (with low p-values) by our model were located in the left hemisphere and they include ROIs such as lateral fusiform gyrus, medial lingual gyrus, parahippocampal gyrus, occipital pole, inferior frontal sulcus and collateral sulcus, which are known to be highly related to AD (along with other identified ROIs) [27, 28, 29, 30, 31]. Fig. 2 provides a p-value map on a brain surface visualizing the identified ROIs by our model. We obtained similar ROIs without GR, but they mostly existed in the right hemisphere. The performance of GR is discussed in section 3.5.
+
+3.5. Multi-group Difference Analysis
+
+In this experiment, we used all 5 classes for our framework to obtain the optimal representations of ROIs to differentiate the 5 groups, which resulted in 10 group analyses. Notice that this setting is much more difficult compared with 2 group analysis, and we report a subset of results which are more suitable to demonstrate performance of our framework.
+
+Fig. 3 compares the performance of GR. It shows the total number of detected ROIs w.r.t. each epoch with three different group analyses, i.e., AD vs. CN (yellow), CN vs. EMCI (green) and EMCI vs. LMCI (red). We selected them since AD vs. CN has the largest effect size, and CN vs. EMCI and EMCI vs. LMCI comparisons are very difficult with subtle effect sizes in the disease spectrum. The blue dots denote the total number of detected ROIs that commonly appear across all group comparisons, i.e., those ROIs are effective for separation of all 5 groups. The GR increases the total number of commonly detected ROIs, makes the model stable, and enables us to distinguish even EMCI and LMCI groups well. The 4 best ROIs exist in the left hemisphere: lateral occipitotemporal gyrus, lingual gyrus, posterior transverse collateral sulcus, and medial occipitotemporal and lingual sulcus, which are known to be related to AD progression [32, 33, 34].
+
+When we look at the three individual group analyses given in Table 3, it is easily seen that the number of ROIs as well as the smallest p-value obtained using our model outperforms other ROI descriptors by enriching statistical analyses. Especially, when we compare the original node2vec representation to our case, we see that the p-value has significantly decreased, even separating EMCI and LMCI groups with 11 detected ROIs. The p-value map of the 11 ROIs in the left and right hemisphere is given in Fig. 4.
+
+It is also interesting to see that most of the detected ROIs in all analyses were located at the left hemisphere over the right hemisphere. Through our analyses, we found total of 23 ROIs in the left hemisphere and 7 ROIs in the right hemisphere, and such biased detection on the left hemisphere with AD agrees with many other AD literature [35, 36].
+
+4. CONCLUSION
+
+We proposed a framework for statistical group analysis of graph data that capture differences in the nodes caused by differences in topology. The method maps graph nodes into an optimized latent space based on a statistical measure and DNN architecture, where the separation of different groups/classes can be made more effective. Our framework enriched statistical group analyses of brain connectivities from ADNI, which can easily characterize even subtle differences between EMCI and LMCI groups. It has potential to significantly impact other disease/preclinical analyses whose goal is to compare a set of brain connectivities.
+
+5. ACKNOWLEDGEMENT
+
+This research was supported by NIH R01 AG059312, R21 AG059065, K01 AG049089 and Research Enhancement Program (REP) at the University of Texas at Arlington.
+
+Fig. 1: Overall architecture of our framework. For each graph G in the input graph set G, its graph nodes are transformed to e which is then mapped to one instant of the embedding set O in a latent space using DNN. O is divided into |P| group pairs to perform hypothesis testings. Finally, we use a sparse Fusion layer to identify significant graph nodes and compute statistical loss.
+
+Fig. 2: p-value (in − log10 scale) map on a brain surface from Preclinical vs. Prodromal AD analysis. Several ROIs related to AD are detected.
+
+Fig. 3: Statistical Group Analysis results w.r.t. epoch on ADNI dataset with our model: a) our model with GR, b) our model w/o GR. Blue dots represent number of ROIs that appear in common in all 10 group analyses, which is more stable with the regularizer. Among 10 group pairs, only 3 group pairs are shown for simplicity (i.e., AD-CN, CN-EMCI, EMCI-LMCI).
+
+Fig. 4: The p-values (in − log10 scale) from EMCI vs. LMCI analysis shown on a brain surface. Left: left hemisphere, Right: right hemisphere.
+
+Table 1: Demographics of ADNI dataset
+
+Category	AD	CN	EMCI	LMCI	SMC	
+# of Subjects	77	109	167	94	59	
+Age (mean, std)	76.1 (7.05)	73.9 (5.8)	72 (7.48)	72.6 (6.46)	73.6 (4.91)	
+Gender (M/F)	47/30	57/52	106/61	51/43	21/38	
+
+Table 2: Preclinical vs. Prodromal AD Analysis
+
+Metrics	Degree Matrix	Clustering Coefficients	node2vec Embedding	our model (w/o GR)	our model (w/ GR)	
+# of affected ROIs	3	0	0	15	15	
+Minimal p-value	5.07e–6	5.40e–3	1.38e–2	1.11e–16	1.11e–16	
+
+Table 3: Number of identified ROIs (lowest p-values) from group analyses
+
+Group Pairs	Degree Matrix	Clustering Coefficients	node2vec Embedding	our model (w/o GR)	our model (w/ GR)	
+AD vs. CN	6 (7.30e–7)	0 (8.68e–3)	0 (0.32)	19 (1.11e–16)	20 (1.11e–16)	
+CN vs. EMCI	1 (1.28e–4)	0 (7.18e–3)	0 (0.29)	17 (1.11e–16)	15 (1.11e–16)	
+EMCI vs. LMCI	4 (1.05e–4)	0 (3.5e–4)	0 (0.77)	4 (8.45e–14)	11 (1.11e–16)	
+
+
+6. REFERENCES
+
+[1] Moo K Chung , Kim M Dalton , Li Shen , , “Weighted fourier series representation and its application to quantifying the amount of gray matter,” IEEE transactions on medical imaging, vol. 26 , no. 4 , pp. 566–581, 2007.17427743
+[2] Azari Nina P , Karen D Pettigrew , Mark B Schapiro , , “Early detection of Alzheimer’s disease: a statistical approach using positron emission tomographic data,” Journal of Cerebral Blood Flow &amp; Metabolism, vol. 13 , no. 3 , pp. 438–447, 1993.8478402
+[3] Krista L Hyde , Fabienne Samson , Alan C Evans , and Laurent Mottron , “Neuroanatomical differences in brain areas implicated in perceptual and other core features of autism revealed by cortical thickness analysis and voxel-based morphometry,” Human brain mapping, vol. 31 , no. 4 , pp. 556–566, 2010.19790171
+[4] Joana Braga Pereira ,Naroa Ibarretxe-Bilbao , Maria-Jose Marti , , “Assessment of cortical degeneration in patients with parkinson’s disease by voxel-based morphometry, cortical folding, and cortical thickness,” Human brain mapping, vol. 33 , no. 11 , pp. 2521–2534, 2012.21898679
+[5] Rae Charlotte L , Correia Marta M , Altena Ellemarije , , “White matter pathology in Parkinson’s disease: the effect of imaging protocol differences and relevance to executive function,” Neuroimage, vol. 62 , no. 3 , pp. 1675–1684, 2012.22713671
+[6] Michael D Greicius , Ben Krasnow , Allan L Reiss , and Vinod Menon , “Functional connectivity in the resting brain: a network analysis of the default mode hypothesis,” Proceedings of the National Academy of Sciences, vol. 100 , no. 1 , pp. 253–258, 2003.
+[7] Mclntosh AR and Gonzalez-Lima F , “Structural equation modeling and its application to network analysis in functional brain imaging,” Human brain mapping, vol. 2 , no. 1–2 , pp. 2–22, 1994.
+[8] Bullmore Ed and Sporns Olaf , “Complex brain networks: graph theoretical analysis of structural and functional systems,” Nature Reviews Neuroscience, vol. 10 , no. 3 , pp. 186, 2009.19190637
+[9] Won Hwa Kim , Nagesh Adluru , Moo K Chung , , “Multi-resolution statistical analysis of brain connectivity graphs in preclinical Alzheimer’s disease,” NeuroImage, vol. 118 , pp. 103–117, 2015.26025289
+[10] Eklund Anders , Thomas E Nichols , and Hans Knutsson , “Cluster failure: Why fMRI inferences for spatial extent have inflated false-positive rates,” Proceedings of the national academy of sciences, vol. 113 , no. 28 , pp. 7900–7905, 2016.
+[11] Scarpazza Cristina , Tognin Stefania , Frisciata Silvia , , “False positive rates in voxel-based morphometry studies of the human brain: should we be worried?,” Neuroscience &amp; Biobehavioral Reviews, vol. 52 , pp. 49–55, 2015.25701614
+[12] Cabin RJ and Mitchell RJ , “To Bonferroni or not to Bonferroni: when and how are the questions,” Bulletin of the Ecological Society of America, vol. 81 , no. 3 , pp. 246–248, 2000.
+[13] Benjamini Yoav and Hochberg Yosef , “Controlling the false discovery rate: A practical and powerful approach to multiple testing,” Journal of the Royal Statistical Society, vol. 57 , no. 1 , pp. pp. 289–300, 1995.
+[14] Donald J Hagler Jr , Ayse Pinar Saygin , and Martin I Sereno , “Smoothing and cluster thresholding for cortical surface-based group analysis of fMRI data,” Neuroimage, vol. 33 , no. 4 , pp. 1093–1103, 2006.17011792
+[15] Moo K Chung , Steven M Robbins , Kim M Dalton , , “Cortical thickness analysis in autism with heat kernel smoothing,” NeuroImage, vol. 25 , no. 4 , pp. 1256–1265, 2005.15850743
+[16] Langer Nicolas , Pedroni Andreas , Lorena RR Gianotti , , “Functional brain network efficiency predicts intelligence,” Human brain mapping, vol. 33 , no. 6 , pp. 1393–1406, 2012.21557387
+[17] Supekar Kaustubh , Menon Vinod , Rubin Daniel , , “Network analysis of intrinsic functional brain connectivity in Alzheimer’s disease,” PLoS computational biology, vol. 4 , no. 6 , pp. e1000100, 2008.18584043
+[18] Ottet Marie-Christine , Schaer Marie , Martin Debbané , , “Graph theory reveals dysconnected hubs in 22q11DS and altered nodal efficiency in patients with hallucinations,” Frontiers in human neuroscience, vol. 7 , pp. 402, 2013.24046733
+[19] Grover Aditya and Leskovec Jure , “node2vec: Scalable feature learning for networks,” in KDD. ACM, 2016, pp. 855–864.
+[20] Meng Lu and Xiang Jing , “Brain network analysis and classification based on convolutional neural network,” Frontiers in computational neuroscience, vol. 12 , 2018.
+[21] Glotsos Dimitris , Tohka Jussi , Ravazoula Panagiota , , “Automated diagnosis of brain tumours astrocytomas using probabilistic neural network clustering and support vector machines,” International Journal of Neural Systems, vol. 15 , no. 01n02 , pp. 1–11, 2005.15912578
+[22] Li Rongjian , Zhang Wenlu , Suk Heung-Il , , “Deep learning based imaging data completion for improved brain disease diagnosis,” in MICCAI. Springer, 2014, pp. 305–312.
+[23] Beaty Roger E , Kenett Yoed N , Christensen Alexander P , , “Robust prediction of individual creative ability from brain functional connectivity,” Proceedings of the National Academy of Sciences, vol. 115 , no. 5 , pp. 1087–1092, 2018.
+[24] Shi Jianbo and Malik Jitendra , “Normalized cuts and image segmentation,” Departmental Papers (CIS), p. 107, 2000.
+[25] Martijn Van Den Heuvel , Rene Mandl , and Hilleke Hulshoff Pol , “Normalized cut group clustering of resting-state fMRI data,” PloS one, vol. 3 , no. 4 , pp. e2001, 2008.18431486
+[26] Hotelling Harold , “The generalization of student’s ratio,” Ann. Math. Statist, vol. 2 , no. 3 , pp. 360–378, 08 1931.
+[27] Bertoux Maxime , Lagarde Julien , Corlier Fabian , , “Sulcal morphology in Alzheimer’s disease: an effective marker of diagnosis and cognition,” Neurobiology of aging, vol. 84 , pp. 41–49, 2019.31491594
+[28] Usman A Khan , Li Liu , Frank A Provenzano , , “Molecular drivers and cortical spread of lateral entorhinal cortex dysfunction in preclinical Alzheimer’s disease,” Nature neuroscience, vol. 17 , no. 2 , pp. 304, 2014.24362760
+[29] Gary W van Hoesen , Jean C Augustinack , Jason Dierking , , “The parahippocampal gyrus in Alzheimer’s disease: clinical and preclinical neuroanatomical correlates,” Annals of the New York Academy of Sciences, vol. 911 , no. 1 , pp. 254–274, 2000.10911879
+[30] Zhou Yongxia and Yvonne W Lui , “Small-world properties in mild cognitive impairment and early Alzheimer’s disease: a cortical thickness MRI study,” ISRN geriatrics, vol. 2013 , 2013.
+[31] Won Hwa Kim Deepti Pachauri , Hatt Charles , , “Wavelet based multi-scale shape features on arbitrary surfaces for cortical thickness discrimination,” in NIPS, 2012, pp. 1250–1258.
+[32] Braak Heiko and Braak Eva , “Neuropathological staging of Alzheimer-related changes,” Acta neuropathologica, vol. 82 , no. 4 , pp. 239–259, 1991.1759558
+[33] Demey Ignacio , Ventrice Fernando , Rojas Galeno , , “Regional brain differences in cortical thickness between patients with amnestic mild cognitive impairment and Alzheimer’s disease dementia,” Alzheimer’s &amp; Dementia: The Journal of the Alzheimer’s Association, vol. 10 , no. 4 , pp. P716, 2014.
+[34] Li Chuanming , Wang Jian , Gui Li , Zheng Jian , Liu Chen , and Du Hanjian , “Alterations of whole-brain cortical area and thickness in mild cognitive impairment and Alzheimer’s disease,” Journal of Alzheimer’s Disease, vol. 27 , no. 2 , pp. 281–290, 2011.
+[35] Hutsler Jeffrey and Galuske Ralf AW , “Hemispheric asymmetries in cerebral cortical networks,” Trends in neurosciences, vol. 26 , no. 8 , pp. 429–435, 2003.12900174
+[36] Derflinger Sabine , Sorg Christian , Gaser Christian , , “Grey-matter atrophy in Alzheimer’s disease is asymmetric but not lateralized,” Journal of Alzheimer’s Disease, vol. 25 , no. 2 , pp. 347, 2011.

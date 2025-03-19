@@ -1,0 +1,427 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101740243
+48337
+Nat Mach Intell
+Nat Mach Intell
+Nature machine intelligence
+2522-5839
+2522-5839
+
+37771758
+10538467
+10.1038/s42256-023-00684-8
+NIHMS1927789
+Article
+Hypergraph factorization for multi-tissue gene expression imputation
+Viñas Ramon Department of Computer Science and Technology, University of Cambridge
+
+Joshi Chaitanya K. Department of Computer Science and Technology, University of Cambridge
+
+Georgiev Dobrik Department of Computer Science and Technology, University of Cambridge
+
+Lin Phillip Division of Genetic Medicine, Vanderbilt University Medical Center
+
+Dumitrascu Bianca *Department of Statistics and Irving Institute for Cancer Dynamics, Columbia University
+
+Gamazon Eric R. *Vanderbilt Genetics Institute and Data Science Institute, MRC Epidemiology Unit, University of Cambridge
+
+Liò Pietro *Department of Computer Science and Technology, University of Cambridge
+
+Author contributions
+
+R.V., E.R.G., and P.L. conceived the study. R.V. developed and implemented the framework, with contributions from C.K.J. and D.G.. C.K.J. and R.V. optimised the method and C.K.J. performed the ablation studies. P.Lin and E.R.G. performed the eQTL mapping analyses. C.K.J., R.V., and D.G. studied the scalability of the method. R.V. performed all other experiments and analyses. E.R.G., B.D., and P.L. supervised the study. R.V. and E.R.G. wrote the manuscript with input from all other authors. All authors approved the manuscript.
+
+* Correspondence to: Bianca Dumitrascu, bianca.dumitrascu@columbia.edu, Eric, R. Gamazon, eric.gamazon@vumc.org, Pietro Liò, pl219@cam.ac.uk
+20 9 2023
+7 2023
+17 7 2023
+28 9 2023
+5 7 739753
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Integrating gene expression across tissues and cell types is crucial for understanding the coordinated biological mechanisms that drive disease and characterise homeostasis. However, traditional multitissue integration methods cannot handle uncollected tissues or rely on genotype information, which is often unavailable and subject to privacy concerns. Here we present HYFA (Hypergraph Factorisation), a parameter-efficient graph representation learning approach for joint imputation of multi-tissue and cell-type gene expression. HYFA is genotype-agnostic, supports a variable number of collected tissues per individual, and imposes strong inductive biases to leverage the shared regulatory architecture of tissues and genes. In performance comparison on Genotype-Tissue Expression project data, HYFA achieves superior performance over existing methods, especially when multiple reference tissues are available. The HYFA-imputed dataset can be used to identify replicable regulatory genetic variations (eQTLs), with substantial gains over the original incomplete dataset. HYFA can accelerate the effective and scalable integration of tissue and cell-type transcriptome biorepositories.
+
+
+pmcIntroduction
+
+Sequencing technologies have enabled profiling the transcriptome at tissue and single-cell resolutions, with great potential to unveil intra- and multi-tissue molecular phenomena such as cell signalling and disease mechanisms. Due to the invasiveness of the sampling process, gene expression is usually measured independently in easy-to-acquire tissues, leading to an incomplete picture of an individual’s physiological state and necessitating effective multi-tissue integration methodologies.
+
+A question of fundamental biological significance is to what extent the transcriptomes of difficult-to-acquire tissues and cell types can be inferred from those of accessible ones [1, 2]. Due to their ease of collection, accessible tissues such as whole blood could have great utility for diagnosis and monitoring of pathophysiological conditions through metabolites, signalling molecules, and other biomarkers, including possible transcriptome-level associations [3]. Moreover, all human somatic cells share the same genetic information, which may regulate expression in a context-dependent and temporal manner, partially explaining tissue- and cell-type-specific gene expression variation. Computational models that exploit these patterns could therefore be used to impute the transcriptomes of uncollected cell types and tissues, with potential to elucidate the biological mechanisms regulating a diverse range of developmental and physiological processes.
+
+Multi-tissue imputation is a central problem in transcriptomics with broad implications for fundamental biological research and translational science. The methodological problem can powerfully influence downstream applications, including performing differential expression analysis, identifying regulatory mechanisms, determining co-expression networks, and enabling drug target discovery. In practice, in experimental follow-up or clinical application, the task includes the special case of determining a good proxy or easily-assayed system for causal tissues and cell types. Multi-tissue integration methods can also be applied to harmonise large collections of RNA-seq datasets from diverse institutions, consortia, and studies [4] — each potentially affected by technical artifacts — and to characterise gene expression co-regulation across tissues. Reconstruction of unmeasured gene expression across a broad collection of tissues and cell types from available reference transcriptome panels may expand our understanding of the molecular origins of complex traits and of their context specificity.
+
+Several methods have traditionally been employed to impute uncollected gene expression. Leveraging a surrogate tissue has been widely used in studies of biomarker discovery, diagnostics, and expression Quantitative Trait Loci (eQTLs), and in the development of model systems [5, 6, 7, 8, 9]. Nonetheless, gene expression is known to be tissue and cell-type specific, limiting the utility of a proxy tissue. Other related studies impute tissue-specific gene expression from genetic information [10]. Wang et al. [11] propose a mixed-effects model to infer uncollected data in multiple tissues from eQTLs. Sul et al. [12] introduce a model termed Meta-Tissue that aggregates information from multiple tissues to increase statistical power of eQTL detection. However, these approaches do not model the complex non-linear relationships between measured and unmeasured gene expression traits among tissues and cell types, and individual-level genetic information (such as at eQTLs) is subject to privacy concerns and often unavailable.
+
+Computationally, multi-tissue transcriptome imputation is challenging because the data dimensionality scales rapidly with the number of genes and tissues, often leading to overparameterised models. TEEBoT [1] addresses this issue by employing principal component analysis (PCA) — a non-parametric dimensionality reduction method — to project the data into a low-dimensional manifold, followed by linear regression to predict target gene expression from the principal components. However, this technique does not account for non-linear effects and can only handle a single reference tissue, i.e. whole blood. Approaches such as standard multilayer perceptrons can exploit non-linear patterns, but are massively overparameterised and computationally infeasible.
+
+To address these challenges, we present HYFA (Hypergraph Factorisation), a parameter-efficient graph representation learning approach for joint multi-tissue and cell-type gene expression imputation. HYFA represents multi-tissue gene expression in a hypergraph of individuals, metagenes, and tissues, and learns factorised representations via a specialised message passing neural network operating on the hypergraph. In contrast to existing methods, HYFA supports a variable number of reference tissues, increasing the statistical power over single-tissue approaches, and incorporates inductive biases to exploit the shared regulatory architecture of tissues and genes. In performance comparison, HYFA attains improved performance over TEEBoT and standard imputation methods across a broad range of tissues from the Genotype-Tissue Expression (GTEx) project (v8) [2]. Through transfer learning on a paired single-nucleus RNA-seq dataset (GTEx-v9) [13], we further demonstrate the ability of HYFA to resolve cell-type signatures — average gene expression across cells for a given cell-type, tissue, and individual — from bulk gene expression. Thus, HYFA may provide a unifying transcriptomic methodology for multi-tissue imputation and cell-type deconvolution. In post-imputation analysis, application of eQTL mapping on the fully-imputed GTEx data yields a substantial increase in number of detected replicable eQTLs. HYFA is publicly available at https://github.com/rvinas/HYFA.
+
+Results
+
+Hypergraph factorisation (HYFA)
+
+We developed HYFA, a framework for inferring the transcriptomes of unmeasured tissues and cell-types from bulk expression collected in a variable number of reference tissues (Figure 1, Methods). HYFA receives as input gene expression measurements collected from a set of reference tissues, as well as demographic information, and outputs gene expression values in a tissue of interest (e.g. uncollected). The first step of the workflow is to project the input gene expression into low-dimensional metagene representations [14, 15] for every collected tissue. Each metagene summarises abstract properties of groups of genes, e.g. sets of genes that tend to be expressed together [16], that are relevant for the imputation task. In a second step, HYFA employs a custom message passing neural network [17] that operates on a 3-uniform hypergraph, yielding factorised individual, tissue, and metagene representations. Lastly, HYFA infers latent metagene values for the target tissue — a hyperedge-level prediction task — and maps these representations back to the original gene expression space. Through higher-order hyperedges (e.g. 4-uniform hypergraph), HYFA can also incorporate cell-type information and infer finer-grained cell-type-specific gene expression (Methods). Altogether, HYFA offers features to reuse knowledge across tissues and genes, capture non-linear cross-tissue patterns of gene expression, learn rich representations of biological entities, and account for variable numbers of reference tissues.
+
+Characterisation of cross-tissue relationships
+
+Characterising cross-tissue relationships at the transcriptome level can help elucidate coordinated gene regulation and expression, a fundamental phenomenon with direct implications on health homeostasis, disease mechanisms, and comorbidities [18, 19, 20]. We trained HYFA on bulk gene expression from the GTEx project (GTEx-v8; Methods) [2] and assessed the cross-tissue gene expression predictability —measured by the Pearson correlation between the observed and the predicted gene expression across individuals— and quality of tissue embeddings (Figure 2). Application of Uniform Manifold Approximation and Projection (UMAP) [21] on the learnt tissue representations revealed strong clustering of biologically-related tissues (Figure 2a), including the gastrointestinal system (e.g. esophageal, stomach, colonic, and intestinal tissues), the female reproductive tissues (i.e. uterus, vagina, and ovary), and the central nervous system (i.e. the 13 brain tissues). For every pair of reference and target tissues in GTEx, we then computed the Pearson correlation coefficient ρ between the predicted and actual gene expression, averaged the scores across individuals, and used a cutoff of ρ&gt;0.5 to depict the top pairwise associations (Figure 2b and Extended Data Figure 1). We observed connections between most GTEx tissues and whole blood, which suggests that blood-derived gene expression is highly informative of (patho)physiological processes in other tissues [22]. Notably, brain tissues and the pituitary gland were strongly associated with several tissues (ρ&gt;0.5), including gastrointestinal tissues (i.e. esophagus, stomach, and colon), the adrenal gland, and skeletal muscle, which may account for known disease comorbidities.
+
+Imputation of gene expression from whole blood transcriptome
+
+Knowledge about tissue-specific patterns of gene expression can increase our understanding of disease biology, facilitate the development of diagnostic tools, and improve patient subtyping [23, 1], but most tissues are inaccessible or difficult to acquire. To address this challenge, we studied to what extent HYFA can recover tissue-specific gene expression from whole-blood transcriptomic measurements (Figure 3). For each test individual with measured whole-blood gene expression, we predicted tissue-specific gene expression in the remaining collected tissues of the individual. We evaluated performance using the Pearson correlation ρ between the inferred gene expression and the ground-truth samples. We observed strong prediction performance for esophageal tissues (muscularis: ρ=0.49, gastro: ρ=0.46, mucosa: ρ=0.36), heart tissues (left ventricle: ρ=0.48, atrial: ρ=0.46), and lung (ρ=0.47), while Epstein Barr virus-transformed lymphocytes (ρ=0.06), an accessible and renewable resource for functional genomics, was a notable outlier. We noted that the per-gene prediction scores followed smooth, unimodal distributions (Extended Data Figure 2). The blood-imputed gene expression also predicted disease-relevant genes in hard-to-access central nervous system (Extended Data Figure 3). These include APP, PSEN1, and PSEN2, i.e. the causal genes for autosomal dominant forms of early-onset Alzheimer’s disease [24], and Alzheimer’s disease genetic risk factors such as APOE [25]. We compared our method with TEEBoT [1] (without expression single-nucleotide polymorphism information), which first projects the high-dimensional blood expression data into a low-dimensional space through principal component analysis (30 components; 75–80% explained variance) and then performs linear regression to predict the gene expression of the target tissue. Overall, TEEBoT and HYFA attained comparable scores when a single tissue (i.e. whole blood) was used as reference and both methods outperformed standard imputation approaches (mean imputation, blood surrogate, and k nearest neighbours; Figure 3c).
+
+Multiple reference tissues improve performance
+
+We hypothesised that using multiple tissues as reference would improve downstream imputation performance. To evaluate this, we selected individuals with measured gene expression both at the target tissue and 4 reference accessible tissues (whole blood, skin sun-exposed, skin not sun-exposed, and adipose subcutaneous) and employed HYFA to impute target expression values (Figure 3 and Extended Data Figure 4). We discarded underrepresented target tissues with less than 25 test individuals. Relative to using whole blood in isolation, using all accessible tissues as reference resulted in improved performance for 32 out of 38 target tissues (Extended Data Figure 4). This particularly boosted imputation performance for esophageal tissues (muscularis: Δρ=0.068, gastro: Δρ=0.061, mucosa: Δρ=0.048), colonic tissues (transverse: Δρ=0.065, sigmoid: Δρ=0.056), and artery tibial (Δρ=0.079). In contrast, performance for the pituitary gland (Δρ=−0.011), lung (Δρ=−0.003), and stomach (Δρ=−0.002) remained stable or dropped slightly. Moreover, the performance gap between HYFA and TEEBoT (trained on the set of complete multi-tissue samples) widened relative to the single-tissue scenario (Figure 3 and Extended Data Figure 5) — HYFA obtained better performance in all target tissues, with statistically significant improvements in 26 out of 38 tissues (two-sided Mann-Whitney-Wilcoxon p-value &lt; 0.05). We attribute the improved scores to HYFA’s ability to process a variable number of reference tissues, reuse knowledge across tissues, and capture non-linear patterns.
+
+Inference of cell-type signatures
+
+We next investigated the potential of HYFA to predict cell-type-specific signatures — average gene expression across cells from a given cell-type — in a given tissue of interest. We first selected GTEx donors with collected bulk (v8) and single-nucleus RNA-seq profiles (v9, Methods). Next, we trained HYFA to infer cell-type signatures from the multi-tissue bulk expression profiles. We evaluated performance using the observed (Figure 4) and inferred library sizes (Supplementary Information K). To attenuate the small data size problem, we applied transfer learning on the model trained for the multi-tissue imputation task (Methods). We observed strong prediction performance (Pearson correlation ρ between log ground truth and log predicted signatures) for vascular endothelial cells (heart: ρ=0.84; breast: ρ=0.88, esophagus muscularis: ρ=0.68) and fibroblasts (heart: ρ=0.84; breast: ρ=0.89, esophagus muscularis: ρ=0.70). Strikingly, HYFA recovered the cell-type profiles of tissues that were never observed in the train set with high correlation (Figure 4 and Supplementary Information K), e.g. skeletal muscle (vascular endothelial cells: ρ=0.79, fibroblasts: ρ=0.77, pericytes/SMC: ρ=0.68), demonstrating the benefits of the factorised tissue representations. Overall, our results highlight the potential of HYFA to impute unknown cell-type signatures even for tissues that were not considered in the original single-cell study. Additionally, our analyses point to promising downstream applications as single-cell RNA-seq datasets become larger in number of individuals (Supplementary Information N), including deconvolution and cell-type specific eQTL mapping.
+
+Multi-tissue imputation improves eQTL detection
+
+The GTEx project has enabled the identification of numerous genetic associations with gene expression across a broad collection of tissues [2], also known as expression Quantitative Trait Loci (eQTLs) [26]. However, eQTL datasets are characterised by small sample sizes, especially for difficult-to-acquire tissues and cell types, reducing the statistical power to detect eQTLs [27]. To address this problem, we employed HYFA to impute the transcript levels of every uncollected tissue for each individual in GTEx, yielding a complete gene expression dataset of 834 individuals and 49 tissues. We then performed eQTL mapping (Methods) on the original and imputed datasets and observed a substantial gain in the number of unique genes with detected eQTLs, the so-called eGenes (Figure 5). Notably, this metric increased for tissues with low sample size (Spearman correlation coefficient ρ=−0.83) — which are most likely to benefit from borrowing information across tissues with shared regulatory architecture. Kidney cortex displayed the largest gain in number of eGenes (from 215 to 12,557), while there was no increase observed for whole blood.
+
+To assess the quality of the identified eQTLs from HYFA imputation, we conducted systematic replication analyses of 1) the whole blood eQTL-eGene pairs, using the eQTLGen blood transcriptome dataset in more than 30,000 individuals [28] and 2) the frontal cortex eQTL-eGene pairs, using the PsychENCODE pre-frontal cortex transcriptome dataset in 1,866 individuals [29]. For each tissue, we quantified the replication rate for eQTL-eGene pairs using the π1 statistic [30]. Notably, we found a highly significant enrichment for low replication p-values among the HYFA-derived eQTL-eGene pairs (Figure 5), demonstrating strong reproducibility of the results. The replication rate π1 was 0.80 for whole blood and 0.96 for frontal cortex. We also evaluated the extent to which the HYFA imputation could capture regulatory variants that directly modulate gene expression using experimentally validated causal variants from Massively Parallel Reporter Assay [31]. Notably, among the causal regulatory variants from this experimental assay, we found a highly significant enrichment for low p-values among the HYFA-identified eQTLs in blood and in frontal cortex (Figure 5). Thus, HYFA imputation enabled identification of biologically meaningful, replicable eQTL hits in the respective tissues. Our results generate a large catalog of new tissue-specific eQTLs (Data availability), with potential to enhance our understanding of how regulatory variation mediates variation in complex traits, including disease susceptibility.
+
+Brain-gut axis
+
+The brain-gut axis is a bidirectional communication system of signalling pathways linking the central and enteric nervous systems. We investigated whether the transcriptomes of tissues from the gastrointestinal system are predictive of gene expression in brain tissues (Figure 2 and Supplementary Information G). Overall, the top predicted genes were enriched in multiple signalling-related terms (e.g. cytokine receptor activity and interleukin-1 receptor activity), consistent with existing knowledge that gut microbes communicate with the central nervous system through signalling mechanisms [32]. Genes in the intersection were also notably enriched in the ciliary neurotrophic factor receptor activity, which plays an important role in neuron survival [33], enteric nervous system development [34], and body weight control [35].
+
+HYFA-learned metagenes capture known biological pathways
+
+A key feature of HYFA is that it reuses knowledge across tissues and metagenes, allowing to exploit shared regulatory patterns. We explored whether HYFA’s inductive biases encourage learning biologically relevant metagenes. To determine the extent to which metagene-factors relate to known biological pathways, we applied Gene Set Enrichment Analysis (GSEA) [36] to the gene loadings of HYFA’s encoder (Methods). Similar to [37], for a given query gene set, we calculated the maximum running sum of enrichment scores by descending the sorted list of gene loadings for every metagene and factor. We then computed pathway enrichment p-values through a permutation test and employed the Benjamini-Hochberg method to correct for multiple testing independently for every metagene-factor.
+
+In total, we identified 18683 statistically significant enrichments (FDR &lt; 0.05) of KEGG biological processes ([38]; 320 gene sets; Figure 6) across all HYFA metagenes (n=50) and factors (n=98). Among the enriched terms, 2109 corresponded to signalling pathways and 1300 to pathways of neurodegeneration. We observed considerable overlap between several metagenes in terms of biologically related pathways, e.g. factor 95 of metagene 11 had the lowest FDR for both Alzheimer’s disease (FDR &lt; 0.001) and Amyotrophic Lateral Sclerosis (FDR &lt; 0.001) pathways. Enrichment analysis of TRRUST [39] transcription factors (TFs) further identified important regulators including GATA1 (known to regulate the development of red blood cells [40]), SPI1 (which controls hematopoietic cell fate [41]), CEBPs (which play an important role in the differentiation of a range of cell types and the control of tissue-specific gene expression; [42, 43]), and STAT1 (a member of the STAT protein family that drives the expression of many target genes [44]). We also observed that the learnt HYFA factors recapitulate synergistic effects among the enriched TFs (Supplementary Information H and Extended Data Figure 6). For example, GATA1 and SPI1, which were simultaneously enriched in 7 factors (FDR &lt; 0.05), functionally antagonise each other through physical interaction [45]. Similarly, IRF1 induces STAT1 activation via phosphorylation [44, 46] and both TFs were enriched in 10 factors (FDR &lt; 0.05), aligning with our enrichment analyses of GO Biological Process terms (Supplementary Information I and Extended Data Figures 7 and 8). Altogether, our analyses suggest that HYFA-learned metagenes and factors are amenable to biological interpretation and capture information about known regulators of tissue-specific gene expression.
+
+Discussion
+
+Effective multi-tissue omics integration promises a system-wide view of human physiology, with potential to shed light on intra- and multi-tissue molecular phenomena. Such an approach challenges single-tissue and conventional integration techniques — often unable to model a variable number of tissues with sufficient statistical strength — necessitating the development of scalable, non-linear, and flexible methods. Here we developed HYFA (Hypergraph Factorisation), a parameter-efficient approach for joint multi-tissue and cell-type gene expression imputation that imposes strong inductive biases to learn entity-independent relational semantics and demonstrates excellent imputation capabilities.
+
+We performed extensive benchmarks on data from the Genotype-Tissue Expression project (GTEx; [2]; v8 and v9), the most comprehensive human transcriptome resource available, and evaluated imputation performance over a broad collection of tissues and cell types. In addition to standard transcriptome imputation approaches, we compared our method with TEEBoT [1], a linear method that predicts target gene expression from the principal components of the reference expression. In the single-tissue reference scenario, HYFA and TEEBoT attained comparable imputation performance, outperforming standard methods. In the multi-tissue reference scenario, HYFA consistently outperformed TEEBoT and standard approaches in all target tissues, demonstrating HYFA’s capabilities to borrow non-linear information across a variable number of tissues and exploit shared molecular patterns.
+
+In addition to imputing tissue-level transcriptomics, we investigated the ability of HYFA to predict cell-type-level gene expression from multi-tissue bulk expression measurements. Through transfer learning, we trained HYFA to infer cell-type signatures from a cohort of single-nucleus RNA-seq [13] with matching GTEx-v8 donors. The inferred cell-type signatures exhibited a strong correlation with the ground truth despite the low sample size, indicating that HYFA’s latent representations are rich and amenable to knowledge transfer. Strikingly, HYFA also recovered cell-type profiles from tissues that were never observed at transfer time, pointing to HYFA’s ability to leverage gene expression programs underlying cell-type identity [47] even in tissues that were not considered in the original study [13]. HYFA may also be used to impute the expression of disease-related genes in a tissue of interest (Supplementary Information J).
+
+In post-imputation analysis, we studied whether the imputed data improves eQTL discovery. We employed HYFA to impute the gene expression levels of every uncollected tissue in GTEx-v8, yielding a complete dataset, and performed eQTL mapping. Compared to the original dataset, we observed a substantial gain in number of genes with detected eQTLs, with kidney cortex showing the largest gain. The increase was highest for tissues with low sample sizes, which are the ones expected to benefit the most from knowledge sharing across tissues. Notably, HYFA’s detected eQTLs with their target eGenes could be replicated using independent, single-tissue transcriptome datasets that focus on depth, including the blood eQTLGen [28] and the brain frontal cortex PsychENCODE [29] datasets. Moreover, we found a significant enrichment for experimentally validated causal variants from the Massively Parallel Reporter Assay ([31]) dataset. Our results uncover a large number of previously undetected tissue-specific eQTLs and highlight the ability of HYFA to exploit shared regulatory information across tissues.
+
+Lastly, HYFA can provide insights on coordinated gene regulation and expression mechanisms across tissues. We analysed to what extent tissues from the gastrointestinal system are informative of gene expression in brain tissues — an important question that may shed light on the biology of the brain-gut axis — and identified enriched biological processes and molecular functions. Through Gene Set Enrichment Analysis [36], we observed, among the HYFA-learned metagenes, a substantial amount of enriched pathways, transcription factors, and known regulators of biological processes, opening the door to biological interpretations. Future work might also seek to impose stronger inductive bias to ensure that metagenes are identifiable and robust to batch effects.
+
+We believe that HYFA, as a versatile graph representation learning framework, provides a novel methodology for effective integration of large-scale multi-tissue biorepositories. The hypergraph factorisation framework is flexible (it supports k-uniform hypergraphs of arbitrary node types) and may find application beyond computational genomics.
+
+Methods
+
+Problem formulation
+
+Suppose we have a transcriptomics dataset of N individuals/donors, T tissues, and G genes. For each individual i∈{1,…,N}, let Xi∈RT×G be the gene expression values in T tissues and define the donor’s demographic information by ui∈RC, where C is the number of covariates. Denote by xi(k) the k-th entry of Xi, corresponding to the expression values of donor i measured in tissue k. For a given donor i, let 𝒯(i) represent the collection of tissues with measured expression values. These sets might vary across individuals. Let X˜i∈(R∪{*})T×G be the measured gene expression values, where * denotes unobserved, so that x˜i(k)=xi(k) if k∈𝒯(i) and x˜i(k)=* otherwise. Our goal is to infer the uncollected values in X˜i by modelling the distribution pX=Xi∣X˜=X˜i,U=ui.
+
+Multi-tissue model
+
+An important challenge of modelling multi-tissue gene expression is that a different set of tissues might be collected for each individual. Moreover, the data dimensionality scales rapidly with the total number of tissues and genes. To address these problems, we represent the data in a hypergraph and develop a parameter-efficient neural network that operates on this hypergraph. Throughout, we make use of the concept of metagenes [14, 15]. Each metagene characterises certain gene expression patterns and is defined as a positive linear combination of multiple genes [14, 15].
+
+Hypergraph representation
+
+We represent the data in a hypergraph consisting of three types of nodes: donor, tissue, and metagene nodes.
+
+Mathematically, we define a hypergraph 𝒢=𝒱d∪𝒱m∪𝒱t,ℰ, where 𝒱d is a set of donor nodes, 𝒱m is a set of metagene nodes, 𝒱t is a set of tissue nodes, and ℰ is a set of multi-attributed hyperedges. Each hyperedge connects an individual i with a metagene j and a tissue k if k∈𝒯(i), where 𝒯(i) are the collected tissues of individual i. The set of all hyperedges is defined as ℰ={(i,j,k,eij(k))∣(i,j,k)∈𝒱d×𝒱m×𝒱t,k∈𝒯(i)}, where eij(k) are hyperedge attributes that describe characteristics of the interacting nodes, i.e. features of metagene j in tissue k for individual i.
+
+The hypergraph representation allows representing data in a flexible way, generalising the bipartite graph representation from [48]. On the one hand, using a single metagene results in a bipartite graph where each edge connects an individual i with a tissue k. In this case, the edge attributes ei1(k) are derived from the gene expression xi(k) of individual i in tissue k. On the other hand, using multiple metagenes leads to a hypergraph where each individual i is connected to tissue k through multiple hyperedges. For example, it is possible to construct a hypergraph where genes and metagenes are related by a one-to-one correspondence, with hyperedge attributes eij(k) derived directly from expression xij(k). The number of metagenes thus controls a spectrum of hypergraph representations and, as we shall see, can help alleviate the inherent over-squashing problem of graph neural networks.
+
+Message passing neural network
+
+Given the hypergraph representation of the multi-tissue transcriptomics dataset, we now present a parameter-efficient graph neural network to learn donor, metagene, and tissue embeddings, and infer the expression values of the unmeasured tissues. We start by computing hyperedge attributes from the multi-tissue expression data. Then, we initialise the embeddings of all nodes in the hypergraph, construct the message passing neural network, and define an inference model that builds on the latent node representations obtained via message passing.
+
+Computing hyperedge attributes
+
+We first reduce the dimensionality of the measured transcriptomics values. For every individual i and measured tissue k, we project the corresponding gene expression values xi(k) into low-dimensional metagene representations eij(k) : (1) eij(k)=ReLU⁡(Wjxi(k))∀j∈1..M
+
+where M, the number of metagenes, is a user-definable hyperparameter and Wj∀j∈1..M are learnable parameters. In addition to characterising groups of functionally similar genes, employing metagenes reduces the number of messages being aggregated for each node, addressing the over-squashing problem of graph neural networks (Supplementary Information B).
+
+Initial node embeddings
+
+We initialise the node features of the individual 𝒱p, metagene 𝒱m, and tissue 𝒱t partitions with learnable parameters and available information. For metagene and tissue nodes, we use learnable embeddings as initial node values. The idea is that these weights, which will be approximated through gradient descent, should summarise relevant properties of each metagene and tissue. We initialise the node features of each individual with the available demographic information ui of each individual i (we use age and sex). We encode sex as a binary value and age as a float normalised by 100 (e.g. age 30 is encoded as 0.30). Importantly, this formulation allows transfer learning between sets of distinct donors.
+
+Message passing layer
+
+We develop a custom GNN layer to compute latent donor embeddings by passing messages along the hypergraph. At each layer of the GNN, we perform message passing to iteratively refine the individual node embeddings. We do not update the tissue and metagene embeddings during message passing, in a similar vein as knowledge graph embeddings [49], because their node embeddings already consist of learnable weights that are updated through gradient descent. Sending messages to these nodes would also introduces a dependency between individual nodes and tissue and metagene features (and, by transitivity, dependencies between individuals). However, if we foresee that unseen entities will be present at test time (e.g. new tissue types), our approach can be extended by initialising their node features with constant values and introducing node-type-specific message passing equations.
+
+Mathematically, let h1d,…,hNd,h1m,..,hMm, and h1t,..,hTt be the donor, metagene, and tissue node embeddings, respectively. At each layer of the GNN, we compute refined individual embeddings {hˆ1d,…,hˆNd} as follows: (2) hˆid=ϕh(hid,mi),mi=∑j=1M∑k∈𝒯(i)ϕa(hjm,hkt,mijk),mijk=ϕe(hid,hjm,hkt,eij(k)),
+
+where the functions ϕe and ϕh are edge and node operations that we model as multilayer perceptrons (MLP), and ϕa is a function that determines the aggregation behavior. In its simplest form, choosing ϕahjm,hkt,mijk=1M|𝒯(i)|mijk results in average aggregation. We analyse the time complexity of the message passing layer in Supplementary Information A. Optionally, we can stack several message passing layers to increase the expressivity of the model.
+
+The architecture is flexible and may be extended as follows:
+
+Incorporation of information about the individual embeddings hid into the aggregation mechanism ϕa.
+
+Incorporation of target tissue embeddings hut, for a given target tissue u, into the aggregation mechanism ϕa.
+
+Update hyperedge attributes eij(k) at every layer.
+
+Aggregation mechanism
+
+In practice, the proposed hypergraph neural network suffers from a bottleneck. In the aggregation step, the number of messages being aggregated is M|𝒯(i)| for each individual i. In the worst case, when all genes are used as metagenes (i.e. M=G; it is estimated that humans have around G≈25,000 protein-coding genes), this leads to serious over-squashing — large amounts of information are compressed into fixed-length vectors [50]. Fortunately, choosing a small number of metagenes reduces the dimensionality of the original transcriptomics values which in turn alleviates the over-squashing and scalability problems (Supplementary Information B). To further attenuate over-squashing, we propose an attention-based aggregation mechanism ϕa that weighs metagenes according to their relevance in each tissue: ϕahjm,hkt,mijk=αjkmijk,αjk=exp⁡e(hjm,hkt)∑v  exp⁡e(hvm,hkt),ehjm,hkt=a⊤LeakyReLU⁡(Whjm∥hkt),
+
+where ∥ is the concatenation operation and a and W are learnable parameters. The proposed attention mechanism, which closely follows the neighbour aggregation method of graph attention networks [51, 52], computes dynamic weighting coefficients that prioritise messages coming from important metagenes. Optionally, we can leverage multiple heads [53] to learn multiple modes of interaction and increase the expressivity of the model.
+
+Hypergraph model
+
+The hypergraph model, which we define as f, computes latent individual embeddings hˆid from incomplete multi-tissue expression profiles as hˆid=f(X˜i,ui).
+
+Downstream imputation tasks
+
+The resulting donor representations hˆid summarise information about a variable number of tissue types collected for donor i, in addition to demographic information. We leverage these embeddings for two downstream tasks: inference of gene expression in uncollected tissues and prediction of cell-type signatures.
+
+Inference of gene expression in uncollected tissues
+
+Predicting the transcriptomic measurements xˆi(k) of a tissue k (e.g. uncollected) is achieved by first recovering the latent metagene values eˆij(k) for all metagenes j∈1..M, a hyperedge-level prediction task, and then decoding the gene expression values from the predicted metagene representations eˆij(k) with an appropriate probabilistic model.
+
+Prediction of hyperedge attributes
+
+To predict the latent metagene attributes eˆij(k) for all j∈1..M, we employ a multilayer perceptron that operates on the factorised metagene hjm and tissue representations hkt as well as the latent variables hˆid of individual i: eˆij(k)=MLP⁡(hˆid,hjm,hkt),
+
+where the MLP is shared for all combinations of metagenes, individuals, and tissues.
+
+Negative binomial imputation model
+
+For raw count data, we use a negative binomial likelihood. To decode the gene expression values for a tissue k of individual i, we define the following probabilistic model p(xi(k)∣hˆid,ui,k) : p(xi(k)∣hˆid,ui,k)=∏jG p(xij(k)∣hˆid,ui,j,k),p(xij(k)∣hˆid,ui,j,k)=NB(xij(k);μij(k),θij(k)),
+
+where NB is a negative binomial distribution. The mean μij(k) and dispersion θij(k) parameters of this distribution are computed as follows: μi(k)=li(k)si(k),si(k)=softmax⁡(Wseˆik+bs),θik=exp⁡(Wθeˆik+bθ),eˆik=MLP⁡(∥j=1Meˆijk),
+
+where si(k) are mean gene-wise proportions; Ws, Wθ, bs, and bθ are learnable parameters; and li(k) is the library size, which is modelled with a log-normal distribution log⁡li(k)∼𝒩(li(k);νi(k),ωi(k)),νi(k)=Wνeˆi(k)+bν,ωi(k)=exp⁡(Wωeˆi(k)+bω),
+
+where Wν, Wω, bν, and bω are learnable parameters. Optionally, we can use the observed library size.
+
+Gaussian imputation model
+
+For normalised gene expression data (i.e. inverse normal transformed data), we use the following Gaussian likelihood: p(xi(k)∣h^id,ui,k)=∏jGp(xij(k)∣h^id,ui,j,k),p(xij(k)∣h^id,ui,j,k)=𝒩(xij(k);μij(k),σij2ij(k)),
+
+where the mean μij(k) and standard deviation σij(k) are computed as follows: μi(k)=Wμeˆi(k)+bμ,σi(k)=softplus⁡(Wσeˆi(k)+bσ),eˆi(k)=MLP⁡(∥j=1Meˆij(k)),
+
+where Wμ, Wσ, bμ, and bσ are learnable parameters and softplus (x)=log⁡(1+exp⁡(x)).
+
+Optimisation
+
+We optimise the model to maximise the imputation performance on a dynamic subset of observed tissues, that is, tissues that are masked out at train time, similar to [54]. For each individual i, we randomly select a subset 𝒞⊂𝒯(i) of pseudo-observed tissues and treat the remaining tissues 𝒰=𝒯(i)−𝒞 as unobserved (pseudo-missing). We then compute the individual embeddings hˆid using the gene expression of pseudo-observed tissues 𝒞 and minimise the loss: ℒ(X˜i,ui,𝒞,𝒰)=−1𝒰∑k∈𝒰 log⁡p(xik∣hˆid,ui,k),
+
+which corresponds to the average negative log-likelihood across pseudo-missing tissues. Importantly, the pseudo-mask mechanism generates different sets of pseudo-missing tissues for each individual, effectively enlarging the number of training examples and regularising our model. We summarise the training algorithm in Supplementary Information D.
+
+Inference of gene expression from uncollected tissues
+
+At test time, we infer the gene expression values xˆi(v) of an uncollected tissue v from a given donor i via the mean, i.e. xˆi(v)=μi(v). Alternatively, we can draw random samples from the conditional predictive distribution p(xi(k)∣hˆid,ui,k).
+
+Prediction of cell-type signatures
+
+We next consider the problem of imputing cell-type signatures in a tissue of interest. We define a cell-type signature as the sum of gene expression profiles across cells of a given cell-type in a certain tissue. Formally, let xi(k,q) be the gene expression signature of cell-type q in a tissue of interest k of individual i. Our goal is to infer xi(k,q) from the multi-tissue gene expression measurements X˜i. To achieve this, we first compute the hyperedge features of a hypergraph consisting of 4-node hyperedges and then infer the corresponding signatures with a zero-inflated model.
+
+Prediction of hyperedge attributes
+
+We consider a hypergraph where each hyperedge groups an individual, a tissue, a metagene, and a cell-type node. For all metagenes j∈1..M, we compute latent hyperedge attributes eˆij(k,q) for a cell-type q in a tissue of interest k of individual i as follows: eˆij(k,q)=MLP⁡(hˆid,hjm,hkt,hqc),
+
+where hqc are parameters specific to each unique cell-type q and the MLP is shared for all combinations of metagenes, individuals, tissues, and cell-types.
+
+Zero-inflated model
+
+We employ the following probabilistic model: p(xi(k,q)∣h^id,ui,k,q)=∏jGp(xij(k,q)∣h^id,ui,j,k,q),p(xi(k,q)∣h^id,ui,j,k,q)=ZINB(xij(k,q);μij(k,q),θij(k,q),πij(k,q))
+
+μi(k,q)=ni(k,q)li(k,q)softmax⁡(Wseˆik,q+bs),θik,q=exp⁡(Wθeˆik,q+bθ),πik,q=σ(Wπeˆik,q+bπ),
+
+where Ws, Wθ, Wπ, bs, bθ, and bπ are learnable parameters; ni(k,q) is the number of cells in the signature, and li(k,q) is their average library size. At train time, we set ni(k,q) to match the ground truth number of cells. At test time, the number of cells ni(k,q) is user-definable. We model the average library size li(k,q) with a log-normal distribution log⁡li(k,q)∼𝒩(li(k,q);νi(k,q),ωi(k,q)),νi(k,q)=Wνeˆi(k,q)+bν,ωi(k,q)=exp⁡(Wωeˆi(k,q)+bω),
+
+where Wν, Wω, bν, and bω are learnable parameters. Optionally, we can use the observed library size.
+
+Optimisation
+
+Single-cell transcriptomic studies typically measure single-cell gene expression for a limited number of individuals, tissues, and cell-types, so aggregating single-cell profiles per individual, tissue, and cell-type often results in small sample sizes. To address this challenge, we apply transfer learning by pre-training the hypergraph model f on the multi-tissue imputation task and then fine-tuning the parameters of the signature inference module on the cell-type signature profiles. Concretely, we minimise the loss: ℒ(xi(k,q),X˜i,ui,k,q)=−log⁡p(xi(k,q)∣hˆid,ui,k,q),
+
+which corresponds to the negative log-likelihood of the observed cell-type signatures.
+
+Inference of uncollected gene expression
+
+To infer the signature of a cell-type q in a certain tissue v of interest, we first compute the latent individual embeddings hˆid from the multi-tissue profiles X˜i and then compute the mean of the distribution p(xi(k,q)∣hˆid,ui,k,q) as μi(k,q)(1−πi(k,q)). Alternatively, we can draw random samples from that distribution.
+
+eQTL mapping
+
+The breadth of tissues in the GTEx (v8) collection enabled us to comprehensively evaluate the extent to which eQTL discovery could be improved through the HYFA-imputed transcriptome data. We mapped eQTLs that act in cis to the target gene (cis-eQTLs), using all SNPs within ± 1 Mb of the transcription start site of each gene. For the imputed and the original (incomplete) datasets, we considered SNPs significantly associated with gene expression, at a false discovery rate ≤ 0.10. We applied the same GTEx eQTL mapping pipeline, as previously described [55], to the imputed and original datasets to quantify the gain in eQTL discovery from the HYFA-imputed dataset.
+
+Pathway enrichment analysis
+
+Similar to [37], we employed Gene Set Enrichment Analysis (GSEA) [36] to relate HYFA’s metagene factors to known biological pathways. This is advantageous to over-representation analysis, which requires selecting an arbitrary cutoff to select enriched genes. GSEA, instead, computes a running sum of enrichment scores by descending a sorted gene list [36, 37].
+
+We applied GSEA to the gene loadings in HYFA’s encoder. Specifically, let Wj∈RF×G be the gene loadings for metagene j, where F is the number of factors (i.e. number of hyperedge attributes) and G is the number of genes (Equation 17. For every factor in Wj, we employed blitzGSEA [56] to calculate the running sum of enrichment scores by descending the gene list sorted by the factor’s gene loadings. The enrichment score for a query gene set is the maximum difference between phit(𝒮,i) and pmiss(𝒮,i) [37], where phit(𝒮,i) is the proportion of genes in 𝒮 weighted by their gene loadings up to gene index i in the sorted list [37]. We then calculated pathway enrichment p-values through a permutation test (with n=100 trials) by randomly shuffling the gene list. We employed the Benjamini-Hochberg method to correct for multiple testing.
+
+GTEx bulk and single-nucleus RNA-seq data processing
+
+The GTEx dataset is a public resource that has generated a broad collection of gene expression data collected from a diverse set of human tissues [2]. We downloaded the data from the GTEx portal (Data availability). After the processing step, the GTEx-v8 dataset consisted of 15197 samples (49 tissues, 834 donors) and 12557 genes. The dataset was randomly split into 500 train, 167 validation, and 167 test donors. Each donor had an average of 18.22 collected tissues. The processing steps are described below.
+
+Normalised bulk transcriptomics (GTEx-v8)
+
+Following the GTEx eQTL discovery pipeline (https://github.com/broadinstitute/gtex-pipeline/tree/master/qtl), we processed the data as follows:
+
+Discard underrepresented tissues (n=5), namely bladder, cervix (ectocervix, endocervix), fallopian tube, and kidney (medulla).
+
+Select set of overlapping genes across all tissues.
+
+Discard donors with only one collected tissue (n=4).
+
+Select genes based on expression thresholds of ≥ 0.1 transcripts per kilobase million (TPM) in ≥ 20% of samples and ≥ 6 reads (unnormalised) in ≥ 20% of samples.
+
+Normalise read counts across samples using the trimmed mean of M values (TMM) method [57].
+
+Apply inverse normal transformation to the expression values for each gene.
+
+Cell-type signatures from a paired snRNA-seq dataset (GTEx-v9)
+
+We downloaded paired snRNA-seq data for 16 GTEx individuals [13] (Data availability) collected in 8 GTEx tissues, namely skeletal muscle, breast, esophagus (mucosa, muscularis), heart, lung, prostate, and skin. We split these individuals into train, validation, and test donors according to the GTEx-v8 split. We processed the data as follows:
+
+Select set of overlapping genes between bulk RNA-seq (GTEx-v9) and paired snRNA-seq dataset [13].
+
+Select top 3000 variable genes using the Scanpy function scanpy.pp.highly_variable_genes with flavour setting seurat_v3 [58, 59].
+
+Discard underrepresented cell-types occurring in less than 10 tissue-individual combinations.
+
+Aggregate (i.e. sum) read counts by individual, tissue, and (broad) cell-type. This resulted in a dataset of 226 unique signatures, of which 135 belong to matching GTEx-v8 individuals.
+
+Implementation and reproducibility
+
+We report the selected hyperparameters in Supplementary Information B. HYFA is implemented in Python [60]. Our framework and implementation are flexible (i.e. we support k-uniform hypergraphs), may be integrated in other bioinformatics pipelines, and may be useful for other applications in different domains. We used PyTorch [61] to implement the model and scanpy [58] to process the gene expression data. We performed hyperparameter optimisation with wandb [62]. We employed blitzGSEA [56] for pathway enrichment analysis. We also used NumPy [63], scikit-learn [64], pandas [65], matplotlib [66], seaborn [67], and statannotations [68]. Figure 1 was created with BioRender.com.
+
+Extended Data
+
+Extended Data Figure 1 Summary of per-gene prediction scores
+
+(a) Network of tissues depicting the predictability of target tissues with HYFA using the average per-gene Pearson ρ correlation coefficients. Edges from reference to target tissues indicate an average per-gene ρ &gt; 0.4. The dimension of each node is proportional to its degree. (b) Distribution of per-gene Pearson correlation coefficients in 6 target tissues (source tissue: whole blood). We attribute the unimodality of the distributions to the fact that the data was inverse Normal transformed (Methods).
+
+Extended Data Figure 2 Whole blood to lung predictions for unseen individuals
+
+(a) Average and standard deviation of per-gene expression in lung versus prediction performance (prediction performance (Pearson correlation between predicted and ground truth expression; whole blood to lung). The per-gene predictions were uncorrelated with the averages and variances of the per-gene expression in the target tissue (average: ρ=0.07, variance: ρ=0.06). (b) Best and worst predicted lung genes (NUDT16: ρ=0.85; GALNT4: ρ=−0.08; n=166).
+
+Extended Data Figure 3 Top predicted Alzheimer’s disease-relevant genes in multiple brain regions, with whole blood as reference tissue
+
+(a) Pearson correlation coefficient of top 20 predicted genes from the Alzheimer’s disease pathway (KEGG), ranked by average correlation. (b, c, d) Average per-gene expression (x-axis) versus prediction performance (Pearson correlation between predicted and ground truth expression) in (b) cerebellum, (c) cortex, and (d) hippocampus. HYFA exhibits strong prediction performance for several Alzheimer’s disease-relevant genes including APOE (cortex ρ=0.536, cerebellum: ρ=0.502), APP (cortex ρ=0.524), PSEN1 (cerebellum: ρ=0.459), and PSEN2 (cortex: ρ=0.590, cerebellum: ρ=0.559, hippocampus: ρ=0.403). In cerebellum, PSEN1 (ρ=0.459), PSEN2 (ρ=0.559), and APOE (ρ=0.502) attained above expected performances (average ρ=0.448). APP (ρ=0.524), PSEN2 (ρ=0.590), and APOE (ρ=0.536) surpassed the expected correlation in cortex (average ρ=0.443).
+
+Extended Data Figure 4 Prediction scores for different accessible tissues as reference
+
+For each target tissue, we predicted the expression values based on accessible tissues (whole blood, skin sun exposed, skin not sun exposed, and adipose subcutaneous). We report the Pearson correlation coefficient between the predicted values and the actual gene expression values. For any given target tissue, we used the same set of individuals to evaluate performance, namely individuals in the validation and test sets with collected gene expression measurements in all the corresponding tissues. Target tissues represented by less than 25 test individuals were discarded. HYFA attains the best performance in 32 out of 38 tissues when all accessible tissues are simultaneously used as reference. Boxes show quartiles, centerlines correspond to the median, and whiskers depict the distribution range (1.5 times the interquartile range). Outliers outside of the whiskers are shown as distinct points. The top axis indicates the total number of samples for every target tissue.
+
+Extended Data Figure 5 Performance comparison across gene expression imputation methods with per-gene metrics (n=12,557 genes)
+
+(a, b) Per-tissue comparison between HYFA and TEEBoT when using (a) whole-blood and (b) all accessible tissues (whole blood, skin sun exposed, skin not sun exposed, and adipose subcutaneous) as reference. We discarded target tissues represented by less than 25 test individuals. HYFA achieved superior Pearson correlation in (a) 25 out of 48 target tissues when a single tissue was used as reference and (b) all target tissues when multiple reference tissues were considered. For underrepresented target tissues (less than 25 individuals with source and target tissues in the test set), we considered all the validation and test individuals (translucent bars). (c, d) Prediction performance from (c) whole-blood gene expression and (d) accessible tissues as reference. Boxes show quartiles and whiskers depict the distribution range (1.5 times the interquartile range). Mean imputation replaces missing values with the feature averages. Blood surrogate utilises gene expression in whole blood as a proxy for the target tissue. k- Nearest Neighbours (kNN) imputes missing features with the average of measured values across the k nearest observations (k=20). TEEBoT projects reference gene expression into a low- dimensional space with principal component analysis (PCA; 30 components), followed by linear regression to predict target values. HYFA (all) employs information from all collected tissues. Boxes show quartiles, centerlines correspond to the median, and whiskers depict the distribution range (1.5 times the interquartile range). Outliers outside of the whiskers are shown as distinct points. The top axis indicates the total number of samples for every target tissue.
+
+Extended Data Figure 6 Transcription factor (TF) enrichment analysis of metagene-factors
+
+For every metagene (n=50) and factor (n=98), we performed Gene Set Enrichment Analysis using the corresponding gene loadings of HYFA’s encoder (Methods) and TF gene sets from the TRRUST database of transcription factors (Enrichr library: TRRUST_Transcription_Factors_2019). (a) Top enriched TFs, ranked by the total number of metagene-factors in which the TFs were enriched (FDR &lt; 0.05). (b) Circos plot of the top 9 enriched TFs (outer layer). The angular size is proportional to the number of enrichments. The second layer (bar plot) depicts the factor IDs where the TF was enriched, ranging from 0 (lowest bar) to 98 (higher bar). The third layer shows the corresponding metagene IDs (blue dots) of the enriched metagene-factors, increasing monotonically within the same factor. The edges in the middle connect TFs whenever they are both enriched in the same factor (FDR &lt; 0.05). (c, d) Distribution of the GATA1 false discovery rates in factor 69 (FDR &lt; 0.05 in 28/50 metagenes) and an arbitrary factor (enriched in 0/50 metagenes).
+
+Extended Data Figure 7 GO Biological Process enrichment analysis of metagene-factors
+
+For every metagene (n=50) and factor (n=98), we performed Gene Set Enrichment Analysis using the corresponding gene loadings of HYFA’s encoder (Methods) and Gene Ontology gene sets (GO Biological Process, version of 2021) (Enrichr library: GO_Biological_Process_2021). (a) Top enriched signaling GO terms, ranked by the total number of metagene- factors in which the terms were enriched (FDR &lt; 0.05). (b, c) FDR distribution of the Type-I Interferon signaling pathway in factor 18 (FDR &lt; 0.05 in 12/50 metagenes) and an arbitrary factor (enriched in 0/50 metagenes).
+
+Extended Data Figure 8 GO Biological Process FDRs for signaling pathways
+
+GO Biological Process enrichment analysis of metagene-factors. For every pathway and factor, we selected the metagene with lowest FDR and depicted statistically significant values (FDR &lt; 0.05). Point sizes are inversely proportional to the FDR values. Type I interferons (IFNs), a family of cytokines that activate a variety of signaling cascades, were the most enriched. We also detected the simultaneous enrichment of interferon IRF1 and STAT1 (a member of the STAT protein family that drives the expression of many target genes) in 10 factors (FDR &lt; 0.05; Extended Data Figure 6b), consistent with these results.
+
+Supplementary Material
+
+Supplementary Information
+
+Acknowledgements
+
+We thank the reviewer’s for their constructive comments. We thank Tiago Azevedo, Pietro Barbiero, David Buterez, Iulia Duta, Elisa Gómez de Lope, Janine Lux, Andrei Margeloiu, Jacob Moss, Paul Scherer, and Nikola Simidjievski for useful feedback and discussions. The project leading to these results has received funding from Fundación Rafael del Pino (R.V.), with support from the Engineering and Physical Sciences Research Council (EPSRC DTG). C.K.J. was supported by the A*STAR Singapore National Science Scholarship (PhD). P.L. was supported by MICA: Mental Health Data Pathfinder: University of Cambridge, Cambridgeshire and Peterborough NHS Foundation Trust, Microsoft, and the Medical Research Council (MC PC 17213). E.R.G. acknowledges support from the following National Institutes of Health (NIH) grants: Genomic Innovator Award R35HG010718, NHGRI R01HG011138, NIMH R01MH126459, and NIA AG068026. We thank Vanderbilt’s Advanced Computing Center for Research and Education (ACCRE) for infrastructure support. We thank Janine Lux for support with the first figure.
+
+Data availability
+
+The datasets analysed for this study, including bulk RNA-seq [2] and snRNA-seq [13], can be found in the GTEx portal: https://gtexportal.org/. We deposited our processed GTEx-v8 data here: https://figshare.com/articles/dataset/Processed_GTEx_v8_data/22650763. A detailed summary of the GTEx samples and donor information can be found at: https://gtexportal.org/home/tissueSummaryPage. We downloaded MSK SPECTRUM data from https://cellxgene.cziscience.com/collections/4796c91c-9d8f-4692-be43-347b1727f9d8. We downloaded RNASeqDB data from https://github.com/mskcc/RNAseqDB. The full catalog of HYFA-derived eQTLs is downloadable at: https://doi.org/10.5281/zenodo.6815784.
+
+Figure 1: Overview of HYFA. (a) HYFA processes gene expression from a number of collected tissues (e.g. accessible tissues) and infers the transcriptomes of uncollected tissues. (b) Workflow of HYFA. The model receives as input a variable number of gene expression samples xi(k) corresponding to the collected tissues k∈𝒯(i) of a given individual i. The samples xi(k) are fed through an encoder that computes low-dimensional representations eij(k) for each metagene j∈1..M. A metagene is a latent, low-dimensional representation that captures certain gene expression patterns of the high-dimensional input sample. These representations are then used as hyperedge features in a message passing neural network that operates on a hypergraph. In the hypergraph representation, each hyperedge labelled with eij(k) connects an individual i with metagene j and tissue k if tissue k was collected for individual i, i.e. k∈𝒯(i). Through message passing, HYFA learns factorised representations of individual, tissue, and metagene nodes. To infer the gene expression of an uncollected tissue u of individual i, the corresponding factorised representations are fed through a multilayer perceptron (MLP) that predicts low-dimensional features eij(u) for each metagene j∈1...M. HYFA finally processes these latent representations through a decoder that recovers the uncollected gene expression sample xˆij(u).
+
+Figure 2: Analysis of cross-tissue relationships (next page). Colors are assigned to conform to the GTEx Consortium conventions. (a) UMAP representation of the tissue embeddings learnt by HYFA. Note that human body systems cluster in the embedding space (e.g. digestive system: stomach, small intestine, colon, esophagus; and central nervous system). (b) Network of tissues depicting the predictability of target tissues with HYFA using the average per-sample Pearson ρ correlation coefficients. The dimension of each node is proportional to its degree. Edges from reference to target tissues indicate an average Pearson correlation coefficient ρ &gt; 0.5. Interestingly, central nervous system tissues strongly correlate with several non-brain tissues such as gastrointestinal tissues and skeletal muscles. (c) Top predicted genes in multiple brain regions with the oesophago gastric junction as the reference tissue, ranked by average Pearson correlation. (d) Common genes in the top 1000 predicted genes for each brain tissue. (e) Enriched GO terms of the top shared genes at the interesection. The top predicted genes were enriched in signalling pathways (FDR &lt; 0.05), consistent with studies reporting that gut microbes communicate to the central nervous system through endocrine and immune mechanisms. These results depict the cross-tissue associations and highlight the potential connection between the elements of the oesophago gastric junction and the ciliary neurotrophic factor, which has been linked to the survival of neurons [33] and the control of body weight [35].
+
+Figure 3: Performance comparison across gene expression imputation methods. (a, b) Per-tissue comparison between HYFA and TEEBoT when using (a) whole-blood and (b) all accessible tissues (whole blood, skin sun exposed, skin not sun exposed, and adipose subcutaneous) as reference. HYFA achieved superior Pearson correlation in (a) 25 out of 48 target tissues when a single tissue was used as reference and (b) all target tissues when multiple reference tissues were considered. For underrepresented target tissues (less than 25 individuals with source and target tissues in the test set), we considered all the validation and test individuals (translucent bars). We employed a two-sided Mann-Whitney-Wilcoxon tests to compute p-values (*: 1e-2 &lt; p ≤ 5e-2, **: 1e-3 &lt; p ≤ 1e-2, ***: 1e-4 &lt; p ≤ 1e-3, ****: p ≤ 1e-4). (c, d) Prediction performance from (c) whole-blood gene expression (n=2424 samples from 167 GTEx donors) and (d) accessible tissues as reference (n=675 samples from 167 test GTEx donors). Mean imputation replaces missing values with the feature averages. Blood surrogate utilises gene expression in whole blood as a proxy for the target tissue. k-Nearest Neighbours (kNN) imputes missing features with the average of measured values across the k nearest observations (k=20). TEEBoT projects reference gene expression into a low-dimensional space with principal component analysis (PCA; 30 components), followed by linear regression to predict target values. HYFA (all) employs information from all collected tissues of the individual. Boxes show quartiles, centerlines correspond to the median, and whiskers depict the distribution range (1.5 times the interquartile range). Outliers outside of the whiskers are shown as distinct points. The top axis indicates the total number n of independent individuals for every target tissue.
+
+Figure 4: Prediction of cell-type signatures. HYFA imputes individual- and tissue-specific cell-type signatures from bulk multi-tissue gene expression. The scatter plots depict the Pearson correlation ρ between the logarithmised ground truth and predicted signatures for N unseen individuals. To infer the signatures, we used the observed library size li(k,q) and number of cells ni(k,q) (Methods).
+
+Figure 5: HYFA’s imputed data improves expression Quantitative Trait Loci (eQTL) discovery. (a) Number of unique genes with detected eQTLs (FDR &lt; 0.1) on observed (circle) and full (observed plus imputed; rhombus) GTEx data. Note logarithmic scale of y-axis. The eQTLs were mapped using MatrixEQTL [70, 55] assuming additive genotype effect on gene expression. MatrixEQTL conducts a test for each SNP-gene pair and makes adjustments for multiple comparisons by computing the Benjamini-Hochberg FDR [71]. (b) Fold increase in number of unique genes with mapped eQTLs (y-axis) versus observed sample size (x-axis). (c) Histogram of replication p-values among the HYFA-identified cis-eQTLs for whole blood (left) and brain prefrontal cortex (right). For replication, we used the independent eQTLGen Consortium (n&gt;30,000; [28]) and PsychENCODE (n=1,866; [29]) eQTL datasets, respectively. (d) Quantile-quantile plot showing the causal variants’ association with gene expression in blood (left) and brain frontal cortex (right) in the HYFA-derived dataset using experimentally validated causal variant data from the application of Massively Parallel Reporter Assay [31]. All statistical tests were two-sided. HYFA’s imputed data substantially increases the number of identified associations with high replicability and significant enrichment of causal regulatory variants.
+
+Figure 6: Pathway enrichment analysis of metagene factors. (a) Manhattan plot of the GSEA results on the metagenes (n=50) and factors (n=98) learned by HYFA. The x-axis represents metagenes (colored bins) and every offset within the bin corresponds to a different factor. The y-axis is the −log q-value (FDR) from the GSEA permutation test, corrected for multiple testing via the Benjamini-Hochberg procedure. We identified 18683 statistically significant enrichments (FDR &lt; 0.05) of KEGG biological processes across all metagenes and factors. (b) Total number of enriched terms for each type of pathway. (c) FDR for pathways of neurodegeneration. For every pathway and metagene, we selected the factor with lowest FDR and depicted statistically significant values (FDR &lt; 0.05). Point sizes are proportional to −log FDR values. Metagene 11 (factor 95) had the lowest FDR for both Amyotropic Lateral Sclerosis (ALS) and Alzheimer’s Disease. (d) UMAP of latent values of metagene 11 for all spinal cord (ALS: orange) and brain cortex (Alzheimer’s disease or Dementia: orange) GTEx samples. (e) Leading edge subsets of top-15 enriched gene sets for factor 95 of metagene 11. (f, g) Enrichment plots for Amyotropic Lateral Sclerosis (f) and Alzheimer’s disease gene sets (g).
+
+Competing interests
+
+The authors declare no competing interests.
+
+Code availability
+
+HYFA is publicly available at https://github.com/rvinas/HYFA [69] (DOI: 10.5281/zenodo.7863458).
+
+
+References
+
+[1] Basu Mahashweta , Wang Kun , Ruppin Eytan , and Hannenhalli Sridhar . Predicting tissue-specific gene expression from whole blood transcriptome. Science Advances, 7 (14 ):eabd6991, 2021.33811070
+[2] Consortium GTEx . The gtex consortium atlas of genetic regulatory effects across human tissues. Science, 369 (6509 ):1318–1330, 2020.32913098
+[3] Yang Xiaonan , Kui Ling , Tang Min , Li Dawei , Wei Kunhua , Chen Wei , Miao Jianhua , and Dong Yang . High-throughput transcriptome profiling in drug and biomarker discovery. Frontiers in genetics, 11 :19, 2020.32117438
+[4] Xu Chenling , Lopez Romain , Mehlman Edouard , Regier Jeffrey , Jordan Michael I , and Yosef Nir . Probabilistic harmonization and annotation of single-cell transcriptomics data with deep generative models. Molecular systems biology, 17 (1 ):e9620, 2021.33491336
+[5] Hoon Dave SB , Bostick Peter , Kuo Christine , Okamoto Tetsuro , Wang He-Jing , Elashoff Robert , and Morton Donald L . Molecular markers in blood as surrogate prognostic indicators of melanoma recurrence. Cancer research, 60 (8 ):2253–2257, 2000.10786692
+[6] Cai Chaochao , Langfelder Peter , Fuller Tova F , Oldham Michael C , Luo Rui , van den Berg Leonard H , Ophoff Roel A , and Horvath Steve . Is human blood a good surrogate for brain tissue in transcriptional studies? BMC genomics, 11 (1 ):1–15, 2010.20044946
+[7] Istas Geoffrey , Declerck Ken , Pudenz Maria , Lendinez-Tortajada Veronica , Leon-Latre Montserrat , Heyninck Karen , Haegeman Guy , Casasnovas Jose A , Tellez-Plaza Maria , Gerhauser Clarissa , Identification of differentially methylated brca1 and crisp2 dna regions as blood surrogate markers for cardiovascular disease. Scientific reports, 7 (1 ):1–14, 2017.28127051
+[8] Gamazon Eric R , Segrè Ayellet V , Van De Bunt Martijn , Wen Xiaoquan , Xi Hualin S , Hormozdiari Farhad , Ongen Halit , Konkashbaev Anuar , Derks Eske M , Aguet François , Using an atlas of gene regulation across 44 human tissues to inform complex disease-and trait-associated variation. Nature genetics, 50 (7 ):956–967, 2018.29955180
+[9] Kim Kayoung , Kim Min-Ji , Da Won Kim Su Yeong Kim , Park Steve , and Park Chan Beum . Clinically accurate diagnosis of alzheimer’s disease via multiplexed sensing of core biomarkers in human plasma. Nature communications, 11 (1 ):1–9, 2020.
+[10] Zhou Dan , Jiang Yi , Zhong Xue , Cox Nancy J , Liu Chunyu , and Gamazon Eric R . A unified framework for joint-tissue transcriptome-wide association and mendelian randomization analysis. Nature genetics, 52 (11 ):1239–1246, 2020.33020666
+[11] Wang Jiebiao , Gamazon Eric R , Pierce Brandon L , Stranger Barbara E , Im Hae Kyung , Gibbons Robert D , Cox Nancy J , Nicolae Dan L , and Chen Lin S . Imputing gene expression in uncollected tissues within and beyond gtex. The American Journal of Human Genetics, 98 (4 ):697–708, 2016.27040689
+[12] Sul Jae Hoon , Han Buhm , Ye Chun , Choi Ted , and Eskin Eleazar . Effectively identifying eqtls from multiple tissues by combining mixed model and meta-analytic approaches. PLoS genetics, 9 (6 ):e1003491, 2013.23785294
+[13] Eraslan Gokcen , Drokhlyansky Eugene , Anand Shankara , Subramanian Ayshwarya , Fiskin Evgenij , Slyper Michal , Wang Jiali , Van Wittenberghe Nicholas , Rouhana John M. , Waldman Julia , Ashenberg Orr , Dionne Danielle , Win Thet Su , Cuoco Michael S , Kuksenko Olena , Branton Philip A. , Marshall Jamie L. , Greka Anna , Getz Gad , Segrè Ayellet V. , Aguet François , Rozenblatt-Rosen Orit , Ardlie Kristin G. , and Regev Aviv . Single-nucleus cross-tissue molecular reference maps to decipher disease gene function. bioRxiv, 2021.
+[14] Brunet Jean-Philippe , Tamayo Pablo , Golub Todd R , and Mesirov Jill P . Metagenes and molecular pattern discovery using matrix factorization. Proceedings of the national academy of sciences, 101 (12 ):4164–4169, 2004.
+[15] Raychaudhuri Soumya , Stuart Joshua M , and Altman Russ B . Principal components analysis to summarize microarray experiments: application to sporulation time series. In Biocomputing 2000 , pages 455–466. World Scientific, 1999.
+[16] Svensson Valentine , Gayoso Adam , Yosef Nir , and Pachter Lior . Interpretable factor models of single-cell RNA-seq via variational autoencoders. Bioinformatics, 36 (11 ):3418–3421, 03 2020.32176273
+[17] Gilmer Justin , Schoenholz Samuel S , Riley Patrick F , Vinyals Oriol , and Dahl George E . Neural message passing for quantum chemistry. In International conference on machine learning, pages 1263–1272. PMLR, 2017.
+[18] Roenneberg Till and Merrow Martha . The circadian clock and human health. Current biology, 26 (10 ):R432–R443, 2016.27218855
+[19] Davière Jean-Michel and Achard Patrick . Organ communication: Cytokinins on the move. Nature plants, 3 (8 ):1–2, 2017.
+[20] Bodine Sue C , Brooks Heddwen L , Bunnett Nigel W , Coller Hilary A , Frey Mark R , Joe Bina , Kleyman Thomas R , Lindsey Merry L , Marette Andre , Morty Rory E , An american physiological society cross-journal call for papers on “inter-organ communication in homeostasis and disease”, 2021.
+[21] McInnes Leland , Healy John , and Melville James . Umap: Uniform manifold approximation and projection for dimension reduction. arXiv preprint arXiv:1802.03426, 2018.
+[22] Ray Sandip , Britschgi Markus , Herbert Charles , Takeda-Uchimura Yoshiko , Boxer Adam , Blennow Kaj , Friedman Leah , Galasko Douglas , Jutel Marek , Karydas Anna , Kaye Jeffrey , Leszek Jerzy , Miller Bruce , Minthon Lennart , Quinn Joseph , Rabinovici Gil , Robinson William , Sabbagh Marwan , So Yuen , and Wyss-Coray Tony . Classification and prediction of clinical alzheimer’s diagnosis based on plasma signaling proteins. Nature Medicine, 13 :1359–1362, 10 2007.
+[23] Lage Kasper , Hansen Niclas Tue , Karlberg E Olof , Eklund Aron C , Roque Francisco S , Donahoe Patricia K , Szallasi Zoltan , Jensen Thomas Skøt , and Brunak Søren . A large-scale analysis of tissue-specific pathology and gene expression of human disease genes and complexes. Proceedings of the National Academy of Sciences, 105 (52 ):20870–20875, 2008.
+[24] Lanoiselée Hélène-Marie , Nicolas Gaël , Wallon David , Rovelet-Lecrux Anne , Lacour Morgane , Rousseau Stéphane , Richard Anne-Claire , Pasquier Florence , Rollin-Sillaire Adeline , Martinaud Olivier , App, psen1, and psen2 mutations in early-onset alzheimer disease: A genetic screening study of familial and sporadic cases. PLoS medicine, 14 (3 ):e1002270, 2017.28350801
+[25] Bekris Lynn M , Yu Chang-En , Bird Thomas D , and Tsuang Debby W . Genetics of alzheimer disease. Journal of geriatric psychiatry and neurology, 23 (4 ):213–227, 2010.21045163
+[26] Nica Alexandra C and Dermitzakis Emmanouil T . Expression quantitative trait loci: present and future. Philosophical Transactions of the Royal Society B: Biological Sciences, 368 (1620 ):20120362, 2013.
+[27] Rockman Matthew V and Kruglyak Leonid . Genetics of global gene expression. Nature Reviews Genetics, 7 (11 ):862–872, 2006.
+[28] Võsa Urmo , Claringbould Annique , Westra Harm-Jan , Marc Jan Bonder Patrick Deelen , Zeng Biao , Kirsten Holger , Saha Ashis , Kreuzhuber Roman , Yazar Seyhan , Large-scale cis-and trans-eqtl analyses identify thousands of genetic loci and polygenic scores that regulate blood gene expression. Nature genetics, 53 (9 ):1300–1310, 2021.34475573
+[29] Wang Daifeng , Liu Shuang , Warrell Jonathan , Won Hyejung , Shi Xu , Fabio CP Navarro Declan Clarke , Gu Mengting , Emani Prashant , Yang Yucheng T , Comprehensive functional genomic resource and integrative model for the human brain. Science, 362 (6420 ):eaat8464, 2018.30545857
+[30] Storey John D and Tibshirani Robert . Statistical significance for genomewide studies. Proceedings of the National Academy of Sciences, 100 (16 ):9440–9445, 2003.
+[31] Tewhey Ryan , Kotliar Dylan , Daniel S Park Brandon Liu , Winnicki Sarah , Reilly Steven K , Andersen Kristian G , Mikkelsen Tarjei S , Lander Eric S , Schaffner Stephen F , Direct identification of hundreds of expression-modulating variants using a multiplexed reporter assay. Cell, 165 (6 ):1519–1529, 2016.27259153
+[32] Martin Clair R , Osadchiy Vadim , Kalani Amir , and Mayer Emeran A . The brain-gut-microbiome axis. d hepatology, 6 (2 ):133–148, 2018.
+[33] Davis Samuel , Aldrich Thomas H , Valenzuela David M , Wong Vivien , Furth Mark E , Squinto Stephen P , and Yancopoulos George D . The receptor for ciliary neurotrophic factor. Science, 253 (5015 ):59–63, 1991.1648265
+[34] Liu Sumei . Neurotrophic factors in enteric physiology and pathophysiology. Neurogastroenterology &amp; Motility, 30 (10 ):e13446, 2018.30259610
+[35] Xu Baoji and Xie Xiangyang . Neurotrophic factor control of satiety and body weight. Nature Reviews Neuroscience, 17 (5 ):282–292, 2016.27052383
+[36] Subramanian Aravind , Tamayo Pablo , Mootha Vamsi K , Mukherjee Sayan , Ebert Benjamin L , Gillette Michael A , Paulovich Amanda , Pomeroy Scott L , Golub Todd R , Lander Eric S , Gene set enrichment analysis: a knowledge-based approach for interpreting genome-wide expression profiles. Proceedings of the National Academy of Sciences, 102 (43 ):15545–15550, 2005.
+[37] Zhao Yifan , Cai Huiyu , Zhang Zuobai , Tang Jian , and Li Yue . Learning interpretable cellular and gene signature embeddings from single-cell transcriptomic data. Nature communications, 12 (1 ):1–15, 2021.
+[38] Kanehisa Minoru , Araki Michihiro , Goto Susumu , Hattori Masahiro , Hirakawa Mika , Itoh Masumi , Katayama Toshiaki , Kawashima Shuichi , Okuda Shujiro , Tokimatsu Toshiaki , Kegg for linking genomes to life and the environment. Nucleic acids research, 36 (suppl_1 ):D480–D484, 2007.18077471
+[39] Han Heonjong , Shim Hongseok , Shin Donghyun , Jung Eun Shim Yunhee Ko , Shin Junha , Kim Hanhae , Cho Ara , Kim Eiru , Lee Tak , Trrust: a reference database of human transcriptional regulatory interactions. Scientific reports, 5 (1 ):1–11, 2015.
+[40] Pevny Larysa , Simon M Celeste , Robertson Elizabeth , Klein William H , Tsai Shih-Feng , D’Agati Vivette , Orkin Stuart H , and Costantini Frank . Erythroid differentiation in chimaeric mice blocked by a targeted mutation in the gene for transcription factor gata-1. Nature, 349 (6306 ):257–260, 1991.1987478
+[41] Sharrocks Andrew D . The ets-domain transcription factor family. Nature reviews Molecular cell biology, 2 (11 ):827–837, 2001.11715049
+[42] Wedel Angela and Lömsziegler-Heitbrock HXW . The c/ebp family of transcription factors. Immunobiology, 193 (2–4 ):171–185, 1995.8530141
+[43] Nerlov Claus . The c/ebp family of transcription factors: a paradigm for interaction between gene expression and proliferation control. Trends in cell biology, 17 (7 ):318–324, 2007.17658261
+[44] Ramana Chilakamarti V , Chatterjee-Kishore Moitreyee , Nguyen Hannah , and George R Stark. Complex roles of stat1 in regulating gene expression. Oncogene, 19 (21 ):2619–2627, 2000.10851061
+[45] Nerlov Claus , Querfurth Erich , Kulessa Holger , and Graf Thomas . Gata-1 interacts with the myeloid pu. 1 transcription factor and represses pu. 1-dependent transcription. Blood, The Journal of the American Society of Hematology, 95 (8 ):2543–2551, 2000.
+[46] Zenke Kosuke , Muroi Masashi , and Tanamoto Ken-ichi . Irf1 supports dna binding of stat1 by promoting its phosphorylation. Immunology and cell biology, 96 (10 ):1095–1103, 2018.29893425
+[47] Kotliar Dylan , Veres Adrian , Nagy M Aurel , Tabrizi Shervin , Hodis Eran , Douglas A Melton, and Pardis C Sabeti. Identifying gene expression programs of cell-type identity and cellular activity with single-cell rna-seq. Elife, 8 , 2019.
+[48] You Jiaxuan , Ma Xiaobai , Ding Daisy , Kochenderfer Mykel , and Leskovec Jure . Handling missing data with graph representation learning. NeurIPS, 2020.
+[49] Bordes Antoine , Usunier Nicolas , Alberto Garcia-Duran Jason Weston , and Yakhnenko Oksana . Translating embeddings for modeling multi-relational data. Advances in neural information processing systems, 26 , 2013.
+[50] Alon Uri and Yahav Eran . On the bottleneck of graph neural networks and its practical implications. arXiv preprint arXiv:2006.05205, 2020.
+[51] Brody Shaked , Alon Uri , and Yahav Eran . How attentive are graph attention networks?, 2022.
+[52] Veličković Petar , Cucurull Guillem , Casanova Arantxa , Romero Adriana , Liò Pietro , and Bengio Yoshua . Graph attention networks, 2018.
+[53] Vaswani Ashish , Shazeer Noam , Parmar Niki , Uszkoreit Jakob , Jones Llion , Gomez Aidan N , Kaiser Ł ukasz , and Polosukhin Illia . Attention is all you need. In Guyon I , Luxburg UV , Bengio S , Wallach H , Fergus R , Vishwanathan S , and Garnett R , editors, Advances in Neural Information Processing Systems, volume 30 . Curran Associates, Inc., 2017.
+[54] Viñas Ramon , Azevedo Tiago , Gamazon Eric R. , and Liò Pietro . Deep learning enables fast and accurate imputation of gene expression. Frontiers in Genetics, 12 , 2021.
+[55] Consortium GTEx . The genotype-tissue expression (gtex) pilot analysis: multitissue gene regulation in humans. Science, 348 (6235 ):648–660, 2015.25954001
+[56] Lachmann Alexander , Xie Zhuorui , and Ma’ayan Avi . blitzgsea: efficient computation of gene set enrichment analysis through gamma distribution approximation. Bioinformatics, 38 (8 ):2356–2357, 2022.35143610
+[57] Robinson Mark D and Oshlack Alicia . A scaling normalization method for differential expression analysis of rna-seq data. Genome biology, 11 (3 ):1–9, 2010.
+[58] Wolf F Alexander , Angerer Philipp , and Theis Fabian J . Scanpy: large-scale single-cell gene expression data analysis. Genome biology, 19 (1 ):1–5, 2018.29301551
+[59] Stuart Tim , Butler Andrew , Hoffman Paul , Hafemeister Christoph , Papalexi Efthymia , Mauck William M III , Hao Yuhan , Stoeckius Marlon , Smibert Peter , and Satija Rahul . Comprehensive integration of single-cell data. Cell, 177 (7 ):1888–1902, 2019.31178118
+[60] Van Rossum Guido and Drake Fred L Jr . Python reference manual. Centrum voor Wiskunde en Informatica Amsterdam, 1995.
+[61] Paszke Adam , Gross Sam , Massa Francisco , Lerer Adam , Bradbury James , Chanan Gregory , Killeen Trevor , Lin Zeming , Gimelshein Natalia , Antiga Luca , Desmaison Alban , Kopf Andreas , Yang Edward , Zachary DeVito Martin Raison , Tejani Alykhan , Chilamkurthy Sasank , Steiner Benoit , Fang Lu , Bai Junjie , and Chintala Soumith . Pytorch: An imperative style, high-performance deep learning library. In Wallach H , Larochelle H , Beygelzimer A , d’Alché-Buc F , Fox E , and Garnett R , editors, Advances in Neural Information Processing Systems 32 , pages 8024–8035. Curran Associates, Inc., 2019.
+[62] Biewald Lukas . Experiment tracking with weights and biases, 2020. Software available from wandb.com.
+[63] Harris Charles R. , Millman K. Jarrod , van der Walt Stéfan J. , Gommers Ralf , Virtanen Pauli , Cournapeau David , Wieser Eric , Taylor Julian , Berg Sebastian , Smith Nathaniel J. , Kern Robert , Picus Matti , Hoyer Stephan , van Kerkwijk Marten H. , Brett Matthew , Haldane Allan , del Río Jaime Fernández , Wiebe Mark , Peterson Pearu , Gérard-Marchant Pierre , Sheppard Kevin , Reddy Tyler , Weckesser Warren , Abbasi Hameer , Gohlke Christoph , and Oliphant Travis E. . Array programming with NumPy. Nature, 585 (7825 ):357–362, September 2020.32939066
+[64] Pedregosa F , Varoquaux G , Gramfort A , Michel V , Thirion B , Grisel O , Blondel M , Prettenhofer P , Weiss R , Dubourg V , Vanderplas J , Passos A , Cournapeau D , Brucher M , Perrot M , and Duchesnay E . Scikit-learn: Machine learning in Python. Journal of Machine Learning Research, 12 :2825–2830, 2011.
+[65] McKinney Wes . Data Structures for Statistical Computing in Python. In van der Walt&lt; Stéfan Jarrod , editors, Proceedings of the 9th Python in Science Conference, pages 56 – 61, 2010.
+[66] Hunter JD . Matplotlib: A 2d graphics environment. Computing in Science &amp; Engineering, 9 (3 ):90–95, 2007.
+[67] Waskom Michael L. . seaborn: statistical data visualization. Journal of Open Source Software, 6 (60 ):3021, 2021.
+[68] Charlier Florian , Weber Marc , Izak Dariusz , Harkin Emerson , Magnus Marcin , Lalli Joseph , Fresnais Louison , Chan Matt , Markov Nikolay , Amsalem Oren , Proost Sebastian , Krasoulis Agamemnon , getzze , and Repplinger Stefan . Statannotations, October 2022.
+[69] Ramon Viñas Chaitanya Joshi , and Lab Gamazon . rvinas/hyfa: v0.1.0, April 2023.
+[70] Shabalin Andrey A . Matrix eqtl: ultra fast eqtl analysis via large matrix operations. Bioinformatics, 28 (10 ):1353–1358, 2012.22492648
+[71] Benjamini Yoav and Hochberg Yosef . Controlling the false discovery rate: a practical and powerful approach to multiple testing. Journal of the Royal statistical society: series B (Methodological), 57 (1 ):289–300, 1995.

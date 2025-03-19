@@ -1,0 +1,376 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+8215016
+7188
+Stat Med
+Stat Med
+Statistics in medicine
+0277-6715
+1097-0258
+
+31985088
+8082466
+10.1002/sim.8477
+NIHMS1692340
+Article
+Multikernel linear mixed model with adaptive lasso for complex phenotype prediction
+Wen Yalu http://orcid.org/0000-0002-0071-5917
+1
+Lu Qing 2
+1 Department of Statistics, The University of Auckland, Auckland, New Zealand
+2 Department of Epidemiology and Biostatistics, Michigan State University, East Lansing, Michigan
+Author Contributions
+
+Y.W. and Q.L. developed the research idea. Y.W. designed the algorithm and evaluated its theoretical performance. Y.W. also conducted simulation studies and performed analyses for the real example. Y.W. wrote the article and revised following the comments and revisions from Q.L.
+
+Correspondence: Yalu Wen, Department of Statistics, The University of Auckland, 38 Princes Street, Auckland Central, New Zealand. y.wen@auckland.ac.nz
+21 4 2021
+27 1 2020
+30 4 2020
+29 4 2021
+39 9 13111327
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Linear mixed models (LMMs) and their extensions have been widely used for high-dimensional genomic data analyses. While LMMs hold great promise for risk prediction research, the high dimensionality of the data and different effect sizes of genomic regions bring great analytical and computational challenges. In this work, we present a multikernel linear mixed model with adaptive lasso (KLMM-AL) to predict phenotypes using high-dimensional genomic data. We develop two algorithms for estimating parameters from our model and also establish the asymptotic properties of LMM with adaptive lasso when only one dependent observation is available. The proposed KLMM-AL can account for heterogeneous effect sizes from different genomic regions, capture both additive and nonadditive genetic effects, and adaptively and efficiently select predictive genomic regions and their corresponding effects. Through simulation studies, we demonstrate that KLMM-AL outperforms most of existing methods. Moreover, KLMM-AL achieves high sensitivity and specificity of selecting predictive genomic regions. KLMM-AL is further illustrated by an application to the sequencing dataset obtained from the Alzheimer’s disease neuroimaging initiative.
+
+adaptive lasso
+high-dimensional sequencing data
+linear mixed model
+risk prediction
+
+1 | INTRODUCTION
+
+Accurate disease risk prediction is an essential step toward precision medicine, an emerging model of healthcare that tailors treatment strategies based on individuals’ profiles.1,2 The successes from genome-wide association studies have provided insights into the genetic etiology of complex diseases,3,4 which has led to a growing interest in predicting phenotypes using genetic variants.5 Although promising, most of the existing models can only explain a small proportion of disease heritability and thus lack sufficient accuracy for clinical use.6,7
+
+Complex traits are influenced by multiple genetic variants through complex biological pathways, and thus progress toward accurately predicting phenotypes requires the development of analytical methods that can model all genetic variants jointly.8–11 Best linear unbiased prediction (BLUP) within the linear mixed model (LMM) framework has long been considered the method of choice for predicting phenotypes when a large number of genetic variants are jointly considered.8–10,12–16 It has gained tremendous popularities in recent years.8,9 Instead of estimating the effect size for each genetic predictor, LMMs attempt to estimate their cumulative effects. At the core, LMM assumes that genetic similarity can lead to the phenotypic similarity, and it encodes genetic effects through a genomic similarity matrix (GSM).8,9 Specifically, GSM is used to specify the correlation structure of a random effect term in LMMs. Traditionally, in animal and plant breeding, GSM is estimated using kinship coefficient, and a single random effect term is used to model genome-wide additive effects.14,15 With the development of high-throughput technologies, GSMs nowadays can be estimated empirically from genome-wide data.8–10,12 The widely used genomic BLUP (gBLUP) specifies a single-random effect term in LMM with the correlation structure specified according to the GSM estimated directly from genome-wide data. The implicit assumption for gBLUP is that effect sizes for all genetic variants come from a common Gaussian distribution and they act in an additive manner.10 MultiBLUP generalizes the gBLUP model by allowing genetic variants located at different genomic regions (eg, coding, intron, and eQTLs) having separate random effects, where the correlation structures are determined by GSMs calculated from each genomic region.8 MKLMM further generalizes MultiBLUP by constructing kernel functions under the reproducing kernel Hilbert space (RKHS) to estimate GSMs for each genomic region, where potential interaction effects within each genomic region can be considered.9
+
+LMM-based methods encode genetic effects from multiple variants through GSMs, which substantially reduces the data dimension and makes it possible to jointly consider the predictive effects of all genetic variants. However, for high-dimensional genomic data, most of the measured genetic variants are not related with phenotypes. As noted by Byrnes et al,17 variable selection algorithms can substantially improve the prediction accuracy when good biological annotations are absent. Including GSMs estimated from all genomic regions can attenuate the effects of those predictive regions, and thus reduce the prediction accuracy. Moreover, when the number of random effects is large, the estimation involves a high-dimensional covariance matrix estimation that can increase computational instability.18 Traditional variable selection methods (eg, Mallow Cp,19 akaike information criterion [AIC],20 and forward/backward/stepwise selection) suffer from lack of theoretical justification and statistical stability.21 Bayesian information criteria (BIC) and generalized information criterion (GIC) are consistent variable selection procedures for fixed effects,22–24 but they perform poorly for selecting random effects.25 Recent work has focused on selecting random effects simultaneously with model estimation. Chen and Dunson26 and Kinney et al27 selected random effects through a hierarchical Bayesian approach. Bondell et al28 utilized the reparameterized technique proposed by Chen et al and further developed an expectation-maximization (EM)-algorithm to select random effects based on a penalized likelihood function. Ahn et al29 developed a moment-based method to select random effects, and Lin30 proposed a two-stage method for random effect selection. However, none of these methods can be directly applied to LMMs used in genetic research. For standard LMM, there are multiple clusters (eg, m clusters). It assumes that the outcome vector for each cluster comes from a multivariate normal distribution (eg, Yi ~ N(0, Σ0), ∀i ∈ (1, 2, … , m)), and thus the resulting variance covariance matrix for Y is a block diagonal matrix with m blocks (ie, Σ = diag(Σ0)). For LMMs used in genetic research,8,9 the variance-covariance matrix for the outcome vector Y is of the form Σ=∑rRKrσr2+σ02I, where Kr represents the GSM estimated directly from the rth genomic region. Since Kr is usually a dense matrix, the outcome vector Y is a single observation obtained from a multivariate normal distribution (ie, m = 1). Therefore, the standard asymptotic behaviors established when m → ∞ are not applicable.
+
+Mounting evidences have suggested that epistasis widely exists,31,32 and thus it is crucial to capture the potential interaction effects when building prediction models.9,33 However, the vast majority of LMMs assume that genetic variants influence phenotypes only in an additive manner.8,15,16 A few studies that investigated the effects of interactions (eg, dominant effect,34,35 two-way interactions,36 and high-order interactions using kernels under RKHS37–39) have only achieved limited successes partially due to the exponentially large search space of interactions and the simple assumption of homogeneous effect sizes across the entire genome. The recent proposed MKLMM addresses these limitations by modeling the high-order interactions within each region using kernels under RKHS and accounting for heterogeneous effects by specifying multiple random effects for different genomic regions.9 Although it improves the prediction accuracy, it is hard to prespecify kernels as the genetic architecture of complex diseases is unknown in advance. Moreover, similar to other LMMs, MKLMM also lacks theoretical justifications for selecting predictive regions, as the number of regions is usually determined empirically.
+
+In this article, we develop a multikernel linear mixed model with adaptive lasso (KLMM-AL) to address these issues. The KLMM-AL (i) specifies multiple random effects to allow for heterogeneous effects for different genomic regions, (ii) allows multiple kernels per genomic region to account for various types of genetic effects, and (iii) establishes the theoretical justification for selecting predictive regions (ie, selecting random effects from LMM with only one dependent observation vector). Therefore, the KLMM-AL cannot only account for additive effects and various types of nonadditive effects, but also select predictive regions efficiently. In the following sections, we will first lay out the details of the proposed method and its theoretical properties. We will then compare its accuracy with existing widely used methods through simulation studies and further illustrate the KLMM-AL through an application to a whole-genome sequencing dataset obtained from the Alzheimer’s disease neuroimaging initiative (ADNI).40
+
+2 | METHODS
+
+LMMs and their extensions have been widely used for prediction research with high-dimensional genomic data. For completeness, we first present the LMMs used for prediction research with genomic data. We will then (i) propose our method for selecting random effects from high-dimensional genomic data (ie, selecting random effects based on a single dependent observation), (ii) describe the computational algorithms, and (iii) derive the asymptotic properties of our estimators.
+
+2.1 | Linear mixed model for risk prediction with high-dimensional genomic data
+
+Utilizing a similar idea used in MultiBLUP8 and MKLMM,9 we first divide the genome into R regions and assume each region has its own effect size. We model the outcomes within the LMM framework as, (1) Y=Xβ+∑rRgr+e,e~N(0,Inσ02),
+
+where Y is a n × 1 vector of the outcomes, X is a n × p matrix of demographic variables (eg, age and gender), β is the effect size of demographic variables, and gr is the genetic effects from the rth genomic region with gr~N(0,Krσr2).
+
+The covariance matrix of Y is influenced by both Kr and σr2 (ie, var(Y)=σ02In+∑rRKrσr2, and Krσr2 encodes the assumption of genetic effects of the rth region on the outcome. For example, when Kr=ZrZrTpr with Zr and pr being enotypes and the number of genetic variants of the rth genomic region, it implicitly assumes that genetic variants located at the rth region have additive effects on the outcomes and their effect sizes follow a normal distribution (ie, gr=Zrγr, γr~N(0,σr2)). This assumption has been used by both gBLUP and MultiBLUP.8,15 When Kr=K1r∘K1r with K1r=ZrZrT and ◦ being the Hadamard product (ie, gr~N(0,K1r∘K1rσr2)), it implicitly assumes that there are pairwise interactions among genetic variants on the rth genomic region. Indeed, Kr can be defined using various kernel functions to capture both linear and nonlinear effects. This idea is similar to that used in MKLMM.9 However, different from MKLMM that assumes only one specific effect for each genomic region (eg, additive-only or pairwise-interaction-only effects), we allow the same genetic regions having multiple types of effects. For example, if rth genomic region has both the additive and pairwise interaction effects, then gr~N(0,K1rσr12+K2rσr22). This makes our model much more flexible.
+
+2.2 | Penalized maximum likelihood function
+
+The genetic causes for most of complex diseases are unknown in advance, and thus it is quite likely that a substantial amount of genomic regions and their types of effects (eg, additive) included in the analyses are not disease-related. While we focus on region selection in the following sections, the same rule can be applied to select the type of effects for each genomic region. Under model 1, if the rth genetic region is not predictive, and then σr2 is expected to be zero. Selecting predictive regions are equivalent to determine which σr2 is not zero, and thus a natural choice for our model is to use L1 penalty to select random effects.
+
+Let θR=(σ12,…,σR2)T, θ=(σ02,θRT)T, and ϕ = (βT, θT) T. The log-likelihood function for Equation (1) is (2) l(ϕ)=−12log|Σ|−12(Y−Xβ)TΣ−1(Y−Xβ),Σ=Inσ02+∑rRKrσr2.
+
+The corresponding penalized log-likelihood function with L1 penalty is, (3) lp(ϕ)=l(ϕ)−λ∑i=1p+R+1ωi(|ϕi|),  with ωi={ωi, for ϕi∈θR0, otherwise, 
+
+where λ is a nonnegative regularization parameter, ωi are adaptive weights, typically ωi=1/|ϕ˜i|, with ϕ˜i denoting an initial n consistent estimator of ϕ (eg, the maximum likelihood estimators). It is worth noting that the penalties are only put on random effects (ie, θR) as the focus is on the selection of predictive genomic regions. Maximizing lp (ϕ) can enable variable selection and parameter estimation simultaneously, as the effects of less important factors are shrunk to zeros under the L1-penalty. The regularization parameters (λωi) are allowed to vary with the genetic effects, which is similar to the idea of adaptive lasso.
+
+2.3 | Computation of penalized maximum likelihood estimator
+
+2.3.1 | EM method
+
+The Cholesky decomposition has been used extensively in LMMs to estimate random effect parameters, but it cannot be directly used for our model. Cholesky decomposition does not allow for the elimination of random effects, and thus is incapable of selecting predictive genomic regions. Moreover, kernel matrices Kr used to encode various types of genetic effects are only guaranteed to be positive semidefinite. To address these challenges, we utilize the same idea used in Chen and Dunson,26 and factorize Kr of the random effect gr as Kr = (Fr Dr)(Fr Dr)T, where Dr is a diagonal matrix and Fr is a lower triangular matrix with 1s on its diagonal. Both Dr and Fr are unique. Let gr~N(0,σ02In), the model in Equation (1) can be reparameterized as, (4) Y=Xβ+∑rRdrLrgr+e,e~N(0,σ02In),
+
+where dr=σr2/σ02 and Lr = Fr Dr.
+
+EM algorithms can be used to estimate parameters in model (4),28 where the complete data comprised of the observed outcomes (Y) and the unobserved random genetic effects (g=(g1T,g2T,…,gRT)T). Let d = (d1, d2,…, dR)T and η = (βT, dT)T. Dropping constant terms, the complete data log-likelihood function can be written as, (5) lc(η∣Y,g)=−n(R+1)2log(σ02)−12σ02(‖Y−Xβ−∑rRdrLrgr‖2+gTg),
+
+where ‖A‖2 is the L2 norm of A. In the E-step, the conditional expectation (denoted as Eg∣Y,ηp) is computed as Eg∣Y,η(lc(η∣Y,g))+λ∑rRωr′|dr|, where ωr′=1/d˜r and d˜r is a n consistent estimator of dr. In the M-step, Eg∣Y,ηp is the maximized with respective to parameters, which is equivalent to minimize Equation (6). (6) Qc(η∣Y,g)=Eg∣Y,η(‖Y−Xβ−∑rdrLrgr‖2)+λ∑rRωr′|dr|.
+
+At iteration step t, g∣Y,η(t)^~N(g(t)^,U(t)^) with mean and variances are given by (7) g^(t)=(I+B(t)LTLB(t))−1(LB(t))T(Y−Xβ(t))
+
+U^(t)=(I+B(t)LTLB(t))−1σ02(t)
+
+σ02(t)=(Y−Xβ(t))T(LB(t)B(t)LT+I)−1(Y−Xβ(t))/N,
+
+where L = [L1, L2,…, LR] is a n × (Rn) matrix and B(t) is a (Rn)× (Rn) block diagonal matrix with the rth block equal to dr(t)In. For high-dimensional data, inverting a (Rn)× (Rn) matrix is computationally intensive. However, as shown in Appendix B, gr |Y, η is also normally distributed, and the mean and variances are given by, (8) g^r(t)=dr(t)LrT(∑iMKidi2(t)+IN)−1(Y−Xβ(t))
+
+U^r(t)=(In−dr2(t)LrT(∑iMKidi2(t)+IN)−1Lr)σ02(t).
+
+Clearly, for those noise regions (ie, dr = 0), gr = 0 and Ur=Inσ02. As most of the genomic regions are not predictive, instead of directly inverting a (Rn)× (Rn) matrix (Equation (7)), we use Equation (8) to compute the conditional distributions. Therefore, for E-step at iteration step t, the conditional expectation (ie, Equation (6)) is calculated as, (9) Q(η∣η(t))=Egr∣Y,η(t)(‖Y−Xβ−∑rdrLrgr‖2)+λ∑rRωr′|dr|.
+
+For M-step at step t, Equation (9) is minimized with respect to η, which can be achieved using the quadratic programming. The details for computing the conditional expectation and performing the M-step are in Appendix B. This EM algorithm is designed for a fixed value of λ. To choose the tuning parameter λ, we use a BIC, (10) BICλ=−2l(ϕ^)+log(n)×(dfλ),
+
+where dfλ is the number of nonzero coefficient in η^
+
+2.3.2 | Approximate penalized maximum likelihood estimator
+
+The maximization algorithms for linear mixed models are usually based on two basic approaches: the EM and Newton-Raphson (NR) method.41, 42 While the above EM algorithm can be used to estimate parameters, it can be computationally intensive when dealing with high-dimensional data, especially when the tuning parameter λ also needs to be selected. To optimize Equation (6), the NR algorithm whose convergence rate is quadratic with good initial values can also be used. Motivated by the idea used in References 42, and 44, we propose to locally approximate the penalized log-likelihood function as, (11) lp(ϕ)≈l(ϕ(0))+l′(ϕ(0))T(ϕ−ϕ(0))+12(ϕ−ϕ(0))Tl′′(ϕ(0))(ϕ−ϕ(0))−λ∑rRωr|ϕr|.
+
+We set ϕ(0) to be the maximum likelihood estimator of l(ϕ) that can be obtained by the existing software (eg, MultiBLUP). It can be shown that the maximizers for Equation (11) can be attained equivalently by using (12) ϕ^=argminϕ{12(ϕ−ϕ(0))T(−l′′(ϕ(0)))(ϕ−ϕ(0))+λ∑rRωr|ϕr|}.
+
+Clearly, Equation (12) can be efficiently solved by the least angel regression (LAR) algorithm that allows computing of the entire regularization path very efficiently.45 The regularization parameter λ is determined according to the BIC type of criterion specified in Equation (10).
+
+2.4 | Asymptotic properties
+
+The asymptotic properties for the maximum likelihood estimators for the traditional LMMs have been well established under the settings where the number of clusters goes to infinity. However, these results cannot be directly applied to our model. Kr is usually a dense matrix. Therefore, the outcome vector in our model is a single observation from a multivariate normal distribution (ie, Yn~N(Xβ,Σ=Inσ02+∑rRKrσr2)), and the number of clusters is 1 by design in our model. Sweeting46 and Mardia and Marshall47 have derived a general result of weak consistency and uniform asymptotic normality for maximum likelihood estimators based on dependent observations. In our work, we consider the same framework established by Mardia and Marshal47 and use a similar idea introduced by Kyung et al48 and Chu et al49 to investigate the asymptotic properties of our estimators. The assumptions of our model are listed in Appendix A.1. The assumptions (S.1) to (S.6) are similar to those used in Mardia et al47 (detailed proof is shown in Appendix A.2). Together with the assumption (S.7), they yield a central limit theorem for l′(ϕ) and convergence in probability of l″(ϕ). To be specific, under the assumptions (S.1) to (S.7), for any ϕ∈ℝp×Θ, as n → ∞, we have n−1/2l′(ϕ) →d N(0, J(ϕ)) and n−1l″(ϕ) →p −J(ϕ), where J(ϕ) = diag{J(β), J(θ)} (The detailed proof is shown in Appendix A.3). This result demonstrates the asymptotic behavior of the first and second derivatives of the log-likelihood function. It also shows that the maximum likelihood estimator is n consistent and asymptotically normal.
+
+Let θ0=(θ10T,θ20T)T denote the true values of θ. Without loss of generality, θ10 is a s × 1 vector whose components are not zero and θ20 is the (R + 1 − s) remaining components of θ0, so that θ20 = 0. Let β0 denote the true values of β. Therefore, the true values of ϕ can be written as ϕ0=(ϕ10T,ϕ20T)T, where ϕ10=(β0T,θ10T)T and ϕ20 = θ20 = 0. In a similar manner, ϕ can be decomposed as ϕ=(ϕ1T,ϕ2T)T=(βT,θ1T,ϕ2T)T=(βT,θ1T,θ2T)T. For the penalized log-likelihood function given in Equation (3), let l(ϕ1) ≡ l{(ϕ1, 0)T} and lp(ϕ1) ≡ lp {(ϕ1, 0)T} denote the log-likelihood and the penalized log-likelihood of the first s components of ϕ (ie, by letting ϕ2 = 0 and ϕ=(ϕ1T,0T)T), respectively.
+
+In the web appendix A, we showed that the penalized estimators enjoy the oracle property and are asymptotically normally distributed.52 In particular, we first showed that there exists a local maximizer in a n neighborhood with ϕ^2=0, suggesting that the penalized likelihood estimator can identify the true model with probability tending to 1. To be specific, under the assumptions (S.1) to (S.8) given in Appendix A.1, we have (i) there exists a local maximizer ϕ^=(ϕ^1,0)T of lp(ϕ1) such that ϕ^1 is n consistent for ϕ10 and (ii) lp((ϕ1T,0)T)=max‖ϕ2‖≤Mn−1/2lp((ϕ1T,ϕ2T)T) for any ϕ1 satisfying ϕ1 − ϕ10 ≤ Mn−1/2 and some constant M &gt; 0. We further showed that the penalized maximum likelihood estimators |for those nonzero parameters are asymptotically normally distributed. To be specific, under the assumptions (S.1) to (S.8)| given in Appendix A.1, we have n(β^−β0)→dN(0,J(β0)−1)
+
+nJ(θ10)[θ^1−θ10+λnnJ(θ10)−1h(θ10)]→dN(0,J(θ10)),
+
+where J(θ10) consists of the first s × s upper-left submatrix of J(θ) and h(θ10)=(ωp+1sgn(θ101),ωp+2sgn(θ102),…,ωp+ssgn(θ10s)) with θ10j being the jth element in vector θ10. It is straightforward to see that nJ(θ10)(θ^1−θ10)→dN(0,J(θ10)), to the first order.
+
+3 | SIMULATIONS
+
+Simulation studies are conducted to evaluate the performance of KLMM-AL, where for each genomic region, we consider two kernels (ie, the linear kernel and the polynomial kernel with degree 2). We further compare the performances of KLMM-AL with other commonly used methods (ie, gBLUP,15 MultiBLUP,8 and MKLMM9). In the first scenario, we compare the performance of KLMM-AL with parameters estimated by both EM (denoted by KLMM-AL-EM) and NR with local approximation (denoted by KLMM-AL-NR). In the second scenario, we compare the performance of our KLMM-AL-NR method with the other three existing methods by increasing the number of noise genetic regions. In the third scenario, we evaluate the performance of our method when epistasis (ie, interaction effects) are present. For both MultiBLUP and MKLMM, we use the default settings. As the number of regions for MKLMM are determined empirically, we considered three regions (denoted by MKLMM3) and eight regions (denoted by MKLMM8) for MKLMM in our simulations. For all the simulation studies, we consider two analytical techniques for KLMM-AL method: (i) only additive effects (ie, the linear kernels) are considered (denoted by KLMM-AL-Lin) and (ii) both additive effects (ie, the linear kernels) and interaction effects (ie, polynomial kernel with degree 2) are considered (denoted by KLMM-AL-Adapt).
+
+In all simulation studies, we use the training samples to build predictive models and use the testing samples to evaluate their performance. The Pearson correlation and the mean square error (MSE) in the testing samples are calculated for KLMM-AL, gBLUP, MultiBLUP, and MKLMM. For the KLMM-AL method, we also calculate the chances of selecting predictive and nonpredictive genomic regions. To mimic the distribution of minor allele frequencies and linkage disequilibrium in the real human genome, in all simulations described below the genomic data are drawn from chromosome 1 of the 1000 Genome Project. In particular, we first cut the genome into regions with each being 75 Kb, and then randomly select these genomic regions for each replicate. For all the simulations considered below, three regions are selected as causal for each type of effects. Within each causal region, 20% of the genetic variants are set causal.
+
+3.1 | Simulation I: The comparison between KLMM-AL-NR and KLMM-AL-EM
+
+In this section, we compare the performance of KLMM-AL-NR with KLMM-AL-EM to assess whether the local approximation can achieve similar accuracy as the EM algorithm. In particular, we want to evaluate the impact of sample size on the local approximation. For this set of simulations, we only consider the additive effects and simulate the phenotypes as: (13) Yi=∑r=13∑j=1NrZrjβrjIrj+ϵi,ϵi~N(0,σ2),βrj~N(0,σr2),
+
+where Nr is the total number of genetic variants on the rth causal region, and Zrj and βrj, respectively, represent the genotype and its effect of the jth genetic variant on the rth causal region. Irj is an indicator with Irj = 1 if the jth marker on the rth causal region is causal and Irj = 0 otherwise. We set P(Irj) = 20%. The first, second, and third causal regions account for 6.7%, 13.3%, and 20% of the heritability, respectively. In total, all causal genetic variants account for 40% of the heritability.
+
+While keeping the testing sample size being 100, we gradually change the training sample size from 50 to 500. For each sample size setting, we consider two and seven noise regions (ie, total number of regions is five and 10, respectively). We generate 500 replicates for each setting. For each replicate, we use training samples to train the model and use the testing data to assess its performance. We calculate the Pearson correlations and MSEs between the predicted values calculated from KLMM-AL-NR and those from KLMM-AL-EM to assess the consistency between these methods. We further report the selection consistency between these two methods in terms of the chances of correctly identifying causal and noncausal genomic regions.
+
+The consistencies between the predicted values for KLMM-AL-NR and KLMM-AL-EM are summarized in Figure 1. As the training sample size increases, the consistencies between the two methods increase. Indeed, when the training sample size equal to 500, regardless of the number of noise regions, the mean of Pearson correlation between the predicted values derived from these two methods is almost 1, and the mean of MSEs is very close to zero. The selection consistencies between the two methods are summarized in Table 1. On average, the chances of selecting the same regions from both methods is 84% and the chances of selecting the same causal regions from both methods is 88%, indicating the selection consistency between KLMM-AL-EM and KLMM-AL-NR is relatively high. Indeed, when the training sample size is 500, the chances of both methods selecting the same causal regions are above 95% (Table 1). This suggests that when the training sample size is sufficiently large, KLMM-AL-NR performs very similar to KLMM-AL-EM with regard to both the predicted values and the selected regions. KLMM-AL-EM can be computationally demanding when the sample size is large due to the selection of tuning parameters (ie, λ). Because for each value of λ, an EM algorithm is used to estimate the parameters as detailed in Section 2.3.1. The KLMM-AL-NR, on the other hand, can efficiently calculate the entire regularization pathways using the LAR algorithm (Section 2.3.2), which can substantially improve the computational efficiencies, especially when both the sample size and the number of genomic regions are large. KLMM-AL-NR can asymptotically achieve similar performance as KLMM-AL-EM, and thus we recommend to use KLMM-AL-NR when the training sample size is relatively large.
+
+3.2 | Simulation II: The impact of the number of noise regions
+
+In this set of simulations, we compare the performance of KLMM-AL with three commonly used methods (ie, gBLUP, MultiBLUP, and MKLMM) by gradually increasing the number of noise genomic regions from two (ie, the total number of regions is five) to 97 (ie, the total number of regions is 100). As shown in Section 3.1, KLMM-AL-NR and KLMM-AL-EM achieve similar performance. Because KLMM-AL-EM requires a substantial amount of computational time, we only focus on KLMM-AL-NR in this set of simulations. Similar to Section 3.1, we only consider additive effects and simulate the phenotypes using Equation (13). For each given number of noise regions, we vary the total heritability and allow different regions contributing differently to the total heritability. Specifically, for the rth causal genomic region, it accounts for rh∕6 of the heritability, where r = 1, 2, 3, and h changes from 20% to 80%. The sample sizes for training samples and testing samples are all set to be 500. Based on 500 Monte Carlo replicates, we calculate the Pearson correlations and MSEs from the testing samples and report the proportions of correctly identifying causal and noncausal genomic regions for the KLMM-AL method.
+
+The Pearson correlations and MSEs are shown in Figure 2. The computational time is shown in Appendix Figure S1. Among all the scenarios considered, KLMM-AL performs better than the other methods. As the number of noise regions increases, the performance of gBLUP drops significantly. While MultiBLUP and MKLMM tend to be more robust compared with gBLUP by allowing for different effect sizes of genetic regions, their performances also drop as the number of noise regions increases, especially when the heritability is high. For the KLMM-AL methods, regardless of whether we use one kernel (ie, KLMM-AL-Lin) or two kernels per region (ie, KLMM-AL-Adapt), the performances are relatively robust as the number of noise regions increases. This indicates excluding noise regions cannot only improve prediction accuracy, but also improve the robustness of the prediction model.
+
+In practice, the underlying disease model is usually unknown in advance, and thus a model that can adaptively choose the right kernels and achieve accurate prediction is preferred. With regard to variable selection, KLMM-AL-Lin has high sensitivity and specificity (Table 2). KLMM-AL-Adapt may misclassify the predictive effects of the variants located on those causal regions (ie, by selecting the polynomial kernel rather than the linear kernel), but this misclassification rate becomes negligible as the heritability increases. Nevertheless, KLMM-AL-Adapt has a similar proportion of correctly identifying the predictive regions as KLMM-AL-Lin, and its specificity is also very similar to that of KLMM-AL-Lin (Table 2). Moreover, while it is expected that the KLMM-AL-Lin performs better than KLMM-AL-Adapt as the kernel it uses represents the true disease model, the differences of prediction accuracies between these two methods are very small (Figure 2).
+
+3.3 | Simulation III: The impact of epistasis
+
+In this set of simulations, we evaluate the performance of KLMM-AL-NR when interaction effects are present. We further compare its performance with gBLUP, MultiBLUP, and MKLMM. When simulating phenotypes, we consider both the additive effects (denoted by Yav) and the interaction effects (denoted by Yint). The phenotypes Y are simulated as a weighted linear combination of these genetic effects, (14) Y=Yav+Yint+e, e~N(0,σ2I).
+
+Similar to the above simulations, we simulate three causal regions for each effect. We use Zr,av (pr,av) and Zr,int (pr,int) to respectively denote the causal variants (the number of causal variants) on the rth causal region for the additive and interaction effects. We use hav and hint to denote the heritability accounted by the additive and interaction effects, respectively.
+
+For the additive effects, Equation (13) is used. We can show that Equation (13) is equivalent to (15) Yav~N(0,∑r3Kr,avσr,av2),  where Kr,av=Zr,avZr,avTpr,av.
+
+Therefore, Equation (15) is used to generate the additive effects. To allow various regions having different effect sizes, the rth causal region (r = 1, 2, 3) with the additive effects accounts for r × hav∕6 of the heritability.
+
+For the interaction effect, we only consider the local pairwise interactions (ie, interactions within the causal region), and simulate the interaction effects as Yint~N(0,∑r3Kr,intσr,int2), where Kr,int is used to capture the interaction effects from the rth causal region. For the pairwise interactions, we set Kr,int = Kr,av◦Kr,av with ◦ being Hadamard product. To allow different effect sizes, the rth causal region (r = 1, 2, 3) with the interaction effects accounts for r × hint∕6 of the heritability.
+
+For all the simulations, we fix the total heritability to be 60% (ie, hav + hint = 0.6) and gradually change the proportion of heritability accounted by the interaction effects (ie, hint increases from 0 to 0.6). We also vary the total number of noise regions (ie, 2, 7, 17, 47, and 97). We set both the training and testing sample sizes being 500. We generate 500 replicates for each setting and evaluate the performances based on Pearson correlations and MSEs calculated from the testing samples.
+
+The prediction accuracy when the total number of regions is 50 is summarized in Figure 3. The remaining results are summarized in Figure S2. KLMM-AL works better than the other methods under all the settings considered, and this indicates teasing out the noise genomic regions can improve prediction accuracy. Comparing KLMM-AL-Adapt with KLMM-AL-Lin, as expected, the KLMM-AL-Adapt performs better than KLMM-AL-Lin when the interaction effects account for a substantial amount of heritability. What we have noticed is that even when the interaction effects are absent, KLMM-AL-Adapt achieves very similar performance to that of KLMM-AL-Lin. With regard to variable selection, KLMM-AL-Lin has high sensitivity and specificity for selecting the prediction genomic regions (on average, sensitivity = 88% and specificity = 99.4%). Although the chances of correctly selecting the genomic regions with the interaction (additive) effects vary with their effect sizes and KLMM-AL-Adapt may misclassify different kinds of effects (Table 3), the sensitivity and specificity of selecting the prediction genomic regions for KLMM-AL-Adapt remains high (on average, sensitivity = 87% and specificity = 99.4%). We consider the robust performance of KLMM-AL-Adapt with respect to both prediction accuracy and region selection is important. This is because the underlying disease model is unknown in advance, and an algorithm that can adaptively choose the kernel functions close to the underlying genetic effects has the potential to improve the prediction accuracy. Indeed, as shown in Figure 3, KLMM-AL-Adapt attains better performance than all the other methods and outperforms KLMM-AL-Lin when the interaction effects are large.
+
+4 | REAL-DATA APPLICATION
+
+We analyze the whole-genome sequencing data from the ADNI using the proposed method with both the linear kernel and the polynomial kernel of degree 2 to capture both the additive and interaction effects (ie, KLMM-AL-Adapt). We further compare our method with commonly used methods, including gBLUP,15 MultiBLUP,8 and MKLMM.9 For MultiBLUP and MKLMM, we use the default settings. As the number of regions is preselected for MKLMM, we use both three and eight regions for these analyses.
+
+The ADNI is a longitudinal study designed to assess clinical, imaging, genetic, and biomarkers through the process of normal aging to Alzheimer’s disease (AD).40 Study participants were followed and assessed over time to investigate the pathology of AD. DNA samples were obtained and analyzed using Illumina’s non-CLIA whole-genome sequencing. Imaging data (eg, MR imaging and PET imaging) and clinical data (eg, cognitive tests) were also collected at each visit. For our analyses, we are interested in using sequencing data to predict PET-imaging outcomes, FDG, and AV-45 scans, which were performed on all newly enrolled subjects within 2 weeks of the baseline in-clinic assessments.
+
+We annotated the genetic variants based on GRch37 assembly and included a total of 310 genes that have been previously reported to be associated with AD. The complete genes included in our analyses are listed in Table S1. In total, 344, 337 single-nucleotide variants are included in the final analyses and the distribution of the minor allele frequencies for these variants are shown in Figure S3. To avoid overfitting, we randomly selected 80 subjects to serve as the testing samples and used the remaining samples to build the model (ie, 422 and 551 samples for AV-45 and FDG, respectively). We calculated the Pearson correlations and the MSEs based on the testing samples. To avoid the chance findings, we repeated this process 100 times.
+
+The results for AV-45 and FDG are shown in Figure 4 and Figure 5, respectively. For both AV-45 and FDG, the Pearson correlations of the KLMM-AL are higher and MSEs of KLMM-AL are smaller than the other methods, suggesting KLMM-AL achieves better prediction accuracy than the existing methods. This indicates that excluding noise genes from the prediction can improve prediction accuracy. The proportion of each gene being selected by KLMM-AL for AV-45 and FDG is summarized in Table S1. The KLMM-AL achieves robust performance with regard to the variable selection. The APOE gene on chromosome 19, a well-known risk factor for AD, has been selected 100% for both AV-45 and FDG. Only the linear kernel is chosen for APOE, suggesting the variants on APOE having the additive effects. No other genes are selected for AV-45. For FDG, among the 310 genes, in addition to APOE, only four genes have been selected. The fibroblast growth factor (FGF-1) located on chromosome 5 has been selected about 63% times, and only the linear kernel (ie, the additive effect) has been selected. FGF-1 promotes the survival of neurons, and it was reported that serum FGF-1 in patients with AD was higher than in patients without AD.50 It was also reported that variants within FGF-1 were associated with AD in Chinese Han population.51 The ADRA1A gene located on chromosome 8 has been selected 15%, and only the additive effects have been selected. It has been shown that mutations in ADRA1A can lead to early onset of AD.53 The NTRK1 gene located at chromosome 1 has been selected 24%, and only the interaction effects have been selected. Counts et al54 found that NTRK1 expression was reduced in basal forebrain cholinergic neurons through the postmortem examination of the brains of patients with early stage AD. It has been found that rs6336 on NTRK1 is associated with early-onset AD in Italian population.55 The gene CHRNA4 located at chromosome 20 has been selected 14% with both the linear effects and interaction effects. It was reported that genetic polymorphisms in the CHRNA4 gene were associated with AD.56, 57
+
+5 | DISCUSSION
+
+We have proposed a multikernel linear mixed model with adaptive lasso for predicting phenotypes using high-dimensional genomic data. We have developed two algorithms to estimate the parameters for our model, and have further established the asymptotic properties of the estimators (ie, the asymptotic behavior of the maximum penalized likelihood estimators under LMM when the outcome vector is a single observation obtained from a multivariate normal distribution). The KLMM-AL can (i) account for heterogeneous effect sizes for different genomic regions by specifying multiple random effects, (ii) capture various types of genetic effects (eg, the additive and pairwise interactions) by using multiple kernel functions per genomic region, and (iii) adaptively and efficiently select predictive regions using the theory built from this work. The software implementing this algorithm can be downloaded from https://github.com/YaluWen/KLMMALPackage.
+
+Through simulation studies, we have demonstrated that the computationally efficient algorithm (ie, KLMM-AL-NR) designed to obtain the approximate penalized maximum likelihood estimators can have similar performance as the exact method (ie, KLMM-AL-EM) with respect to both prediction accuracy and predictive region selection. This makes our model easily scale up to large-scale genetic studies. We also demonstrated that the KLMM-AL is robust against the number of noise regions (Figure 2), whereas the prediction accuracies for other methods drop to various degrees as the number of noise regions increases. Although both MKLMM and MultiBLUP allow different regions contributing differently to the outcomes and build an empirical selection process (ie, selecting the regions based on empirical criteria), neither of them can achieve the same level of prediction accuracy as the KLMM-AL partially due to the lack of theoretical justification of selecting predictive regions. Indeed, MKLMM lets the users to determine the number of regions and its performance depends on the users’ decision (Figures 2–5). From simulations, we also show that the data adaptive version of KLMM-AL (ie, KLMM-AL-Adapt) can capture potential interaction effects (Figures 3 and S2) and has relatively high sensitivities and specificities of selecting predictive genomic regions (Tables 2 and 3). Moreover, KLMM-AL-Adpat can also provide some insights into the types of genetic effects (eg, the additvie or pairwise interactions). Although we demonstrate the KLMM-AL-Adapt with only two kernels per region (ie, the linear kernel and the polynomial kernel), it can easily incorporate other kernels to capture more complicated interactions. For example, the saturate pathway kernel9 can also be implemented into KLMM-AL-Adapt. Through the real-data application, we further demonstrate that the selection of our algorithm is consistent (Table S1) and it can achieve better prediction performance than the existing methods (Figures 4 and 5).
+
+The work introduced in this article focuses on the continuous phenotype with normal distribution. The analysis of binary outcomes within mixed effect model framework can be challenging, as the parameter inference is intractable.9 Several recent studies have demonstrated that treating binary outcomes as if they were continuous using LMM can achieve reasonable predictions.8, 9 Though easy to implement, it would be interesting to study, within the framework of generalized LMM, other link functions (eg, logit and log) for the prediction of outcomes with various distributions (eg, binary and Poisson) in the future. Similar to many existing parametric models,8, 9 our method depends on the distributional assumptions that can be violated in practice (eg, model misspecification and outcomes from heavy tailed distributions). It could of great importance to incorporate robust modeling and variable selection methods (an extensive review of such methods can be found in Wu et al58) into our proposed framework, and this will be a future direction of our research.
+
+Supplementary Material
+
+Supplementary Material
+
+ACKNOWLEDGEMENTS
+
+The project was supported by the National Natural Science Foundation of China (Award No. 81502887), the Faculty Research Development Funds from the University of Auckland, the National Institute on Drug Abuse (Award No. R01DA043501), and the National Library of Medicine (Award No. R01LM012848). The authors wish to acknowledge the contribution of NeSI high-performance computing facilities to the results of this research. NZs national facilities are provided by the NZ eScience Infrastructure and funded jointly by NeSIs collaborator institutions and through the Ministry of Business, Innovation &amp; Employment’s Research Infrastructure program.
+
+FIGURE 1 The impact of sample size on local approximation for the KLMM-AL method
+
+FIGURE 2 The impact of the number of noise genomic regions on Pearson correlations and mean square errors calculated from the testing samples
+
+FIGURE 3 The impact of epistasis: the total heritability is 60%
+
+FIGURE 4 Pearson correlations and mean square errors calculated from the testing samples for AV-45
+
+FIGURE 5 Pearson correlations and mean square errors calculated from the testing samples for FDG
+
+TABLE 1 The consistency of selection between KLMM-AL-EM and KLMM-AL-NR
+
+	KLMM-AL-Lin	KLMM-AL-Adapt	
+No. Sample	Alla	Trueb	Alla	Trueb	
+The number of regions = 5	
+50	0.812	0.785	0.821	0.925	
+100	0.791	0.762	0.827	0.911	
+200	0.811	0.844	0.805	0.915	
+500	0.863	0.962	0.841	0.955	
+The number of regions = 10	
+50	0.840	0.768	0.871	0.936	
+100	0.825	0.727	0.871	0.889	
+200	0.814	0.829	0.859	0.915	
+500	0.851	0.955	0.873	0.957	
+a The chances of KLMM-AL-EM and KLMM-AL-NR selecting the same regions.
+
+b The chances of KLMM-AL-EM and KLMM-AL-NR selecting the same causal regions.
+
+TABLE 2 The chances of selecting predictive/noise regions as the number of noise regions increases
+
+	KLMM-AL-Lin	KLMM-AL-Adapt	
+No. Regions	TPa	FPb	TP-Linc	FP-Lind	TP-Inte	FP-Intf	TP-Bothg	
+The heritability = 20%	
+5	0.798	0.023	0.594	0.013	0.206	0.013	0.786	
+10	0.769	0.011	0.564	0.008	0.201	0.007	0.757	
+20	0.745	0.011	0.570	0.009	0.176	0.007	0.736	
+50	0.692	0.007	0.519	0.006	0.172	0.006	0.685	
+100	0.641	0.005	0.450	0.012	0.144	0.007	0.582	
+The heritability = 40%	
+5	0.944	0.007	0.818	0.003	0.130	0.003	0.939	
+10	0.940	0.008	0.812	0.006	0.138	0.003	0.935	
+20	0.933	0.006	0.820	0.006	0.130	0.002	0.934	
+50	0.926	0.006	0.812	0.004	0.130	0.003	0.922	
+100	0.903	0.003	0.765	0.011	0.143	0.003	0.870	
+The heritability = 60%	
+5	0.937	0.000	0.886	0.000	0.044	0.000	0.922	
+10	0.936	0.002	0.897	0.001	0.045	0.000	0.932	
+20	0.936	0.002	0.897	0.002	0.048	0.000	0.934	
+50	0.934	0.003	0.881	0.003	0.057	0.001	0.921	
+100	0.950	0.002	0.890	0.004	0.081	0.001	0.932	
+The heritability = 80%	
+5	0.919	0.002	0.910	0.002	0.010	0.000	0.915	
+10	0.909	0.000	0.907	0.000	0.012	0.000	0.913	
+20	0.908	0.000	0.902	0.000	0.011	0.000	0.907	
+50	0.899	0.000	0.893	0.000	0.016	0.000	0.899	
+100	0.939	0.000	0.907	0.001	0.022	0.000	0.914	
+a The chances of selecting causal regions for KLMM-AL-Lin.
+
+b The chances of selecting noise regions for KLMM-AL-Lin.
+
+c The chances of selecting causal regions with the additive effects by the linear kernel for KLMM-AL-Adapt.
+
+d The chances of selecting noise regions by the linear kernel for KLMM-AL-Adapt.
+
+e The chances of selecting causal regions with the additive effects by the polynomial kernel for KLMM-AL-Adapt.
+
+f The chances of selecting noise regions by the polynomial kernel for KLMM-AL-Adapt.
+
+g The chances of selecting causal regions by any kernels for KLMM-AL-Adapt.
+
+TABLE 3 The chances of selecting predictive/noise genomic regions when epistasis is present
+
+	KLMM-AL-Lin	KLMM-AL-Adapt	
+Hera	TPb	FPc	TP-Lind	FP-Line	TP-Intf	FP-Intg	TP-Eh	TPi	FPj	
+The total number of noise regions = 3	
+0.6	0.949	0.008	N/A	0.003	0.664	0.002	0.664	0.892	0.005	
+0.4	0.848	0.010	0.657	0.002	0.597	0.005	0.627	0.817	0.008	
+0.2	0.817	0.008	0.827	0.005	0.370	0.000	0.598	0.789	0.005	
+0.0	0.937	0.000	0.886	0.000	N/A	0.000	0.886	0.922	0.000	
+The total number of noise regions = 7	
+0.6	0.950	0.007	N/A	0.004	0.667	0.001	0.667	0.899	0.004	
+0.4	0.847	0.010	0.666	0.007	0.600	0.003	0.633	0.841	0.010	
+0.2	0.819	0.008	0.839	0.006	0.381	0.003	0.610	0.807	0.009	
+0.0	0.936	0.002	0.897	0.001	N/A	0.000	0.897	0.932	0.002	
+The total number of noise regions = 17	
+0.6	0.943	0.003	N/A	0.002	0.666	0.001	0.666	0.902	0.003	
+0.4	0.843	0.008	0.652	0.006	0.606	0.003	0.629	0.841	0.009	
+0.2	0.821	0.008	0.835	0.005	0.400	0.003	0.618	0.806	0.008	
+0.0	0.936	0.002	0.897	0.002	N/A	0.000	0.897	0.934	0.003	
+The total number of noise regions = 47	
+0.6	0.938	0.004	N/A	0.003	0.667	0.001	0.667	0.908	0.004	
+0.4	0.844	0.008	0.628	0.007	0.629	0.002	0.628	0.846	0.009	
+0.2	0.809	0.004	0.824	0.005	0.405	0.002	0.614	0.813	0.006	
+0.0	0.934	0.003	0.881	0.003	N/A	0.001	0.881	0.921	0.003	
+The total number of noise regions = 97	
+0.6	0.932	0.003	N/A	0.006	0.686	0.002	0.686	0.902	0.008	
+0.4	0.803	0.005	0.621	0.009	0.608	0.002	0.614	0.829	0.011	
+0.2	0.817	0.005	0.786	0.007	0.370	0.002	0.578	0.784	0.008	
+0.0	0.950	0.002	0.890	0.004	N/A	0.001	0.890	0.932	0.005	
+a Heritability explained by the interaction effects.
+
+b The chances of selecting causal regions for KLMM-AL-Lin.
+
+c The chances of selecting noise regions for KLMM-AL-Lin.
+
+d The chances of selecting causal regions with the additive effects by the linear kernel for KLMM-AL-Adapt.
+
+e The chances of selecting noise regions by the linear kernel for KLMM-AL-Adapt.
+
+f The chances of selecting causal regions with the interaction effects by the polynomial kernel for KLMM-AL-Adapt.
+
+g The chances of selecting noise regions by the polynomial kernel for KLMM-AL-Adapt.
+
+h The chances of selecting causal regions by kernels representing the underlying effects for KLMM-AL-Adapt.
+
+i The chances of selecting causal regions by any kernels for KLMM-AL-Adapt.
+
+j The chances of selecting noise regions by any kernels for KLMM-AL-Adapt.
+
+Conflict of Interest
+
+The authors declare no potential conflict of interests.
+
+SUPPORTING INFORMATION
+
+Additional supporting information may be found online in the Supporting Information section at the end of this article.
+
+
+REFERENCES
+
+1. Ashley EA . The precision medicine initiative: a new national effort. JAMA. 2015;313 (21 ):2119–2120. 10.1001/jama.2015.3595 . 25928209
+2. Collins FS , Varmus H . A new initiative on precision medicine. N EnglJ Med. 2015;372 (9 ):793–795. 10.1056/NEJMp1500523 . 25635347
+3. Afshari NA , Jr I , Morris NJ , Genome-wide association study identifies three novel loci in Fuchs endothelial corneal dystrophy. Nat Commun. 2017;8 :14898. 10.1038/ncomms14898 . 28358029
+4. Wellcome Trust Case Control Consortium. Genome-wide association study of 14,000 cases of seven common diseases and 3,000 shared controls. Nature. 2007;447 (7145 ):661–678. 10.1038/nature05911 . 17554300
+5. Makowsky R , Pajewski NM , Klimentidis YC , Beyond missing heritability: prediction of complex traits. PLoS Genet. 2011;7 (4 ):e1002051. 10.1371/journal.pgen.1002051 . 21552331
+6. Kim H , Grueneberg A , Vazquez AI , Hsu S , Los CG . Will big data close the missing heritability gap? Genetics. 2017;207 (3 ):1135–1145. 10.1534/genetics.117.300271 . 28893854
+7. Speed D , Cai N , Consortium Ucleb, Johnson MR, Nejentsev S, Balding DJ. Reevaluation of SNP heritability in complex human traits. Nat Genet. 2017;49 (7 ):986–992. 10.1038/ng.3865 . 28530675
+8. Speed D , Balding DJ . MultiBLUP: improved SNP-based prediction for complex traits. Genome Res. 2014;24 (9 ):1550–1557. 10.1101/gr.169375.113 . 24963154
+9. Weissbrod O , Geiger D , Rosset S . Multikernel linear mixed models for complex phenotype prediction. Genome Res. 2016;26 (7 ):969–979. 10.1101/gr.201996.115 . 27302636
+10. Yang J , Benyamin B , McEvoy BP , Common SNPs explain a large proportion of the heritability for human height. Nat Genet. 2010;42 (7 ):565–569. 10.1038/ng.608 . 20562875
+11. Zeng P , Zhou X . Non-parametric genetic prediction of complex traits with latent Dirichlet process regression models. Nat Commun. 2017;8 (1 ):456. 10.1038/s41467-017-00470-2 . 28878256
+12. Los Campos G , Vazquez AI , Fernando R , Klimentidis YC , Sorensen D . Prediction of complex human traits using the genomic best linear unbiased predictor. PLoS Genet. 2013;9 (7 ):e1003608. 10.1371/journal.pgen.1003608 . 23874214
+13. Los Campos G , Hickey JM , Pong-Wong R , Daetwyler HD , Calus MP . Whole-genome regression and prediction methods applied to plant and animal breeding. Genetics. 2013;193 (2 ):327–345. 10.1534/genetics.112.143313 . 22745228
+14. Meuwissen TH , Hayes BJ , Goddard ME . Prediction of total genetic value using genome-wide dense marker maps. Genetics. 2001;157 (4 ):1819–1829.11290733
+15. VanRaden PM . Efficient methods to compute genomic predictions. J Dairy Sci. 2008;91 (11 ):4414–4423. 10.3168/jds.2007-0980 . 18946147
+16. Zhou X , Stephens M . Genome-wide efficient mixed-model analysis for association studies. Nat Genet. 2012;44 (7 ):821–824. 10.1038/ng.2310 . 22706312
+17. Byrnes AE , Wu MC , Wright FA , Li M , Li Y . The value of statistical or bioinformatics annotation for rare variant association with quantitative trait. Genet Epidemiol. 2013;37 (7 ):666–674. 10.1002/gepi.21747 . 23836599
+18. Peng H , Lu Y . Model selection in linear mixed effect models. J Multivar Anal. 2012;109 :109–129. 10.1016/j.jmva.2012.02.005 .
+19. Mallows CL . Some comments on CP. Technometrics. 1973;15 (4 ):661–675. 10.2307/1267380 .
+20. Hirotogu A Information Theory and an Extension of the Maximum Likelihood Principle. In: Parzen E , Tanabe K , Kitagawa G , eds. Selected Papers of Hirotugu Akaike. Springer Series in Statistics (Perspectives in Statistics). New York, NY: Springer; 1998:199–213.
+21. Pan J , Huang C . Random effects selection in generalized linear mixed models via shrinkage penalty function. Stat Comput. 2013;24 (5 ):725–738. 10.1007/s11222-013-9398-0 .
+22. Nishii R Asymptotic properties of criteria for selection of variables in multiple regression. Ann Stat. 1984;12 (2 ):758–765.
+23. Rao R , Wu Y . A strongly consistent procedure for model selection in a regression problem. Biometrika. 1989;76 (2 ):369–374. 10.1093/biomet/76.2.369 .
+24. Schwarz G Estimating the dimension of a model. Ann Stat. 1978;6 (2 ):461–464.
+25. Pu W , Niu X-F . Selecting mixed-effects models based on a generalized information criterion. J Multivar Anal. 2006;97 (3 ):733–758. 10.1016/j.jmva.2005.05.009 .
+26. Chen Z , Dunson DB . Random effects selection in linear mixed models. Biometrics. 2003;59 (4 ):762–769. 10.1111/j.0006-341X.2003.00089.x . 14969453
+27. Kinney SK , Dunson DB . Fixed and random effects selection in linear and logistic models. Biometrics. 2007;63 (3 ):690–698. 10.1111/j.1541-0420.2007.00771.x . 17403104
+28. Bondell HD , Krishna A , Ghosh SK . Joint variable selection for fixed and random effects in linear mixed-effects models. Biometrics. 2010;66 (4 ):1069–1077. 10.1111/j.1541-0420.2010.01391.x . 20163404
+29. Ahn M , Zhang HH , Lu W . Moment-based method for random effects selection in linear mixed models. Stat Sin. 2012;22 (4 ):1539–1562. 10.5705/ss.2011.054 . 23105913
+30. Lin X Estimation using penalized quasilikelihood and quasi-pseudo-likelihood in Poisson mixed models. Lifetime Data Anal. 2007;13 (4 ):533–544. 10.1007/s10985-007-9071-z . 18080833
+31. Buil A , Brown AA , Lappalainen T , Gene-gene and gene-environment interactions detected by transcriptome sequence analysis in twins. Nat Genet. 2015;47 (1 ):88–91. 10.1038/ng.3162 . 25436857
+32. Moore JH , Williams SM . Epistasis and its implications for personal genetics. Am J Hum Genet. 2009;85 (3 ):309–320. 10.1016/j.ajhg.2009.08.006 . 19733727
+33. Cordell HJ . Detecting gene-gene interactions that underlie human diseases. Nat Rev Genet. 2009;10 (6 ):392–404. 10.1038/nrg2579 . 19434077
+34. Vitezica ZG , Varona L , Legarra A . On the additive and dominant variance and covariance of individuals within the genomic selection scope. Genetics. 2013;195 (4 ):1223–1230. 10.1534/genetics.113.155176 . 24121775
+35. Zhu Z , Bakshi A , Vinkhuyzen AA , Dominance genetic variation contributes little to the missing heritability for human complex traits. Am J Hum Genet. 2015;96 (3 ):377–385. 10.1016/j.ajhg.2015.01.001 . 25683123
+36. Munoz PR , Jr R , Gezan SA , Unraveling additive from nonadditive effects using genomic relationship matrices. Genetics. 2014;198 (4 ):1759–1768. 10.1534/genetics.114.171322 . 25324160
+37. Li SY , Cui YH . Gene-centric gene-gene interaction: a model-based kernel machine method. Ann Appl Stat. 2012;6 (3 ):1134–1161.
+38. Akdemir D , Jannink JL . Locally epistatic genomic relationship matrices for genomic association and prediction. Genetics. 2015;199 (3 ):857–871. 10.1534/genetics.114.173658 . 25614606
+39. Ober U , Erbe M , Long N , Porcu E , Schlather M , Simianer H . Predicting genetic values: a kernel-based best linear unbiased prediction with genomic data. Genetics. 2011;188 (3 ):695–708. 10.1534/genetics.111.128694 . 21515573
+40. Saykin AJ , Shen L , Foroud TM , Alzheimer’s disease neuroimaging initiative biomarkers as quantitative phenotypes: genetics core aims, progress, and plans. Alzheimers Dement. 2010;6 (3 ):265–273. 10.1016/j.jalz.2010.03.013 . 20451875
+41. Lindstrom MJ , Bates DM . Newton-Raphson and EM algorithms for linear mixed-effects models for repeated-measures data. J Am Stat Assoc. 1988;83 (404 ):1014–1022.
+42. Lin B , Pang Z , Jiang J . Fixed and random effects selection by REML and pathwise coordinate optimization. J Comput Graph Stat. 2013;22 (2 ):341–355. 10.1080/10618600.2012.681219 . 24920875
+43. Fan J , Li R . Variable selection via nonconcave penalized likelihood and its oracle properties. J Am Stat Assoc. 2001;96 (456 ):1348–1360. 10.1198/016214501753382273 .
+44. Fan Y , Li R . Variable selection in linear mixed effects models. Annals Stat. 2012;40 (4 ):2043–2068. 10.1214/12-AOS1028 .
+45. Efron B , Hastie T , Johnstone I , Tibshirani R . Least angle regression. Ann Stat. 2004;32 (2 ):407–451.
+46. Sweeting TJ . Uniform asymptotic normality of the maximum likelihood estimator. Ann Stat. 1980;8 (6 ):1375–1381.
+47. Mardia KV , Marshall RJ . Maximum likelihood estimation of models for residual covariance in spatial regression. Biometrika. 1984;71 (1 ):135–146. 10.1093/biomet/71.1.135 .
+48. Kyung M , Ghosh SK . Maximum likelihood estimation for directional conditionally autoregressive models. J Stat Plan Infer. 2010;140 (11 ):3160–3179. 10.1016/j.jspi.2010.04.012 .
+49. Chu T , Zhu J , Wang H . Penalized maximum likelihood estimation and variable selection in geostatistics. Ann Stat. 2011;39 (5 ):2607–2625. 10.1214/11-AOS919 .
+50. Mashayekhi F , Hadavi M , Vaziri HR , Naji M . Increased acidic fibroblast growth factor concentrations in the serum and cerebrospinal fluid of patients with Alzheimer’s disease. J Clin Neurosci. 2010;17 (3 ):357–359.20079650
+51. Tao QQ , Sun YM , Liu ZJ , A variant within FGF1 is associated with Alzheimer’s disease in the Han Chinese population. Am J Med Genet B Neuropsychiatr Genet. 2014;165B (2 ):131–136.24464990
+52. Zou H The adaptive lasso and its oracle properties. J Am Stat Assoc. 2006;101 (476 ):1418–1429.
+53. Kunkle Brian W , Vardarajan Badri N , Naj Adam C , Identification of novel candidate genes for early-onset Alzheimer’s Disease through integrated whole-exome sequencing and exome chip array association analysis. Alzheimer’s Dement. 2016;12 (7 ):P177–P178. 10.1016/j.jalz.2016.06.306 .
+54. Counts SE , Mufson EJ . The role of nerve growth factor receptors in cholinergic basal forebrain degeneration in prodromal Alzheimer disease. J Neuropathol Exp Neurol. 2005;64 (4 ):263–272.15835262
+55. Cozza A , Melissari E , Iacopetti P , SNPs in neurotrophin system genes and Alzheimer’s disease in an Italian population. J Alzheimers Dis. 2008;15 (1 ):61–70.18780967
+56. Kawamata J , Shimohama S . Association of novel and established polymorphisms in neuronal nicotinic acetylcholine receptors with sporadic Alzheimer’s disease. J Alzheimers Dis. 2002;4 (2 ):71–76.12214130
+57. Dorszewska J , Florczak J , Rozycka A , Jaroszewska-Kolecka J , Trzeciak WH , Kozubski W . Polymorphisms of the CHRNA4 gene encoding the alpha4 subunit of nicotinic acetylcholine receptor as related to the oxidative DNA damage and the level of apoptotic proteins in lymphocytes of the patients with Alzheimer’s disease. DNA Cell Biol. 2005;24 (12 ):786–794. 10.1089/dna.2005.24.786 . 16332175
+58. Wu C , Ma S . A selective review of robust variable selection with applications in bioinformatics. Brief Bioinform. 2015;16 (5 ):873–883. 10.1093/bib/bbu046 . 25479793

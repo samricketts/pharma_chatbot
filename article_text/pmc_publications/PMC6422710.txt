@@ -1,0 +1,405 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9215515
+20498
+Neuroimage
+Neuroimage
+NeuroImage
+1053-8119
+1095-9572
+
+30639837
+6422710
+10.1016/j.neuroimage.2018.12.024
+NIHMS1002448
+Article
+A HIERARCHICAL INDEPENDENT COMPONENT ANALYSIS MODEL FOR LONGITUDINAL NEUROIMAGING STUDIES
+Wang Yikai
+Guo Ying Alzheimer’s Disease Neuroimaging Initiative
+‡
+Department of Biostatistics and Bioinformatics, Rollins School of Public Health, Emory University, 1518 Clifton Rd., Atlanta, Georgia 30322 USA
+(Corresponding Author) yguo2@emory.edu
+7 1 2019
+09 1 2019
+01 4 2019
+01 4 2020
+189 380400
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+In recent years, longitudinal neuroimaging study has become increasingly popular in neuroscience research to investigate disease-related changes in brain functions, to study neurodevelopment or to evaluate treatment effects on neural processing. One of the important goals in longitudinal imaging analysis is to study changes in brain functional networks across time and how the changes are modulated by subjects’ clinical or demographic variables. In current neuroscience literature, one of the most commonly used tools to extract and characterize brain functional networks is independent component analysis (ICA), which separates multivariate signals into linear mixture of independent components. However, existing ICA methods are only applicable to cross-sectional studies and not suited for modelling repeatedly measured imaging data. In this paper, we propose a novel longitudinal independent component model (L-ICA) which provides a formal modeling framework for extending ICA to longitudinal studies. By incorporating subject-specific random effects and visit-specific covariate effects, L-ICA is able to provide more accurate estimates of changes in brain functional networks on both the population-and individual-level, borrow information across repeated scans within the same subject to increase statistical power in detecting covariate effects on the networks, and allow for model-based prediction for brain networks changes caused by disease progression, treatment or neurodevelopment. We develop a fully traceable exact EM algorithm to obtain maximum likelihood estimates of L-ICA. We further develop a subspace-based approximate EM algorithm which greatly reduce the computation time while still retaining high accuracy. Moreover, we present a statistical testing procedure for examining covariate effects on brain network changes. Simulation results demonstrate the advantages of our proposed methods. We apply L-ICA to ADNI2 study to investigate changes in brain functional networks in Alzheimer disease. Results from the L-ICA provide biologically insightful findings which are not revealed using existing methods.
+
+
+1. Introduction
+
+Brain functional network analysis has been widely used in neuroimaging studies to reveal organization architectures of human brain. In functional imaging studies, neural activity is often captured by a series of 3-D fMRI brain images where the observed data represent the combinations of signals generated from various brain functional networks. One of the major objectives of fMRI-based network analysis is to decompose the observed series of brain images to identify underlying networks and characterize their spatial patterns and temporal dynamics. Independent component analysis (ICA) is one of the most commonly used tools for this purpose. As a special case of blind source separation, ICA decomposes observed fMRI signals into linear combinations of latent spatial source signals that are statistically as independent as possible. These latent independent components correspond to various functional networks. The popularity of the ICA method is mainly due to the following reasons. As a multivariate approach, ICA can jointly model the relationships among multiple voxels and hence provide a tool for investigating whole brain connectivity. Unlike second-order statistical methods such as PCA, ICA takes into account higher-order statistics, and the spatial statistical independence assumption of ICA is well-supported by the sparse nature in typical fMRI activation patterns (Calhoun et al., 2001a; Beckmann and Smith, 2004). Furthermore, ICA is a fully data-driven approach that does not require a priori temporal or spatial models. This makes ICA an important tool for analyzing resting-state fMRI where there is no experimental paradigm (Beckmann et al., 2005).
+
+The classical ICA model was first applied to neuroimaging studies for single subject fMRI data decomposition (Mckeown et al., 1998). Some extensions referred as group ICA (Calhoun et al., 2001a) have been proposed to decompose the multiple-subject fMRI data. One commonly used group ICA framework is the temporal concatenation group ICA (TC-GICA) which stacks subjects’ fMRI data in the temporal domain and then decompose the concatenated group data via ICA (Beckmann and Smith, 2005; Calhoun et al., 2001a; Guo and Pagnoni, 2008). The main limitation of TC-GICA is the assumption of the homogeneity in spatial distribution of the networks across subjects while studies have shown that functional networks can vary considerably due to subjects clinical, biological and demographic characteristics (Zhao et al., 2007; Greicius et al., 2004, among others). To address this limitation, a hierarchical ICA framework has been proposed to directly account for between-subject differences in group ICA decomposition and further allows for modeling subjects’ covariate effects in ICA (Guo and Tang, 2013; Shi and Guo, 2016; Lukemire et al., 2018). All the aforementioned ICA methods are developed for cross-sectional imaging studies where subjects are only scanned once during the study.
+
+In recent years, longitudinal studies have become increasingly popular in the neuroscience community. In such studies, brain imaging such as fMRI scans from the same individual are acquired repeatedly at multiple time points including the baseline as well as follow-up visit times. Within-subject changes in brain images across different time points provides great insights into effects and causal relationships in investigating changes in brain networks related to disease progression, treatment or neurodevelopment. By taking the advantage of using each subject as his/her own control, longitudinal studies are well-known to have the potentials to provide more reliable and significant scientific findings than cross-sectional studies. Existing longitudinal imaging analysis often focus on modeling fMRI brain activation or structural MRI volumetric measures across time (Calhoun et al., 2001b; Dettwiler et al., 2014; Lee et al., 2015). There has also been some work on longitudinal analysis of brain connectivity, which mainly involve modeling pairwise connectivity measures or network summary measures from a per-specified network structure (Dai et al., 2017; Wu et al., 2013; Li et al., 2009). However, methods are lacking for conducting longitudinal ICA that jointly decompose the subjects’ repeatedly measured fMRI data, extract the underlying brain functional networks and studying the longitudinal effects on brain networks.
+
+Existing group ICA methods are not suitable for modeling repeated measured images in longitudinal studies. There are only a couple of ad-hoc strategies for longitudinal ICA decomposition. The first approach is to conduct ICA separately at each time point and then take the ICs extracted from different time points for secondary longitudinal analysis. This separate analysis approach has limited capacity to evaluate changes in functional networks across time because 1) independent components do not have a natural order, it is difficult to identify matching components across different time points, especially in resting-state fMRI. 2) ICA algorithms usually have random elements in that they may find different local minima across different runs (Himberg, Hyvärinen and Esposito, 2004). This reduces the comparability of the ICs extracted separately at each visit. Another major drawback of the approach is that it ignores within-subject correlations among repeatedly measured data, which results in considerable loss of statistical power in testing covariate effects. The second ad-hoc approach is to adopt the TC-GICA framework by stacking all subjects’ repeatedly measured images into a single group data matrix and performing ICA decomposition to extract common group spatial source signals. Then, subject/visit-specific IC maps are reconstructed via post-ICA analysis such as the dual regression. The longitudinal effects are then evaluated based on the reconstructed subject/visit-specific ICs. The limitations of the TC-GICA approach are that it ignores the between-subject variability in the ICA decomposition, does not take into account the random variabilities introduced in reconstructing subject/visit-specific IC maps and does not account for within-subject correlations among repeated scans in ICA decomposition. These limitations lead to loss of accuracy and efficiency in estimating and testing covariate effects on brain networks in longitudinal studies.
+
+In this paper, we propose a longitudinal ICA (L-ICA) model that incorporates subject-level random effects and the time-dependent covariate effects in ICA decomposition to investigate temporal changes in brain networks and their associations with subjects clinical or demographic covariates. The L-ICA is a hierarchical model where the first-level of L-ICA decomposes a subject’s fMRI data obtained at a visit into a linear mixture of subject/visit-specific spatial source signals or ICs, and these ICs are then modeled at the second-level of L-ICA in terms of population-level baseline source signals, visit effects, covariate effects, subject-specific random effects and subject/visit-specific random variability. To the best of our knowledge, L-ICA is the first model-based extension of ICA for longitudinal imaging analysis. L-ICA is able to account for within-subject correlations among repeated scans, provide more accurate estimates of changes in brain functional networks on both the population-and individual-level, and increase statistical power in detecting covariate effects on networks. Furthermore, L-ICA provides model-based prediction for changes in brain networks related to disease progression, treatment or neurodevelopment.
+
+For model estimation, we proposed an exact EM algorithm which is fully traceable and simultaneously provides the estimation on population-level spatial maps and subject/visit-specific ICs. Furthermore, we propose a subspace-based approximate EM algorithm to provide more efficient computation. Results from the simulation studies and real data analysis show that the approximate EM algorithm significantly reduces the computation time while maintaining high estimation accuracy comparable to the exact EM. Moreover, we develop a statistical inference procedure for testing covariate effects in L-ICA, which demonstrates lower type I error and higher statistical power than the existing testing method based on TC-GICA. We apply the L-ICA method to investigating changes in functional networks in ADNI2 longitudinal rs-fMRI study. Results from L-ICA showed differential temporal changing patterns between Alzheimer and control groups in relevant brain networks, which is not revealed by existing ICA methods.
+
+This paper is organized as follows. The methodology of L-ICA is presented in the section 2 which includes the L-ICA model specification, estimation via the exact EM algorithm and the approximate EM algorithm, and the inference procedure. In the section 3, results from the simulation study are presented. Section 4 is the real data application of ANDI2 study. Conclusion and discussion are in section 5.
+
+2. Methods
+
+This section introduces the L-ICA framework, which includes the model specification, EM algorithms and the inference procedure. To set the notation, suppose that in a longitudinal fMRI study, there are N subjects and each of them has K visits during the study. At each visit, a series of T fMRI scans are acquired where each scan represents a 3D brain image containing V voxels. Let Y˜ij=[y˜ij(1),…,y˜ij(V)] be the T ×V fMRI data matrix for subject i (i = 1,...,N) at visit j (j = 1,...,K) where y˜ij(v)∈ℝT represents the centered blood-oxygen-level dependent (BOLD) signal series at voxel v (v = 1,...,V ). Prior to ICA, some preprocessing steps such as centering, dimension reduction and whitening of the observed data are usually performed to facilitate the subsequent ICA decomposition (Hyvärinen, Karhunen and Oja, 2001). Following a PPCA-based preprocessing procedure similar to that used in previous work (Beckmann and Smith, 2004; Shi and Guo, 2016; Guo and Tang, 2013), we perform the dimension reduction and whitening procedure on Y˜ij to obtain a q × V preprocessed data matrix Yij for subject i at visit j, where q is the number of independent components. Throughout the rest of our paper, we will present the L-ICA model and methodologies based on the preprocessed data.
+
+2.1. Longitudinal ICA model (L-ICA)
+
+In this section, we propose a longitudinal ICA (L-ICA) model to jointly decompose repeated measured fMRI data acquired across multiple visits. The L-ICA is developed under a hierarchical modeling framework. We present a schematic illustration of the L-ICA in Figure 1. The first level of L-ICA decomposes the subject/visit-specific fMRI data into a product of subject/visit-specific spatial source signals and temporal mixing matrix. This allows capturing the variabilities of the functional networks across subjects and across visits. We also include a noise term in the first level ICA model to account for residual variabilities in the fMRI data that are not explained by the extracted ICs, which is known as probabilistic ICA (Beckmann and Smith, 2004). Specifically, the first level of L-ICA is as follows, (1) Level1:yij(v)=Aijsij(v)+eij(v),
+
+where sij(v)=[sij(1)(v),…,sij(q)(v)]′ is a q × 1 vector with sij(l)(v)(l=1,…,q) representing the spatial source signal of the ℓth IC (i.e., brain functional network) at voxel v for subject i at visit j, Aij is the q × q mixing matrix for subject i at visit j, which is commonly assumed to be orthogonal given that yij(v) is whitened (Hyvärinen and Oja, 2000). eij(v) is a q × 1 vector that represents the noise in the subject’s data and eij(v) ∼ N(0,Ev) for v = 1,...,V. Prior to ICA, preliminary analysis such as prewhitening (Beckmann and Smith, 2004) can be performed to remove correlations in the noise term and to standardize the variability across voxels (More details about prewhitening can be found in Appendix). Therefore, following previous work (Hyvärinen, Karhunen and Oja, 2001; Beckmann and Smith, 2004, 2005; Guo and Pagnoni, 2008; Guo, 2011), we assume that the covariance for the noise term is isotropic across voxels, i.e. Ev=σ02Iq.
+
+At the second-level of L-ICA, we further model subject/visit-specific spatial source signals sij(v) as a combination of the population-level source signals, subject-specific random effects, visit-specific covariate effects and subject/visit-specific random variations. That is, (2) Level2:sij(v)=s0(v)+bi(v)+αj(v)+βj(v)′xi+γij(v),
+
+where s0(v) = [s01(v),...,s0q(v)]′ is the population-level spatial source signals. The q elements of s0(v) are assumed to be independent and non-Gaussian. bi(v) is the q × 1 subject-specific random effects for q ICs where bi(v) ∼ N(0,D) with D=diag(ν12,…,νq2). The subject-specific random effects help capture the within-subject correlations among the scans repeated acquired on the same subject at different visits, (Verbeke, 1997; Cheng et al., 2014; Gao, Ombao and Gillen, 2017). αj(v) is a q × 1 visit effects parameter representing the population-level changes in spatial source signals from baseline to the jth visit. xi = [xi1,...,xip]′ is the p × 1 subject-specific covariate vector which may contain a subject’s clinical and demographic information such as disease group, gender, age, etc. βj(v) is a p×q parameters matrix reflecting how subjects’ covariates xi modulate the subject/visit-specific brain networks. Finally, γij(v) is a q × 1 zero-mean Gaussian random vector, i.e. γi(v)∼iidN(0,τ2Iq), capturing the residual random variability among subject/visit-specific brain networks after adjusting for the other effects in the model. In the Level 2 model, by including the subject-specific random effects, L-ICA is able to borrow information among the multiple visits within the same subject to obtain more accurate estimate of unique patterns in brain networks specific to the individual. L-ICA incorporates the visit-specific covariate effects to allow flexibly modeling time-varying covariate effects on subjects’ brain networks in a longitudinal study.
+
+2.2. Source signal distribution model
+
+We specify mixtures of Gaussians (MoG) as our source distribution model for the population-level spatial source signals, s0(v). MoG has been selected as the distribution for independent components in quite a few ICA analysis (Attias, 2000; Guo, 2011; Guo and Tang, 2013; Shi and Guo, 2016) because it has several desirable properties for modeling fMRI signals. Within each brain functional network, only a small percentage of locations in the brain are activated or deactivated whereas most brain areas exhibit background fluctuations (Biswal and Ulmer, 1999). MoG are well suited to model such mixed patterns. Furthermore, MoG can capture various types of non-Gaussian signals (Xu et al., 1997; Gao, Shahbaba and Ombao, 2017; Kostantinos, 2000; Gao, Shen and Ombao, 2018) and also offer tractable likelihood-based estimation (McLachlan and Peel, 2004).
+
+Specifically, for ℓ = 1,...,q we assume that the spatial source signal s0ℓ(v) follows a MoG distribution, i.e. (3) s0l(v)∼MoG(πl,μl,σl2),
+
+where πℓ = [πℓ,1,...,πℓ,m]′ with ∑j=1mπl,j=1 is the weight parameters in MoG, μl=[μl,1,…,μl,m]′ and σl2=[σl,12,…,σl,m2]′ are the mean and variance parameters of the Gaussian component distributions in the MoG; m is the number of Gaussian components in MoG. The probability density function of MoG(πl,μl,σl2) is ∑j=1mπl,jg(s0l(v);μl,j,σl,j2) where g(·) is the pdf of the Gaussian distribution. In fMRI applications, mixtures of two to three Gaussian components can be used to capture the distribution of fMRI spatial signals, with the different Gaussian components representing the background fluctuation and the negative or positive fMRI BOLD effects respectively (Beckmann and Smith, 2004; Guo and Pagnoni, 2008; Guo, 2011; Wang et al., 2013; Guo and Tang, 2013). Without loss of generality, we denote the first Gaussian component, i.e. j = 1, to be the background fluctuation state throughout the rest of the paper. To facilitate derivations with the MoG model, we introduce a voxel-specific latent state variable zℓ(v) which represents which Gaussian component in MoG that voxel v belongs to. Specifically, zℓ(v) takes a value in {1,...,m} with probability p[zℓ(v) = j] = πℓ,j (j = 1,..,m). When zℓ(v) = j, the vth voxel follows the jth Gaussian component distribution in MoG, i.e. p(s0l(v)|zl(v)=j)=g(s0l(v);μl,j,σl,j2).
+
+2.3. Maximum likelihood estimation and the EM algorithm
+
+The parameters in L-ICA model is estimated via maximum likelihood (ML) approach. Based on the hierarchical models in (1) and assuming the independence among voxels, (2) and (3), the complete data log-likelihood for L-ICA model is, (4) l(Θ;Y,X,S,B,Z)=∑v=1Vlv(Θ;Y,X,S,B,Z),
+
+where Y={yij(v):i=1,…,N;j=1,…,K;v=1,…,V} are the preprocessed longitudinal fMRI data across subjects, X={xi:i=1,…,N} are subjects’ covariates, S={s0(v),sij(v):i=1,…,N;j=1,…,T;v=1,…,V} are the latent independent component spatial source signals, B={bi(v):i=1,…,N;v=1,…,V} are the subject-specific random effects and Z={z(v):v=1,…,V} are the latent states for MoG source distribution model; the parameters in L-ICA are denoted by Θ={{αj(v)},{βj(v)},{Aij},E,D,τ,{πl},{μl},{σl2}:i=1,…,N,j=1,…,K,v=1,…,V,l=1,…,m}.
+
+Since our likelihood function involves unobserved latent variables, we consider the expectation-maximization (EM) framework (Dempster, Laird and Rubin, 1977) for finding the maximum likelihood estimates of parameters. The EM algorithm is an iterative algorithm that alternates between performing an expectation step (Estep) and a maximization step (M-step). In the E-step, we compute an expectation of the log-likelihood conditioning on the distribution of latent variables given the observed data Y and the current parameter estimates Θ^(k). At the M-step, the updated maximum likelihood estimates of the parameters is computed by maximizing the expected log-likelihood found on the E-step. The parameter estimates found on the M-step are then used to begin another E-step, and the process is iterated until convergence, i.e. until the parameter estimates Θ^(k) and Θ^(k+1) in two consecutive iterations are considered sufficiently close. In the following, we present two EM algorithms for solving the L-ICA model. The first is an exact EM method that provides exact evaluation of the conditional expectation in the E-step. We then propose an approximation EM algorithm is computationally more efficient especially with large number of ICs.
+
+2.3.1. The exact EM algorithm
+
+We first develop an exact EM which has an explicit E-step and M-step to obtain ML estimates for the parameters in L-ICA.
+
+E-step: In the E-step, given the estimated parameter Θ^(k) from the last step, we evaluate the conditional expectation of the complete data log-likelihood as follows, (5) Q(Θ|Θ^(k))=∑v=1VEL(v)|y(v),Θ^(k)[l(Θ;Y,X,S,B,Z)],
+
+where L(v) = [b1(v)′, …,bN(v)′, s0(v)′, s11(v)′, …, sNK(v′)′ are the latent variables in L-ICA model which include the latent source signals on both the population and individual level and the subject-specific random effects. To calculate the conditional expectation, we need to derive the conditional distribution of L(v) given the observed data y(v), i.e. p(L(v)|y(v),Θ^(k)). To facilitate this derivation, we take the following steps. First, we derive the distribution of L(v) given both the observed data y(v) and the latent states z(v), i.e. p(L(v)|y(v),z(v),Θ^(k)), which can be shown to be a multivariate Gaussian distribution. Next, we derive the conditional distribution of the latent states given the observed data, i.e. p[z(v)|y(v),Θ^(k)], by applying the Bayes’ Theorem. Finally, we obtain the conditional distribution of L(v) given y(v) by integrating out z(v), i.e. p(L(v)|y(v),Θ^(k))=∑z(v)∈Rp(L(v)|y(v),z(v),Θ^(k))p[z(v)|y(v);Θ^(k)],
+
+where R represents the set of all possible values of z(v), i.e., R={zr}r=1mq where zr=[z1r,…,zqr]′ and zlr∈{1,…,m} for ℓ = 1,...q.
+
+Following this procedure, we can derive explicit form for the conditional distribution for the latent variables and subsequently deriving the conditional expectation Q(Θ|Θ^(k)) in (5).
+
+M-step: In the M-step, the updated estimates are obtained by maximizing the expected log-likelihood function computed in the E-step, i.e., (6) Θ^(k+1)=argmaxΘQ(Θ|Θ^(k)).
+
+We have derived explicit solutions for all parameter updates (please see Appendix for details).
+
+The steps of the exact EM algorithm is summarized in Algorithm 1. The detailed derivations are presented in the Appendix.
+
+After obtaining the ML estimates Θ^, we estimate the baseline population- and subject/visit-specific source signals as well as their variability based on the mean and variance of their conditional distributions, i.e., [s0(v)|y(v);Θ^] and [sij(v)|y(v);Θ^]. These conditional moments are directly obtainable from the E-step of our algorithm upon convergence and no separate post-ICA steps are required. Based on the estimated covariate effects {β^(v)}, we can investigate how subjects’ clinical and demographic characteristics affects their brain functional networks and their changes across visits. Furthermore, the L-ICA also provides model-based prediction of the brain functional networks for specific sub-populations at a given visit. For example, for a sub-population characterized by a covariates pattern 𝓍∗, the predicted brain functional networks at the jth visit can be derived by plugging the ML parameter estimates into Level 2 of L-ICA, i.e. (7) s^j(v)=s^0(v)+α^j(v)+β^j(v)′x*,
+
+Algorithm 1 The Exact EM Algorithm
+
+Initial values: Obtain an initial values Θ^(0) based on existing group ICA software.	
+repeat	
+E-step:	
+1. Evaluate the conditional distribution of the latent variables p(L(v)|y(v),Θ^(k)) using the proposed three-step approach:	
+1.a Evaluate the multivariate Gaussian p[L(v)|y(v),z(v),Θ^(k)];	
+1.b Evaluate p[z(v)|y(v);Θ^(k)] via Bayes’ Theorem	
+1.c integrate out the latent states z(v) p(L(v)|y(v),Θ^(k))=∑z(v)∈Rp(L(v)|y(v),z(v),Θ^(k))p[z(v)|y(v);Θ^(k)]
+
+	
+2. Estimate conditional expectation Q(Θ|Θ^(k)) based on p(L(v)|y(v),Θ^(k)).	
+M-step:	
+Update parameters estimates Θ^(k+1)=argmaxΘQ(Θ|Θ^(k)).
+
+	
+until convergence, i.e. ‖Θ^(k+1)−Θ^(k)‖‖Θ^(k)‖&lt;ϵ	
+
+2.4. Subspace approximate EM algorithm
+
+The exact EM algorithm requires O(mq) operations at each voxel which is an exponential increase with regard to the number of the ICs extracted in L-ICA, which will be time consuming when q is large. The reason for needing O(mq) operations is that, the exact EM evaluates the conditional distribution of the latent states z(v), i.e. p[z(v) | y(v)], across the whole sample space R of z(v), which has a cardinality of mq. To reduce the computation load, we develop a subspace-based approximate EM for L-ICA model. The motivation of the subspace EM is based on the observation from fMRI analysis that the density of p[z(v) | y(v)] is mostly concentrated on a subspace Rs={zr∈R,s.t.∑lI(zlr≠1)≤1}. To help understand this subspace, recall that the latent state zlr takes values in (1,...,m) with the first state, i.e. zlr=1, corresponding to the background fluctuation while other states, i.e. zlr≠1, corresponding to either positive or negative signals at a voxel. Therefore, the subspace Rs corresponds to that a voxel has active signals in at most one of the q ICs. This approximation is reasonable when the source signals are sparse across ICs, i.e. p(zℓ ≠ 1) ≈ 0 for ℓ = 1,...,q. Because given the statistical independence of the ICs, p(zl*≠1|zl≠1)=p(zl*≠1)≈0. That is given a voxel is activated in the ℓth IC, the probability for it to be also activated in another IC ℓ∗ is close to zero. In Shi and Guo (2016), we have provided theoretical proof that the density of the conditional distribution of the latent states is mostly concentrated in the subspace Rs when the source signals are sparse in each IC, which is the case with the fMRI spatial source signals which have been shown to be sparse across the brain for each network (Mckeown et al., 1998; Daubechies et al., 2009). It is noteworthy to mention that there are some network hubs in the brain that are active in multiple networks. The proposed subspace EM is still able to recover overlapping spatial signals across the ICs, hence capable of identifying brain regions that are involved in multiple functional networks (Shi and Guo, 2016). The subspace approximation only results in small attenuation on the estimated source signals in the overlapping region.
+
+In the subspace EM algorithm, we follow the similar steps as in the exact EM algorithm presented in Algorithm 1. The main difference is that when evaluating and summing across the latent states z(v) in the E-step and M-step, we replace the whole sample space R with the proposed subspace Rs which only has carnality of (m−1)q +1. This means the subspace EM only requires O(mq) operations at each voxel which scales linearly with the number of ICs and is significantly faster than the exponential growth of the exact EM algorithm.
+
+2.5. Statistical inference for testing covariate effects in L-ICA
+
+In this session, we propose a statistical inference procedure for testing covariate effects in L-ICA to investigate whether the covariates have significant effects on brain functional networks and their changes across visits. Typically, statistical inference in maximum likelihood estimation is conducted by inverting the information matrix to estimate the variance-covariance matrix of ML estimates of the parameters. However, this standard approach is not feasible when modeling fMRI data with L-ICA because the high dimensionality of the parameter space makes extremely challenge to obtain a reliable inversion of information matrix. To address this issue, we develop a computational efficient statistical inference procedure based on the connection between the L-ICA and multivariate linear models. The proposed inference procedure provides an efficient approach to estimate the variance-covariance matrix of the time-specific covariate effects at each voxel by directly using the output from our EM algorithms.
+
+Specifically, let yi(v) be the ith subjects longitudinal fMRI data which is a qK×1 vector obtained by stacking his/her data across visits, i.e. yi(v)=[yi1(v)′,…,yiK(v)′]′.
+
+By collapsing the hierarchical models, we rewrite the L-ICA model in a non-hierarchical form which is similar to classical multivariate linear model, i.e., (8) yi*(v)=Xi*C*(v)+ζi(v),
+
+where yi*(v)=Ai′yi(v) is the response vector, Xi* is the design matrix which includes the visit time and the covariates in L-ICA, C*(v) is the parameter matrix which includes the effects parameters in L-ICA such as the visit effects α and covariate effects β, ζi(v) is the zero-mean Gaussian random variation term which includes the subject-specific random effects and noise terms in L-ICA. Please see the Appendix for details.
+
+The model in (8) can be viewed a multivariate linear model. Based on linear model theory, a variance estimator for parameter estimates C^*(v) can be derived as follows, (9) Var[C^*(v)]=(∑i=1NXi*′W(v)−1Xi*)−1.
+
+where W(v) = Var(ζi(v)) and can be estimated by plugging ML estimates obtained from the EM algorithm.
+
+After deriving the variance estimator for the ML estimates of the parameters in L-ICA, We can then conduct hypothesis testing on the covariate effects the brain networks and their changes across visits. Specifically, we first formulate the hypothesis in terms of linear combinations of the parameters in the L-ICA model, i.e. H0 : l′C∗(v) = 0 vs. H1 : l′C∗(v) = 0 where l is a vector of constant coefficients specified based on the hypothesis that we are testing on. We can then construct the test statistic as, (10) z(v)=l′C^*(v)l′Va^r[C^*(v)]l,
+
+the test statistic z(v) will then be compared against its null distribution to derive the p-value for testing the significance of the covariate effects at voxel v. Standard multiple testing correction procedures can be applied to control for family wise error rate (FWER) or the false discovery rate (FDR) when testing the covariate effects across voxels, (Genovese, Lazar and Nichols, 2002; Chumbley and Friston, 2009; Storey, 2011; Wang, Wu and Yu, 2017).
+
+3. Simulation Study
+
+We conducted three types of simulation studies to 1) evaluate the performance of the proposed L-ICA model as compared with the approach based on the existing TC-GICA framework, 2) to evaluate the performance of the proposed inference method for testing covariate effects on brain networks, and 3) to evaluate the performance of the proposed subspace-based EM algorithm as compared with the exact EM algorithm.
+
+3.1. Simulation study I: performance of the L-ICA v.s. TC-GICA-based longitudinal analysis
+
+In this simulation study, we evaluate the performance of the proposed L-ICA model versus the TC-GICA based approach for analyzing longitudinal fMRI. In the simulation, we considered three different sample sizes N = 10,20,60 and each subject has three visits: baseline, visit 1 and visit 2 (K = 3). The simulated fMRI data were generated from 3 underlying ICs or source signals, i.e., q = 3, (see Figure 2 (A)). For each IC, we generated the source signals {s0(v)} as a 3D spatial map with the dimension of 53 × 63 × 3, which was based on three selected slices from a real fMRI imaging data. The source intensity at the activated region in the IC maps was generated from a Gaussian distribution with the mean of 4. The visit specific intercepts, i.e., α2(v) and α3(v), are set to be 2 and 3 respectively for the voxels within the activated IC regions and 0 for other voxels. We then generated a binary covariate for each subject as xi∼iid Bernoulli(0.5). The covariate effects at the jth visit, βj(v), were specified using a 2D Gaussian process within the IC regions where the mean level of the covariate effects increased across the 3 visits. Additionally, we generated subject-specific random effects, i.e., bi(v), from a zero-mean Gaussian distribution with the covariance matrix of D = diag(1.02, 1.12, 1.22). For the residual subject/visit-specific variability, i.e., Υi(v), we considered two levels of variability: low (τ2 = 0.5) and high (τ2 = 4). The time series associated with each IC was generated from real fMRI time courses with the length of T = 200 and hence represented realistic fMRI temporal dynamics. We generated subject/visit-specific time sources that had similar frequency features but different phase patterns (Guo, 2011; Shi and Guo, 2016), which mimic temporal dynamics in resting-state fMRI. After simulating the spatial source signal and the temporal mixing matrices for the ICs, Gaussian background noise with a standard deviation of 1 (i.e. E = Iq) were added to generate observed fMRI data.
+
+Following previous work (Beckmann and Smith, 2005; Guo and Pagnoni, 2008; Guo, 2011), we evaluate the performance of each method based on the correlations between the true ICs and estimated ICs in both temporal and spatial domains. We report the estimation accuracy for both the population-level as well as the subject/visit-specific source signals. To compare the performance in estimating the covariate effects, we report the mean square errors (MSEs) of β^(v) defined by 1KV∑j=1K∑v=1V‖β^j(v)−βj(v)‖F2 averaged across simulation runs. Here || · ||ℱ is the Frobenius norm for a matrix. Since ICA recovery is permutation invariant, the estimated ICs were matched to the true IC with which it has the highest spatial correlation. We present the simulation results in Table 1. The results show that L-ICA provides more accurate estimates for the source signals on both the population- and subject/visit-level, by demonstrating higher correlation with the true source signals. L-ICA also provides more accurate estimation of the covariate effects with smaller mean square errors (MSE). Moreover, compared with the TC-GICA, the L-ICA estimates of the source signals and covariate effects are more stable with consistently smaller standard deviations (SD) across simulation runs.
+
+We also display the estimated population-level IC maps at baseline and the last visit, i.e. visit 2, based on both methods in Figure 2. The L-ICA shows better accuracy in recovering the true activation patterns in the ICs at both visits. The intensity of the source signals in the activated regions in each IC increases from baseline to the last visit in true IC maps. This increase in intensity is well captured by the L-ICA estimated IC maps but not obvious in the TC-GICA estimated IC maps. Furthermore, the estimated IC maps from the TC-GICA approach show “cross-talk” between the ICs. In Figure 2, we also present the true and estimated longitudinal trends of source signals for activated voxels in an IC. The L-ICA shows better performance than the TC-GICA approach in recovering the temporal changing patterns across voxels.
+
+3.2. Simulation study II: performance of the proposed inference procedure for testing covariate effects
+
+In this simulation study, we evaluate the performance of the methods in testing covariates effects on ICs. We simulated fMRI datasets with two source signals (q = 2), two visits (K = 2), one binary covariate and the sample size of N = 40. Since we need a large number of simulation runs to estimate the type I error and power in the test, we generated source signal images with the dimension of 20×20 to facilitate computation. The covariate effects at baseline β1(v) are set to be 0 representing no difference at baseline and visit-specific covariate effects β2(v) took values in {0, 0.375, 0.5, 0.625, 0.75, 0.875, 1, 1.125, 1.25} for the IC region and are set to 0 for background region.
+
+We applied L-ICA method and TC-GICA method to the simulated datasets and tested for covariate effects using both methods. We considered two type of hypothesis tests. The first one aims to test whether the covariate has an effect on the network source signals at a given visit, where the hypotheses are H0 : β2(v) = 0 versus H1 : β2(v) ≠ 0 for the given IC. In the second test, we assess the whether the covariate’s effect on the network vary across visits, or equivalently whether the covariate affect the longitudinal changes in the network across visits, where the hypotheses are H0 : β1(v) = β2(v) versus H0 : β1(v) ≠ β2(v). These two type of tests are the most commonly conducted in longitudinal studies. For L-ICA, hypothesis tests were conducted using the test proposed in section 2.5. For TC-GICA based approach, covariate effects were tested by performing post-ICA longitudinal analysis of the dual-regression reconstructed subject/visit-specific IC maps. We estimated the Type-I error rate with the empirical probabilities of not rejecting H0 at voxels where H0 is true. We estimated the power of the tests with the empirical probabilities of rejecting H0 at voxels where H1 is true.
+
+We report the Type-I error rates and the statistical power for detecting covariate effects based on 1000 simulation runs in Figure 3. The panel (A) in Figure 3 presents the Type I error rates where the diagonal line represents the nominal level for the type I error corresponding to various significance levels. The proposed L-ICA test demonstrates lower type-I error rates which are closer to the nominal level as compared with the TC-GICA method. For the power analysis presented in panel (B), the L-ICA have much higher statistical power in detecting covariate effects than the TC-GICA method. Overall, these results indicate that L-ICA provides more reliable and powerful statistical tests for assessing covariate effects on the functional networks.
+
+3.3. Simulation study III: performance of the subspace EM algorithm for LICA
+
+In this section, we examined the performance of the subspace approximate EM algorithm as compared with the exact EM algorithm for the L-ICA model. We simulated data for ten subjects and considered three different number of ICs: q = 3,5,10. We summarize the results based on the two EM algorithms in Table 2. Results show that the accuracy of the subspace EM is comparable to that of the exact EM. The major advantage of the subspace EM is that it was much faster than the exact EM. This advantage becomes more clear with the increase of the number of ICs. For q = 10, the subspace-based EM only uses about 2% computation time of the exact EM.
+
+4. Application to longitudindal rs-fMRI data from ADNI2 study
+
+4.1. Rs-fMRI acquisition and description
+
+We applied the proposed L-ICA method to the longitudinal rsfMRI data from the Alzheimer’s Disease Neuroimaging Initiative 2 (ADNI2) study. One of the main purposes of the ADNI2 project is to examine changes in neuroimaging with the progression of mild cognitive impairment (MCI) and Alzheimer’s Disease (AD). Data used in our analysis were downloaded from ADNI website (http://www.adni.loni.usc.edu) and included longitudinal rs-fMRI images that were collected at baseline screening, 1 year and 2 year for four disease groups, i.e. Alzheimer’s Disease (AD), late mild cognition impairment (LMCI), early mild cognition impairment (EMCI) and control (CN). A T1-weighted high-resolution anatomical image (MPRAGE) and a series of resting state functional images were acquired with 3.0 Tesla MRI scanner (Philips Systems) during longitudinal visits. The rs-fMRI scans were acquired with 140 volumnes, TR/TE = 3000/30 ms, flip angle of 80 and effective voxel resolution of 3.3×3.3×3.3 mm. More details can be found at ADNI website (http://www.adni.loni.usc.edu). Quality control was performed on the fMRI images both by following the Mayo clinic quality control documentation (version 02–02-2015) and by visual examination. After the quality control, 51 subjects were included for the following ICA analysis. Among these subjects, 6 are diagnosed with AD, 17 are diagnosed with EMCI, 12 are diagnosed with LMCI and 16 are normal controls (CN) at baseline. For gender, there are 2 (33.3%) males for AD, 10 (58.8%) males for EMCI, 7 (58.3%) males for LMCI and 8 (50.0%) males for CN. The mean (SD) of age for each group is 80.3 (4.5) for AD, 72.8 (6.2) for EMCI, 70.0 (7.1) for LMCI and 74.8 (4.7) for CN. Based on F tests, there is no significant between-group difference in gender (p-value = 0.734) but significant difference in age across the groups (p-value = 0.008). We included both gender and age as covariates in the following L-ICA modeling to control for any potential confounding effects.
+
+4.2. Rs-fMRI preprocessing
+
+Skull stripping was conducted on the T1 images to remove extra-cranial material. The first 4 volumes of the fMRI were removed to stablize the signal, leaving 136 volumes for subsequent prepossessing. We registered each subject’s anatomical image to the 8th volume of the slice-time-corrected functional image and then the subjects’ images were normalized to MNI standard brain space. Spatial smoothing with a 6mm FWHM Gaussian kernel and motion corrections were applied to the function images. A validated confound regression approach (Satterthwaite et al., 2014; Wang et al., 2016; Kemmer et al., 2015) was performed on each subject’s rs-fMRI time series data to remove the potential confounding factors including motion parameters, global effects, white matter (WM) and cerebrospinal fluid (CSF) signals. Furthermore, motion-related spike regressors were included to bound the observed displacement and the functional time series data were bandpass filtered to retain frequencies between 0.01 and 0.1 Hz which is the relevant range for rs-fMRI. Lastly, we performed the prior-ICA preprocessing steps including centering, dimension reduction and whitening as described in section 2.
+
+4.3. L-ICA model specification for ADNI2 study
+
+We applied the L-ICA for modeling the preprocessed baseline, 1 year and 2 year rs-fMRI data from ADNI2 study to examine the longitudinal pattern in brain networks among AD, LMCI, EMCI and CN subjects. We decomposed data into 14 ICs. The first level of L-ICA decompose subjects’ longitudinal fMRI data as the product of subject/visit-specific mixing matrix and spatial source signals as specified in equation (1). In the second level model of the L-ICA, we included three binary indicators representing subjects’ membership in the four disease groups (with the CN as the reference group) as our primary covariates of interest. We also included subjects’ gender and baseline age as covariates to adjust for any potential confounding effects. Specifically, The second level for lth IC was specified as sij(l)(v)=s0(l)(v)+bi(l)(v)+αj(l)(v)+(βj1(l)(v),…,βj5(l)(v))(xiADxiLMCIxiEMCIxiAgexiGender)+γij(l)(v),
+
+Where xiAD=1 if subject i is in the AD group and 0 otherwise, and xiLMCI and xiEMCI are defined similarly. βj1(l)(v),βj2(l)(v) and βj3(l)(v) represent the contrast between AD, LMCI and EMCI vs. CN, respectively, at the jth visit. We estimated the parameters in the L-ICA model using the subspace-based EM algorithm implemented by in-house MATLAB programs. To ensure the validity of the results from EM, we initialized the EM algorithm with 20 different initial values and the results were highly consistent.
+
+4.4. Longitudinal changes in brain networks for ADNI2 study based on L-ICA
+
+Among the extracted ICs from L-ICA, we identified components that correspond to well-established brain functional networks (Smith et al., 2009) such as the default mode network (DMN), medial visual network, occipital visual network and frontoparietal left network, which are visualized in Figures 4, 5, 6, 7. In Figure 4, we present the L-ICA model-based estimates of the DMN for the four disease groups at the three visits. The subpopulation maps were estimated at the mean baseline age (73.7 year old) and averaged between the two genders to control for confounding effects. They were thresholded based on the estimated intensity of the source signals. To provide better visualization of the changing patterns across voxels in the DMN, we also present in Figures 8 the model-based estimates of longitudinal trends of source signals for voxels in the two subregions of DMN, i.e. the posterior cingulate cortex (PCC) and the lateral parietal cortex (LPC). Figure 4 and Figure 8 shows that the four disease groups demonstrated different temporal changing patterns in the DMN source signals across the visits. Results show that the AD and LMCI patients generally have more significant changes in the DMN network across the 3 visits as compared with the EMCI and CN subjects. We also found that the longitudinal changes in the network may not necessarily follow a linear pattern and are different between the PCC and LPC regions of the DMN. Another finding from Figure 8 is that the AD group demonstrate larger variations across voxels within the network as compared with the other groups.
+
+We also present the estimated subpopulation IC maps and the voxel-level longitudinal trends for other networks of interest (Figures 5, 6, 7, 9). Similar as the DMN, we found that the AD and LMCI patients generally have more significant changes in these networks across the 3 visits as compared with the EMCI and CN subjects, the longitudinal changes are not necessarily linear across time, and that the AD group demonstrates the larger within-network heterogeneity as compared with the other groups.
+
+We then applied the proposed inference procedure to formally test the between group differences at each visit while controlling for potential confounding effects from age and gender. We considered the differences between AD and CN group to demonstrate network changes in clinically diagnosed Alzheimer patients as compared with normal controls. We also considered the differences between the two MCI groups to investigate the heterogeneity between the early and late MCI stages. We then conducted tests to examine longitudinal changes from baseline to year 2 within disease group. For comparison, we applied the TC-GICA based method to examine the group differences and longitudinal differences. We illustrate results for the DMN for demonstration purpose.
+
+Figure 10 and Figure 11 present the between-group test results for AD vs. CN and LMCI vs. EMCI, respectively. The proposed L-ICA detected significant between-group differences at each visit. Furthermore, the test results from L-ICA indicate that the between-group differences tend to increase across time with group differences observed at increasingly more spatial locations in the network. In comparison, the TC-GICA based approach identified few differences between the groups. Figure 12 represents the differences between baseline and following visits based on L-ICA. It shows that AD has more longitudinal changes compared with other groups. Specifically, Figure 13 presents the results for testing the changes from baseline screening to year 2 for AD group. Results from L-ICA show that the AD group demonstrated noticeable longitudinal changes in DMN, which are consistent with findings reported in previous work (Dai et al., 2017). In comparison, the TC-GICA approach identified very little longitudinal changes in DMN among the AD patients. As in the simulation studies, the results from the real data analysis show that the L-ICA method has higher statistical power in detecting group differences and longitudinal changes. Based on a reviewer’s suggestion, we also conduct additional analyses to evaluate the robustness of the between-group test results based on the L-ICA. Our findings indicate the test results from L-ICA are fairly robust (Please refer to Appendix for details).
+
+5. Discussion
+
+In this paper, we proposed a longitudinal ICA model (L-ICA) to formally quantify time-evolving patterns in brain function networks. In the L-ICA model, we incorporated subject-specific random effects to capture the varbilities across subjects and also borrow information across visits within the same subject to improve the model efficiency. Furthermore, to capture the possible non-linear changing effects in brain functional networks, L-ICA incorporates visit-specific covariate effects which can flexibly capture time-varying effects from subjects’ demographic, clinical and biological variables. The proposed L-ICA has demonstrated lower type I error and higher statistical power in detecting covariate effects on brain networks and their changes across time.
+
+We developed a maximum likelihood estimation method via EM algorithms for L-ICA model. Based on results from the EM, L-ICA model can simultaneously estimate population and subject/visit-specific brain functional networks. We show that L-ICA’s model-based estimates of brain functional networks are more accurate on both population- and individual level. Furthermore, we proposed a computationally efficient subspace based EM algorithm. Simulation study showed that the approximate EM dramatically improves computational efficiency while achieving similar accuracy in model estimation. Matlab functions for implementing the L-ICA model will be added to an Matlab toolbox “HINT: Hierarchical Independent Component Analysis Toolbox” (Lukemire et al., 2018) which is publicly available and updated on NITRC (NeuroImaging Tools and Resources Collaboratory) and the website of Center for Biomedical Imaging Statistics (CBIS) at Emory University.
+
+Some potential extensions to L-ICA is to incorporate more general model specification such as functional data analysis for more flexible modeling of longitudinal effects. Another potential extension to L-ICA is to incorporate spatial dependence in modeling the covariate effects in the ICA which can help improve the accuracy and efficiency in effects estimation. Furthermore, as a reviewer points out, given the computational cost of the MoG source distribution, one may consider alternative source distributions such as fixed or binary prior densities (Hyvärinen, Karhunen and Oja, 2001), which is worth investigating in future work.
+
+Acknowledgements
+
+We thank Dr. Tian Dai for helping with downloading and preprocessing ADNI2 study data. Research reported in this publication was supported by the National Institute of Mental Health of the National Institutes of Health under Award Number R01MH105561 and R01MH079448 and by the National Center for Advancing Translational Sciences of the National Institutes of Health under Award number UL1TR002378. The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
+
+ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer?s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Appendix
+
+1. Q-function in E step: The detailed expression for the complete data loglikelihood function at each voxel v is: lv(Θ)=∑i=1N∑j=1K[logg(yij(v);Aijsij(v),E)+logg(sij(v);s0(v)+bi(v)+Cj(v)xi*,τ2I)]+∑i=1Nlogg(bi(v);0,D)+logg(s0(v);μz(v),Σz(v))+∑l=1qlogπl,zl(v)
+
+where Cj(v) = [αj(v),βj(v)′] of dimension xi*=[1,xi′]′ and g(x;μ,Σ) denotes the pdf of multivariate normal distribution for random vector x with mean μ and covariance Σ.
+
+We derive the Q function in E step as follows, Q(Θ|Θ^(k))=E[l(Θ;Y,X,S,B,Z)|Y]=Q1(Θ|Θ^(k))+Q2(Θ|Θ^(k))+Q3(Θ|Θ^(k))+Q4(Θ|Θ^(k))+Q5(Θ|Θ^(k)),
+
+where Q1(Θ|Θ^(k))=−NKV2log|E|−12∑v=1V∑i=1N∑j=1Ktr{[yij(v)yij(v)′−2AijE[sij(v)|y(v);Θ^(k)]yij(v)′+AijE[sij(v)sij(v)′|y(v);Θ^(k)]Aij′]E−1},Q2(Θ|Θ^(k))=−NKVq2log|τ2|−12τ2∑v=1V∑i=1N∑j=1Ktr{[E[sij(v)sij(v)′+s0(v)s0(v)′+bi(v)bi(v)′|y(v);Θ^(k)]+2E[bi(v)s0(v)′|y(v);Θ^(k)]+2xi*′Cj(v)′E[s0(v)+bi(v)−sij(v)|y(v);Θ^(k)]+Cj(v)xi*xi*′Cj(v)′−2E[s0(v)sij(v)′+bi(v)sij(v)′|y(v);Θ^(k)]]},Q3(Θ|Θ^(k))=−NV2log|D|−12∑v=1V∑i=1Ntr{D−1E[bi(v)bi(v)′|y(v);Θ^(k)]},Q4(Θ|Θ^(k))=−12∑v=1V∑l=1q∑j=1mp[zl(v)=j|y(v);Θ^(k)]{logσl,j2+1σl,j2[μl,j2+E[s0(l)(v)2|zl(v)=j;y(v),Θ^(k)]−2μl,jE[s0(l)(v)|zl(v)=j,y(v);Θ^(k)]]},Q5(Θ|Θ^(k))=∑v=1V∑l=1q∑j=1mp[zl(v)=j|y(v);Θ^(k)]logπl,j,
+
+2. Details about the E step of the exact EM algorithm. In this section, we provide the details about the derivation in the exact E step. By collapsing our model across N subjects and K visits, for v = 1,..,V, (11) y(v)=A(U(c)μz(v)+U(c)ψ(v)+Hb(v)+C*(v)X*+γ(v))+e(v),=AU(c)μz(v)+AC*(v)X*+ARrz(v)+e(v),
+
+where A=blockdiag(A11,…,ANK),b(v)=[b1(v)′,…,bN(v)′]′,γ(v)=[γ11(v)′,…,γNK(v)′]′, e(v)=[e11(v)′,…,eNK(v)′]′,U(c)=1NK⊗Iq,H=(IN⊗1K)⊗Iq,C*(v)=IN⊗ [C1(v)′,..,CK(v)′]′,X*=[x1*′,…,xN*′]′R=[H,U(c),IqNK],rz(v)=[b(v)′,ψz(v)′,γ(v)′]′. Conditioned on latent variable z(v), (11) can be represented as: (12) y(v)−AU(c)μz(v)−AC*(v)X*|rz(v),z(v)∼N(ARrz(v),ϒv),rz(v)|z(v)∼N(0,Γz(v))
+
+where ϒv=INK⊗Ev,Γz(v)=blockdiag(IN⊗D,Σz(v),τ2IqNK). From (12), we can derive the conditional distribution of [rz(v)|y(v),z(v)] through Bayes’ Theorem, rz(v)|y(v),z(v)∼N(μr(v)|y(v),Σr(v)|y(v)),μr(v)|y(v)=Σr(v)|y(v)R′A′ϒ−1[y(v)−AU(c)μz(v)−AC*(v)X*],Σr(v)|y(v)=(Γz(v)−1+R′A′ϒ−1AR)−1.
+
+Next, we evaluate the conditional distribution of L(v). Given that L(v) = Prz(v) + Qz(v) we have L(v)|y(v),z(v)∼N(Pμr(v)|y(v)+Qz(v),PΣr(v)|y(v)P′), where P=(IqN000Iq0HU(c)IqNK),Qz(v)=(0μz(v)U(c)μz(v)+C*(v)X*).
+
+Based on Bayes’ Theorem, we have p[z(v)|y(v)]∝(∏l=1qπl,zl(v))g(AU(c)μz(v)+AC*(v)X*,ARΓz(v)R′A′+ϒv).
+
+By integrating out p[z(v) | y(v)], we obtain the conditional distribution of L(v).
+
+3. Details about the M step of the exact EM In this section, we only provide the M step of the exact EM.
+
+Update the time-specific covariate effects Cj(v): for j = 1,..,K, v = 1,..,V,
+
+C^j(v)(k+1)=(∑i=1Nxi*xi*′)−1∑i=1N{xi*(E[sij(v)′−s0(v)′−b0(v)′|y(v);Θ^(k)])}.
+
+Update the mixing matrices Aij: for i = 1,..,N, j = 1,..,K, A^ij(k+1)={∑v=1Vyij(v)E[sij(v)′|y(v);Θ^(k)]}{∑v=1VE[sij(v)sij(v)′|y(v);Θ^(k)]}−1,
+
+and then update A^ij(k+1)=H(A⌣ij(k+1)) where H(⋅) is the orthogonalization transformation.
+
+Update the first level variance term Ev=σ02Iq with:
+
+σ^02(k+1)=1NKVq∑v=1V∑i=1N∑j=1K{yij(v)′yij(v)−2yij(v)′A^ij(k+1)E[sij(v)|y(v);Θ^(k)]+tr[A^ij(k+1)E[sij(v)sij(v)′|y(v);Θ^(k)]A^ij(k+1)′]}.
+
+Update subject-specific variance term D:
+
+D^(k+1)=1NV∑v=1V∑i=1NE[bi(v)bi(v)′|y(v);Θ^(k)],
+
+Update second level variance term τ2Iq:
+
+τ^2(k+1)=1NKVq∑v=1V∑i=1N∑j=1Ktr{E[sij(v)sij(v)′+s0(v)s0(v)′+bi(v)bi(v)′|y(v);Θ^(k)]+2E[bi(v)s0(v)′|y(v);Θ^(k)]+2xi*′Cj(v)′E[s0(v)+bi(v)−sij(v)|y(v);Θ^(k)]+Cj(v)xi*xi*′Cj(v)′−2E[s0(v)sij(v)′+bi(v)sij(v)′|y(v);Θ^(k)]},
+
+Update πℓ,j:
+
+π^l,j(k+1)=1V∑v=1Vp[zl(v)=j|y(v);Θ^(k)].
+
+Update μℓ,j:
+
+μ^l,j(k+1)=∑v=1Vp[zl(v)=j|y(v);Θ^(k)]E[s0l(v)|zl(v)=j,y(v);Θ^(k)]Vπ^l,j(k+1).
+
+Update σl,j2 :
+
+σ^l,j2(k+1)=∑v=1Vp[zl(v)=j|y(v);Θ^(k)]E[s0l(v)2|zl(v)=j,y(v);Θ^(k)]Vπ^l,j(k+1)−[μ^l,j(k+1)]2.
+
+Here, E[s0ℓ(v) | zℓ(v) = j,y(v);Θ], E[s0ℓ(v)2 | zℓ(v) = j,y(v);Θ] and p[zℓ(v) = j | y(v);Θ] are the marginal conditional moments and probability related to the ℓth IC. They are derived by summing across all the possible states of the other q − 1 ICs as follows, (13) E[s0l(v)|zl(v)=j,y(v);Θ]=∑z(v)∈R(l,j)p[z(v)|y(v);Θ]E[s0l(v)|y(v),z(v);Θ]p[zl(v)=j|y(v);Θ],p[zl(v)=j|y(v);Θ]=∑z(v)∈R(l,j)p[z(v)|y(v);Θ].
+
+where R(l,j) is defined as {zr∈R:zlr=j} for all ℓ = 1,..,q,j = 1,...,m.
+
+4. Statistical inference for testing covariate effects in L-ICA: In this section, we present the statistical inference procedure for testing covariate effects in L-ICA. We first stack the fMRI data from all visits of a subject to have the subject-specific fMRI data yi(v) of dimension qK ×1 which is [yi1(v)′,...,yiK(v)′]′, and a non-hierarchical form of L-ICA is derived by combining equations (1),(2) and (3), (14) Ai′yi(v)=Uμz(v)+α(v)+Xiβ(v)+Uψz(v)+Ubi(v)+γi(v)+Ai′ei(v),
+
+where Ai=blkdiag(Ai1,…,AiK),γi(v)=[γi1(v)′,…,γiK(v)′]′, ei(v)=[ei1(v)′,…,eiK(v)′]′, α(v) = [α1(v)′,α2(v)′,..,αk(v)′]′, β(v) = [vec[β1(v)′]′,…,vec[βk(v)′]′]′, U = 1K ⨂ Iq and Xi=IK⊗(xi′⊗Iq). The model in (14) is further re-written as (15) yi*(v)=X0α*(v)+Xiβ(v)+ζi(v),=Xi*C*(v)+ζi(v),
+
+where yi*(v)=Ai′yi(v),Xi*=[X0,Xi],X0=(10K−1′1K−1IK−1)⊗Iq, α*(v)=[μz(v)′,α2(v)′,…,αK(v)′]′, C*(v) =[α*(v)′,β(v′)]′ and ζi(v)=Uψz(v)+Ubi(v)+γi(v)+Ai′ei(v)∼N(0,Wi(v)) is the multivariate zero-mean Gaussian noise term where Wi(v)=U(Σz(v)+D)U′+AiEvAi′+τ2IqK, which can be shown as Wi(v)=W(v)=U(Σz(v)+D)U′+(σ02+τ2)IqNK.
+
+5. Details about the pre-whitening prior to ICA: Following previous work (Beckmann and Smith, 2004), we perform preliminary analysis to prewhiten the data so that the noise covariance can be assumed to be isotropic across voxels in the probabilistic ICA model. Specifically, if the original covariance of the noise eij(v) is known as σ02Ev, we can use the Cholesky decomposition Ev=KvKv′ to rewrite model (1) as (16) Kv−1yij(v)=Kv−1Aijsij(v)+Kv−1eij(v),
+
+and obtain a new representation, (17) y¯ij(v)=A¯ijsij(v)+e¯ij(v),
+
+where e¯ij(v)∼N(0,σ02I). Therefore, the noise covariance becomes isotropic and standardized across voxels.
+
+When Ev is unknown, the prewhitening can be achieved by the following iterative procedure: (1) start with an initial noise covariance Ev(0), prewhiten the data as in (16), (2) with voxel-wise prewhitened data, we can readily derive the ML estimates of A¯^ij,ML,s^ij,ML(v) and σ^0,ML2 (Beckmann and Smith, 2004), (3) re-estimate the noise covariance Ev based on the residuals e¯^ij(v) from model (17), and then repeat steps (1)-(3). By performing the iterative procedure, we obtain the preprocessed data for the subsequent ICA modeling.
+
+6. Robustness of between-group test results based on L-ICA We conduct additional analyses to evaluate the robustness of the between-group comparison results in the DMN for the ADNI2 study based on the proposed L-ICA. We obtain 51 data sets by applying the leave-one-out procedure on the ADNI2 data, where each data set contains 50 subjects by removing one subject from the original data. We then run L-ICA and conduct between-group comparisons for each of the data sets. We evaluate the consistency of the comparison results for each voxels in the DMN by examining whether the significance of the test result is consistent or not with the original data. Specifically, for voxel v, the consistency rate is defined as 151∑k=1511(sigk(v)=sigorg(v)), where sigorg(v) is a binary indicator that equals 1 if the voxel v showed significant between-group test result in the original data and equals 0 if otherwise, and sigk(v) is the corresponding binary test significance indicator under the kth leave-one-out dataset. Table 3 presents the results on the consistency rate across voxels for each of the group comparisons, including AD vs. CN at every visit, EMCI vs. LMCI at every visit, and longitudinal changes from baseline to year 2 for the AD group. Specifically, we first present the average consistent rate across all voxels in the network (1st row in Table 3) Then, we present the average consistency rates separately for voxels that are significant in the original tests (2nd row in Table 3) and voxels that are non-significant in the original tests (3rd row in Table 3). Results show that the group test results based on the L-ICA on average have a consistent rate of over 90% across the DMN and also within both significant voxels and non-significant voxels, indicating the between-group comparison results based on L-ICA are fairly robust for the ADNI2 study.
+
+Fig 1. Schematic illustration of the hierarchical modeling framework of L-ICA. (A) the first level model of L-ICA with N subjects and K visits where each subject/visit-specific fMRI data is decomposed into q subject/visit-specific ICs, here q = 2 for illustration purpose. (B) the second level model of L-ICA for one specific IC where the subject/visit-specific ICs are modelled in terms of population-level source signals, subject specific random effects, visit effects and visit-specific covariate effects.
+
+Fig 2. Comparison between the proposed L-ICA and the TC-GICA based approach for estimating the population-level IC maps at baseline and the last visit (N=20, low subject/visitspecific random variability): (A) truth, (B) L-ICA estimates and (C) estimates from TCGICA. Column (i) represents the IC maps at baseline; Column (ii) represents the IC maps at last visit; Column (iii) represents the longitudinal trends for activated voxels (where each line represents a voxel) in the first IC (IC1). Results show that L-ICA provides more accurate estimates than TC-GICA at each visit and more precisely captures the voxel-specific longitudinal trend.
+
+Fig 3. Simulation results for testing covariate effects based on 1000 runs with sample size N = 40 using the proposed L-ICA method (red) and the TC-GICA (blue) based method. We considered two types of hypothesis tests: testing the time-specific covariate effect at a given visit (the 2nd visit), i.e. H0 : β2(v) = 0 (the left column), and testing the time-varying longitudinal covariate effects between the 1st and 2nd visit, i.e. H0 : β1(v) = β2(v) (the right column). Panel (A) and (B) presents the type I error rates and the statistical power, respectively. The results show that the L-ICA method demonstrates lower type I error and higher statistical power as compared with the TC-GICA based method.
+
+Fig 4. L-ICA estimates of subpopulation spatial source signal maps for the DMN for the four disease group across the visits, with the mean baseline age (73.7 year old) and are averaged between genders. All IC maps are thresholded based on the source signal intensity level.
+
+Fig 5. L-ICA estimates of subpopulation spatial source signal maps for the medial visual network for the four disease group across the visits, with the mean baseline age (73.7 year old) and are averaged between genders. All IC maps are thresholded based on the source signal intensity level.
+
+Fig 6. L-ICA estimates of subpopulation spatial source signal maps for the occipital visual network for the four disease group across the visits, with the mean baseline age (73.7 year old) and are averaged between genders. All IC maps are thresholded based on the source signal intensity level.
+
+Fig 7. L-ICA estimates of subpopulation spatial source signal maps for the FPL for the four disease group across the visits, with the mean baseline age (73.7 year old) and are averaged between genders. All IC maps are thresholded based on the source signal intensity level.
+
+Fig 8. L-ICA estimates of longitudinal trends for voxels in the DMN network for each disease group in ADNI2 study. Results show that AD and late MCI (LMCI) patients generally have more changes across visits and that AD group has higher within-network variations than the other disease groups at each visit.
+
+Fig 9. L-ICA estimates of longitudinal trends for voxels in FPL and visual networks for each disease group in ADNI2 study. Results show that AD and LMCI patients generally have more changes across visits and that AD group has higher within-network variations than the other disease groups at each visit.
+
+Fig 10. p-values for testing group differences in DMN between AD and CN subjects at each visit. The first row shows the test results based on L-ICA and the second row shows the results from the TC-GICA based approach.
+
+Fig 11. p-values, thresholded at 0.05, for testing group differences in DMN between EMCI and LMCI subjects at each visit. L-ICA finds between-group differences in DMN at each visit while TC-GICA detects little group differences.
+
+Fig 12. Longitudinal changes from baseline and later visits in DMN within AD, LMCI, EMCI and CN groups. The first column shows the comparison between year 1 versus baseline and the second column shows the comparison between year 2 versus baseline, where the value represents the longitudinal differences in source signal intensity for DMN voxels, i.e. s^j(v)−s^0(v).
+
+Fig 13. p-values, thresholded at 0.05, for longitudinal changes between baseline and year 2 for the default mode network (DMN) among the AD group. L-ICA finds longitudinal changes in major regions of DMN among AD patients while TC-GICA detects little changes in DMN among these patients.
+
+Table 1 Simulation results for comparing L-ICA method against TC-GICA-based method with 100 simulation runs. Values presented are mean and standard deviation of correlations between the true and estimated: population-level spatial maps, subject/visit-specific spatial maps and subject/visit-specific time courses. The mean and standard deviation of the MSE of the covariate effects estimates are also provided.
+
+Subj-Visit	Population-level spatial maps	Subject/Vist-specific spatial maps	
+Var	Corr.(SD)	Corr.(SD)	
+	L-ICA	TC-GICA	L-ICA	TC-GICA	
+	
+Low					
+N=10	0.929 (0.021)	0.853 (0.116)	0.979 (0.016)	0.942 (0.095)	
+N=20	0.959 (0.015)	0.889 (0.113)	0.981 (0.012)	0.937 (0.093)	
+N=60	0.984 (0.008)	0.940 (0.109)	0.999 (0.007)	0.951 (0.085)	
+High					
+N=10	0.886 (0.053)	0.621 (0.213)	0.960 (0.044)	0.845 (0.152)	
+N=20	0.899 (0.042)	0.691 (0.187)	0.962 (0.034)	0.854 (0.141)	
+N=60	0.958 (0.011)	0.856 (0.162)	0.991 (0.019)	0.900 (0.099)	
+Subj-Visit	Subject/Vist-specific time courses	Covariate Effects	
+Var	Corr.(SD)	Corr.(SD)	
+	L-ICA	TC-GICA	L-ICA	TC-GICA	
+	
+Low					
+N=10	0.997 (0.004)	0.941 (0.076)	0.152 (0.009)	0.159 (0.068)	
+N=20	0.998 (0.003)	0.942 (0.075)	0.093 (0.006)	0.153 (0.063)	
+N=60	1.000 (0.001)	0.957 (0.063)	0.040 (0.000)	0.128 (0.039)	
+High					
+N=10	0.987 (0.019)	0.884 (0.092)	0.253 (0.015)	0.273 (0.101)	
+N=20	0.990 (0.014)	0.885 (0.093)	0.187 (0.011)	0.239 (0.086)	
+N=60	0.992 (0.007)	0.910 (0.077)	0.098 (0.004)	0.192 (0.083)	
+
+Table 2 Simulation results for comparing subspace EM against exact EM based on 50 simulation runs.Values presented are mean and standard deviation of the computational/iteration time (in second), the mean and standard deviation of correlations between the true and estimated: baseline population-level spatial maps and subject/visit-specific time courses, the mean and standarddeviation of the MSE of the covariates estimates. The stopping criteria is based on the correlation between true and estimated subject/visit-specific spatial maps to reach 0.99 for q = 3,5 and 0.90 for q = 10.
+
+	Iteration time	Baseline population-level spatial maps	
+	(SD)	Corr.(SD)	
+# of IC	Exact EM	Subspace EM	Exact EM	Subspace EM	
+	
+q=3	98.77(2.53)	55.26(0.85)	0.963(0.001)	0.962(0.001)	
+q=5	387.08 (5.61)	89.42(4.51)	0.962(0.005)	0.961(0.004)	
+q=10	11254.67(9.01)	187.82(6.31)	0.913(0.010)	0.907(0.009)	
+	Subject/Visit-specific time coureses	Covariate Effects	
+	Corr.(SD)	MSE(SD)	
+# of IC	Exact EM	Subspace EM	Exact EM	Subspace EM	
+	
+q=3	0.998(0.003)	0.998(0.003)	0.083(0.009)	0.081(0.009)	
+q=5	0.996(0.004)	0.995(0.003)	0.083(0.011)	0.085(0.010)	
+q=10	0.989(0.010)	0.986(0.007)	0.097(0.023)	0.102(0.021)	
+
+Table 3 Consistency of the group comparisons results based on L-ICA for the ADNI2 study.
+
+Averaged Consistency Rate	AD vs CN	LMCI vs EMCI	Year 2 vs Baseline	
+	Baseline	Year 1	Year 2	Baseline	Year 1	Year 2	for the AD group	
+	
+All voxels in DMN	0.948	0.949	0.945	0.936	0.943	0.926	0.966	
+Voxels with differences	0.960	0.966	0.968	0.959	0.961	0.955	0.922	
+Voxels without differences	0.945	0.946	0.937	0.927	0.938	0.912	0.973	
+
+‡ Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how-to-apply/ADNI-Acknowledgement-List.pdf
+
+
+References
+
+ATTIAS H (2000). A variational Bayesian framework for graphical models. Advances in neural information processing systems 12 209–215.
+BECKMANN CF and SMITH SM (2004). Probabilistic independent component analysis for functional magnetic resonance imaging. Medical Imaging, IEEE Transactions on 23 137–152.
+BECKMANN CF and SMITH SM (2005). Tensorial extensions of independent component analysis for multisubject FMRI analysis. Neuroimage 25 294–311.15734364
+BECKMANN CF , DELUCA M , DEVLIN JT and SMITH SM (2005). Investigations into resting-state connectivity using independent component analysis. Philosophical Transactions of the Royal Society of London B: Biological Sciences 360 1001–1013.16087444
+BISWAL BB and ULMER JL (1999). Blind source separation of multiple signal sources of fMRI data sets using independent component analysis. Journal of computer assisted tomography 23 265–271.10096335
+CALHOUN V , ADALI T , PEARLSON G and PEKAR J (2001a). A method for making group inferences from functional MRI data using independent component analysis. Human brain mapping 14 140–151.11559959
+CALHOUN VD , ADALI T , MCGINITY V , PEKAR JJ , WATSON T and PEARLSON G (2001b). fMRI activation in a visual-perception task: network of areas detected using the general linear model and independent components analysis. NeuroImage 14 1080–1088.11697939
+CHENG Q , GAO X , MARTIN R (2014). Exact prior-free probabilistic inference on the heritability coefficient in a linear mixed model. Electronic Journal of Statistics 8 3062–3076.
+CHUMBLEY JR and FRISTON KJ (2009). False discovery rate revisited: FDR and topological inference using Gaussian random fields. Neuroimage 44 62–70.18603449
+DAI T , GUO Y , INITIATIVE ADN (2017). Predicting individual brain functional connectivity using a Bayesian hierarchical model. NeuroImage 147 772–787.27915121
+DAUBECHIES I , ROUSSOS E , TAKERKART S , BENHARROSH M , GOLDEN C , D’ARDENNE K , RICHTER W , COHEN J and HAXBY J (2009). Independent component analysis for brain fMRI does not select for independence. Proceedings of the National Academy of Sciences 106 10415–10422.
+DEMPSTER AP , LAIRD NM and RUBIN DB (1977). Maximum likelihood from incomplete data via the EM algorithm. Journal of the royal statistical society. Series B (methodological) 1–38.
+DETTWILER A , MORUGAVEL M , PUTUKIAN M , CUBON V , FURTADO J and OSHERSON D (2014). Persistent differences in patterns of brain activation after sports-related concussion: a longitudinal functional magnetic resonance imaging study. Journal of neurotrauma 31 180–188.23914845
+GAO X , OMBAO H and GILLEN D (2017). Fisher information matrix of binary time series. arXiv preprint arXiv:1711.05483.
+GAO X , SHAHBABA B and OMBAO H (2017). Modeling Binary Time Series Using Gaussian Processes with Application to Predicting Sleep States. arXiv preprint arXiv:1711.05466.
+GAO X , SHEN W and OMBAO H (2018). Regularized matrix data clustering and its application to image analysis. arXiv preprint arXiv:1808.01749.
+GENOVESE CR , LAZAR NA and NICHOLS T (2002). Thresholding of statistical maps in functional neuroimaging using the false discovery rate. Neuroimage 15 870–878.11906227
+GREICIUS MD , SRIVASTAVA G , REISS AL and MENON V (2004). Default-mode network activity distinguishes Alzheimer’s disease from healthy aging: evidence from functional MRI. Proceedings of the National Academy of Sciences of the United States of America 101 4637–4642.15070770
+GUO Y (2011). A general probabilistic model for group independent component analysis and its estimation methods. Biometrics 67 1532–1542.21517789
+GUO Y and PAGNONI G (2008). A unified framework for group independent component analysis for multi-subject fMRI data. NeuroImage 42 1078–1093.18650105
+GUO Y and TANG L (2013). A hierarchical model for probabilistic independent component analysis of multi-subject fMRI studies. Biometrics 69 970–981.24033125
+HIMBERG J , HYVÄRINEN A and ESPOSITO F (2004). Validating the independent components of neuroimaging time series via clustering and visualization. Neuroimage 22 1214–1222.15219593
+HYVÄRINEN A , KARHUNEN J and OJA E (2001). Independent component analysis 46 JohnWiley &amp; Sons.
+HYVÄRINEN A and OJA E (2000). Independent component analysis: algorithms and applications. Neural networks 13 411–430.10946390
+KEMMER PB , GUO Y , WANG Y and PAGNONI G (2015). Network-based characterization of brain functional connectivity in Zen practitioners. Frontiers in psychology 6 .
+KOSTANTINOS N (2000). Gaussian mixtures and their applications to signal processing. Advanced Signal Processing Handbook: Theory and Implementation for Radar, Sonar, and Medical Imaging Real Time Systems.
+LEE S , ZIPUNNIKOV V , REICH DS and PHAM DL (2015). Statistical image analysis of longitudinal RAVENS images. Frontiers in neuroscience 9 368.26539071
+LI Y , ZHU H , CHEN Y , An H , GILMORE J , LIN W and SHEN D (2009). LSTGEE: Longitudinal analysis of neuroimaging data In Medical Imaging 2009: Image Processing 7259 72590F International Society for Optics and Photonics.
+LUKEMIRE J , WANG Y , VERMA A and GUO Y (2018). HINT: A Toolbox for Hierarchical Independent Component Analysis of Neuroimaging Data. arXiv preprint arXiv:1803.07587.
+MAKEOWN MJ , MAKEIG S , BROWN GG , JUNG T-P , KINDERMANN SS , KINDERMANN RS , BELL AJ and SEJNOWSKI TJ (1998). Analysis of fMRI Data by Blind Separation Into Independent Spatial Components. Human Brain Mapping 6 160–188.9673671
+MCLACHLAN G and PEEL D (2004). Finite mixture models. John Wiley &amp; Sons.
+SATTERTHWAITE TD , WOLF DH , ROALF DR , RUPAREL K , ERUS G , VANDEKAR S , GENNATAS ED , ELLIOTT MA , SMITH A , HAKONARSON H (2014). Linked sex differences in cognition and functional connectivity in youth. Cerebral cortex 25 2383–2394.24646613
+SHI R and GUO Y (2016). Investigating differences in brain functional networks using hierarchical covariate-adjusted independent component analysis. The annals of applied statistics 10 1930.28367256
+SMITH SM , FOX PT , MILLERT KL , GLAHN DC , FOX PM , MACKAY CE , FiILIPPINI N , WATKINS KE , TORO R , LAIRD AR (2009). Correspondence of the brain’s functional architecture during activation and rest. Proceedings of the National Academy of Sciences 106 13040–13045.
+STOREY JD (2011). False discovery rate In International encyclopedia of statistical science 504–508. Springer.
+VERBEKE G (1997). Linear mixed models for longitudinal data In Linear mixed models in practice 63–153. Springer.
+WANG Y , Wu H and Yu T (2017). Differential gene network analysis from single cell RNAseq. Journal of Genetics and Genomics 44 331–334.28642063
+WANG Y , ZHAO Y , ZHANG L , LIANG J , ZENG M and LIU X (2013). Graph construction based on re-weighted sparse representation for semi-supervised learning. Journal of Information &amp; Computational Science 10 375–383.
+WANG Y , KANG J , KEMMER PB and GUO Y (2016). An efficient and reliable statistical method for estimating functional connectivity in large scale brain networks using partial correlation. Frontiers in neuroscience 10 .
+WU K , TAKI Y , SATO K , QI H , Kawashima R and Fukuda H (2013). A longitudinal study of structural brain network changes with normal aging. Frontiers in human neuroscience 7 113.23565087
+XU L , CHEUNG C , YANG H and AMARI S (1997). Maximum equalization by entropy maximization and mixture of cumulative distribution functions. In Proc. of ICNN97 1821–1826.
+ZHAO X-H , WANG P-J , C.-B. LI , Z.-H. HU , Q. XI , W.-Y. Wu and Tang X-W . (2007). Altered default mode network activity in patient with anxiety disorders: an fMRI study. European Journal of Radiology 63 373–378.17400412

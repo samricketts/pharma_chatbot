@@ -1,0 +1,290 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9713490
+21159
+Med Image Anal
+Med Image Anal
+Medical image analysis
+1361-8415
+1361-8423
+
+28732595
+5578831
+10.1016/j.media.2017.06.013
+NIHMS894090
+Article
+Probabilistic Modeling of Anatomical Variability Using a Low Dimensional Parameterization of Diffeomorphisms
+Zhang Miaomiao a
+Wells William M. III ab
+Golland Polina a
+a Computer Science and Artificial Intelligence Laboratory, MIT
+b Brigham and Women’s Hospital, Harvard Medical School
+28 7 2017
+08 7 2017
+10 2017
+01 10 2018
+41 5562
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+We present an efficient probabilistic model of anatomical variability in a linear space of initial velocities of diffeomorphic transformations and demonstrate its benefits in clinical studies of brain anatomy. To overcome the computational challenges of the high dimensional deformation-based descriptors, we develop a latent variable model for principal geodesic analysis (PGA) based on a low dimensional shape descriptor that effectively captures the intrinsic variability in a population. We define a novel shape prior that explicitly represents principal modes as a multivariate complex Gaussian distribution on the initial velocities in a bandlimited space. We demonstrate the performance of our model on a set of 3D brain MRI scans from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database. Our model yields a more compact representation of group variation at substantially lower computational cost than the state-of-the-art method such as tangent space PCA (TPCA) and probabilistic principal geodesic analysis (PPGA) that operate in the high dimensional image space.
+
+Probabilistic modeling
+principal geodesic analysis
+diffeomorphic shape variability
+bandlimited space
+
+1. Introduction
+
+The study of anatomical shape variability across populations and its relationship with disease processes plays an important role in medical image analysis. For example, identifying pathological brain shape changes caused by neurodegenerative disorders from brain MRI scans provides new insights into the nature of the disease and supports treatment (Gerig et al., 2001; Nemmi et al., 2015). Research in shape analysis mainly focuses on developing statistical models with well defined shape descriptors such as landmarks (Cootes et al., 1995; Bookstein, 1997), medial axes (Pizer et al., 1999), and deformation-based representations (Christensen et al., 1993). This paper focuses on a deformation-based shape descriptor with the underlying assumption that the geometric information in the deformations explicitly reflects the shape changes, i.e., shrinkage or expansion, of local structures. In many clinical applications, it is natural to require the deformation to be a diffeomorphism, which guarantees a differentiable bijective mapping with a differentiable inverse. A well developed framework of Large Deformation Diffeomorphic Metric Mapping (LDDMM) endowed with a distance metric in the space of diffeomorphisms was introduced by Beg et al. (2005) to estimate such deformations.
+
+The deformable template approach, which is also known as atlas building, is commonly used for statistical shape analysis of diffeomorphic transformations (Joshi et al., 2004; Twining et al., 2005; Vialard et al., 2011). This class of methods employs image registration to match a template to each individual subject and then computes statistics of the resulting transformations. However, the high dimensional nature of the imaging data, for instance, a 1283 or 2563 image grid as a shape descriptor for a 3D brain MRI presents substantial challenges for model selection and uncertainty estimation if only a small number of image scans is available. Statistical inference in such a high dimensional space demands large computational resources and special programming techniques. Moreover, the optimization landscape contains numerous local minima. To address this problem, data dimensionality reduction methods that extract relevant latent structure from image transformations have been proposed in the diffeomorphic setting. Vaillant et al. (2004) performed principal component analysis (PCA) in the linearized tangent space of diffeomorphisms (TPCA) on the initial momenta, performing statistical modeling of transformations as a step that follows the estimation of deformations. Similar approaches based on the parameterization of stationary velocity fields (Sweet and Pennec, 2010) and free-form B-spline deformations (Onofrey et al., 2013) were also developed. Qiu et al. (2012) constructed an empirical shape distribution by using TPCA to estimate the intrinsic dimensionality of the diffeomorphic surface variation. A Bayesian model of shape variability has been proposed to extract the principal modes after estimating a covariance matrix of transformations (Gori et al., 2013). A unified framework of principal geodesic analysis (PGA) was first developed by Fletcher et al. (2003) to infer the principal modes of variation simultaneously with the data fitting procedure. This method generalized PCA to finite-dimensional manifolds and estimated the geodesic subspaces by minimizing the sum-of-squared geodesic distances. Moreover, PGA enabled factor analysis of diffeomorphisms that treated data variability as a joint inference problem in a probabilistic principal geodesic analysis (PPGA) model (Zhang and Fletcher, 2014, 2015a). All prior models reviewed here were designed to find a compact low dimensional space to represent the data. However, their estimation still remains computationally expensive due to the fact that each operation has to be performed numerically on dense image grids in a high dimensional space.
+
+In contrast, we propose to detect the latent subspaces of anatomical shape variability by using a low dimensional shape descriptor of diffeomorphisms via bandlimited initial velocity fields (Zhang and Fletcher, 2015b), in a model we call low dimensional probabilistic principal geodesic analysis (LPPGA). More specifically, our contributions are as follows:
+
+We define a low dimensional probabilistic framework of factor analysis in the context of diffeomorphic atlas building.
+
+We dramatically reduce the computational cost of detecting principal geodesics of diffeomorphisms by employing a bandlimited parametrization in the Fourier space.
+
+We enforce the orthogonality constraints on the principal modes, which is computationally intractable in high dimensional models like PPGA (Zhang and Fletcher, 2014).
+
+This paper is an extension of a recently published conference paper (Zhang et al., 2016), with several additional developments. First, we provide in-depth derivations of the statistical model and inference procedure. Second, we include comprehensive experimental results that validate the method. Moreover, we demonstrate Markov Chain Monte Carlo sampling in the proposed shape space, which is computationally intractable on dense image grids. We report estimated principal modes in the ADNI brain MRI dataset (Jack et al., 2008) and compare them with the results of TPCA and PPGA of diffeomorphisms estimated on the full image grid. The experimental results show that the low dimensional statistics encode important features of the data, better capture the group variation and improve data interpretability. Moreover, our model requires substantially lower computational resources.
+
+2. Background
+
+In this section, we first briefly review the mathematical background of diffeomorphic atlas building in the LDDMM setting (Beg et al., 2005) with geodesic shooting (Younes et al., 2009; Vialard et al., 2012). We then provide a short summary of low dimensional Fourier representation that forms the basis of our method.
+
+Let J1, · · ·, JN be the N input images that are assumed to be square integrable functions defined on a d-dimensional torus domain Ω = ℝd/ℤd (Jn ∈ L2(Ω, ℝ),n ∈ {1, · · ·, N}) and Diff(Ω) be the space of diffeomorphisms. The problem of diffeomorphic atlas building is to find the template I ∈ L2(Ω, ℝ) and the deformation ϕn ∈ Diff(Ω) from template I to each input image Jn that minimize the energy function
+
+(1) E({ϕn},I)=∑n=1NDist(Jn,I∘ϕn-1)+Reg(ϕn),
+
+where ∘ is a composition operator that resamples I by the inverse of the smooth mapping ϕn, Dist(·, ·) denotes a distance function between images such as sum-of-squared difference (SSD), normalized cross correlation (NCC), or mutual information (MI), and Reg(·) is a regularization term that enforces smoothness of the transformations.
+
+2.1. Flows of Diffeomorphisms and Geodesics
+
+The optimization of the energy function (1) over the transformations {ϕn} is challenging due to the nonlinearity of the space of diffeomorphisms. Mathematically, we consider the time-varying deformation ϕn(t, x) : t ∈ [0,1], x ∈ Ω to be generated by the integral flow of time-varying velocity field vn(t, x) ∈ V in the tangent space of diffeomorphisms at the identity Id (V = TIdDiff(Ω)): dϕn(t,x)dt=vn∘ϕn(t,x),ϕn(0,x)=Id.
+
+The geodesic path between the identity element and transformation ϕn is uniquely determined by a right-invariant Riemannian metric ||·||V on the time-dependent velocity fields as
+
+(2) ∫01‖vn(t,x)‖Vdt.
+
+The geodesic is obtained at the minimum of (2) by integrating the Euler-Poincaré differential equation (EPDiff) (Arnol’d, 1966; Miller et al., 2006) with the initial condition of vn(t, x) at t = 0: (3) ∂vn∂t=-adv†v=-K[(Dvn)Tmn+Dmnvn+mndiv(vn)],
+
+where ad† is an adjoint operator, D is the Jacobian matrix and div is the divergence operator. The operator 𝒦 is the inverse of a symmetric, positive-definite differential operator ℒ : V → V* that maps a velocity field vn ∈ V to a momentum vector mn ∈ V* such that mn = ℒvn and vn = 𝒦mn. Evaluation of Eq. (3) is known as geodesic shooting (Younes et al., 2009; Vialard et al., 2012). It has been shown that the geodesic shooting algorithm substantially reduces the computational complexity and improves the optimization landscape by only manipulating the initial velocity with the geodesic evolution equation (3). Therefore, in this paper we choose to optimize over initial velocities rather than the entire time-dependent velocity fields. With a slight abuse of notation, we set vn ≜ vn(0, x) to represent the initial velocity for the nth image Jn in the remaining sections.
+
+2.2. Fourier Representation of Velocity Fields
+
+It has been recently shown that the velocity fields generated by the EPDiff (3) can be efficiently captured via a discrete low dimensional bandlimited representation in the Fourier space (Zhang and Fletcher, 2015b), which dramatically speeds up geodesic shooting algorithm. The main idea is that the velocity fields do not develop high frequencies and only a small amount of low frequencies contributes to the transformations (Figure 1), therefore working in a bandlimited space captures the deformations as accurately as the original algorithm. Here we briefly review the relevant details of the method.
+
+Let f : ℝd → ℝ be a real-valued function. The Fourier transform ℱ of f is given by
+
+(4) F[f](ξ)=∫ℝdf(x)e-2πi〈ξ,x〉dx,
+
+where x = (x1,..., xd) is a d-dimensional image coordinate vector, ξ = (ξ1,..., ξd) is a d-dimensional frequency vector, and 〈 ·, · 〉 denotes the inner product operator. The inverse Fourier transform ℱ−1 of a discretized Fourier signal f̃
+
+(5) F-1[f∼](x)=∑ξf∼(ξ)e2πi〈ξ,x〉
+
+is an approximation of the original signal f. For vector-valued functions, such as diffeomorphisms ϕ and velocity fields v, we apply the (inverse) Fourier transform to each vector component separately.
+
+Analogous to the definition of a distance metric in (2), Zhang and Fletcher (2015b) developed a new representation of velocity fields entirely in the frequency domain that leads to an efficient computation of diffeomorphisms in a low dimensional space. In particular, if Ṽ is the discrete Fourier space of velocity fields, then for any elements ũ,ṽ ∈ Ṽ, the distance metric at identity is defined as
+
+〈u∼,v∼〉V∼=∑ξ(L∼u∼(ξ),v∼(ξ)),
+
+where ℒ̃ : Ṽ ↦ Ṽ* is the Fourier transform of a differential operator, e.g., a commonly used Laplacian operator (−αΔ + e)c with a positive weight parameter α and a smoothness parameter c, and (·, ·) is a dot product in the frequency space. The Fourier transform of the Laplacian operator is given by
+
+L∼(ξ)=(-2α∑j=1d(cos(2πξj)-1)+1)c.
+
+The Fourier coefficients of the inverse operator 𝒦 : Ṽ* ↦ Ṽ can be easily computed as 𝒦̃(ξ) = 1/ℒ̃ (ξ).
+
+Since 𝒦 is a smoothing operator that suppresses high frequencies in the Fourier domain, the geodesic evolution equation (3) indicates that the velocity field v at each time point can be represented efficiently as a band limited signal in the Fourier space as
+
+(6) ∂v∼∂t=-adv∼†v∼=-K∼[(D∼v∼)T★m∼+D∼m∼★v∼+m∼★∇∼·v∼],
+
+where m̃ = ℒ̃ṽ, and ★ is the truncated matrix-vector field auto-correlation 1 and D̃ṽ is a tensor product D̃ ⊗ ṽ with D̃ (ξ) = i sin(2πξ) representing the Fourier frequencies of a central difference Jacobian matrix D. The operator ∇̃· is the discrete divergence operator that is computed as the sum of the Fourier coefficients of the central difference operator D̃ along each dimension, i.e., ∇∼·ξ=∑j=1disin(2πξj).
+
+All computational operations in (6) are easy to implement in a truncated low dimensional space by eliminating the high frequencies. To ensure that f̃ represents a real-valued vector field in the spatial domain, we require f̃(ξ1,..., ξd) = f̃*(−ξ1,..., −ξd), where * denotes the complex conjugate. We build on the fast computation of diffeomorphisms introduced in Zhang and Fletcher (2015b) to demonstrate an efficient diffeomorphic shape analysis in the same low dimensional Fourier space.
+
+3. Generative Model
+
+We introduce a generative model for principal geodesic analysis of diffeomorphisms represented in the bandlimited velocity space Ṽ, with shape variability explicitly encoded as factors of the model.
+
+Let W̃ ∈ ℂp×q be a matrix in the Fourier space whose q columns (q &lt; N) are orthonormal principal initial velocities in a low p-dimensional space with unit length, Λ ∈ ℝq×q be a diagonal matrix of scale factors for the columns of W̃, and s ∈ ℝq be a vector of random factors that parameterizes the space of initial velocities. Therefore, each initial velocity is generated as ṽ = W̃ Λ s (see Figure 2).
+
+For subject n ∈ {1, · · ·, N}, we define a prior on the loading coefficient vector sn to be a Gaussian distribution whose covariance matrix is a combination of the identity matrix e and a matrix (ℒ̃ Λ W̃TW̃ Λ)−1 that ensures the smoothness of the geodesic path, i.e.,
+
+p(sn∣W∼,Λ)=N(sn;0,(L∼ΛW∼TW∼Λ)-1+e)=N(sn;0,L∼-1Λ-2+e).
+
+The normalizing constant of p(sn|W̃, Λ) including the determinant of the covariance matrix is computed as
+
+(2π)q/2∣L∼-1Λ-2+e∣1/2=(2π)q/2·∏l=1q(1L∼(l,l)Λ2(l,l)+1),
+
+where l ∈ {1, · · ·, q} denote the diagonal element.
+
+Assuming i.i.d. Gaussian noise on image intensities, we obtain the likelihood
+
+p(Jn∣sn;W∼,Λ,I,σ)=N(Jn;I∘ϕn-1,σ2),
+
+where ϕn is a deformation that corresponds to the initial velocity vn = ℱ−1[W̃ Λ sn] in the spatial domain, that is,
+
+(7) dϕndt=F-1[W∼Λsn]∘ϕn,
+
+and σ2 is the image noise variance.
+
+Defining Θ = {W̃, Λ, I, σ}, we employ Bayes’ rule to arrive at the posterior distribution of sn: (8) p(sn∣Jn;Θ)∝p(Jn∣sn;Θ)·p(sn∣W∼,Λ)=N(Jn;I∘ϕn-1,σ2)·N(sn;0,L∼-1Λ-2+e).
+
+The log posterior distribution of the loading coefficients s1, · · ·, sN for the entire image collection is therefore
+
+(9) Q≜logp(s1,⋯,sN∣J1,⋯,JN;Θ)=∑n=1Nlogp(Jn∣sn;Θ)+logp(sn∣W∼,Λ)+const.=∑n=1N-‖Jn-I∘ϕn-1‖L222σ2-snT(L∼-1Λ-2+e)sn2-dN2(logσ)-N2∑l=1qlog(1L∼llΛll2+1)+const.
+
+4. Inference
+
+We present two alternative ways to estimate the model parameters: the maximum a posteriori (MAP) and the Monte Carlo expectation maximization (MCEM) that treats the loading coefficients {s1, · · ·, sN} as latent variables.
+
+MAP
+
+We use gradient accent to maximize the log posterior probability (9) with respect to the parameters Θ and latent variables {sn}.
+
+By setting the derivative of Q with respect to I and σ to zero, we obtain closed-form updates for the atlas template I and noise variance σ2: I=∑n=1NJn∘ϕn∣Dϕn∣∑n=1N∣Dϕn∣,σ2=1MN∑n=1N‖Jn-I∘ϕn-1‖L22,
+
+where M is the number of image voxels.
+
+To estimate the matrix of principal directions W̃, the scaling factor Λ, and the loading coefficients {s1, · · ·, sN}, we follow the derivations in Zhang and Fletcher (2015b) and first obtain the gradient of Q w.r.t. the initial velocity ṽn as follows:
+
+Forward integrate the geodesic evolution equation (6) to compute time-varying velocity fields {ṽn} and then follow the flow equation (7) to generate a flow of diffeomorphic transformations {ϕn}.
+
+Compute the gradient ∇ṽn Q at time point t = 1 as (10) δQ1≜[∇v∼nQ]t=1=-K∼F[1σ2(Jn-I∘ϕn-1)·∇(I∘ϕn-1)].
+
+Backward integrate the gradient (10) to t = 0 to obtain δQ0 ≜ [∇ṽnQ]t=0 by using reduced adjoint Jacobi field equations (Francesco, 1995; Zhang and Fletcher, 2015b) dv^dt=-adv∼†h^,dh^dt=-v^-adv^h^+adh^†v∼,
+
+where adṽĥ = D̃ṽ * ĥ − D̃ĥ * ṽ with * being a truncated convolution operator, and v̂, ĥ ∈ Ṽ are introduced adjoint variables.
+
+After applying the chain rule, we have the gradient of Q for updating the loading factor sn: ∇snQ=-ΛW∼TδQ0-sn.
+
+The gradients of Q w.r.t. W̃ and Λ are given as follows: ∇W∼Q=-∑n=1NδQ0snTΛ,∇ΛQ=-∑n=1N(W∼snTδQ0-1L∼Λ2(L∼Λ2+1)).
+
+Unlike the PPGA model (Zhang and Fletcher, 2014), we enforce the mutual orthogonality constraint on the columns of W̃ since it is computationally tractable in the low dimensional space. There are two natural ways to satisfy this constraint: first is to treat W̃ as a point on the complex Stiefel manifold Vn(ℂd), which is a set of orthonormal n-frames in ℂd (Edelman et al., 1998). This requires projecting the gradient of W̃ onto the tangent space of Vn(ℂd), and then updating W̃ within a small step along the projected gradient direction. Another way is to use Gram-Schmidt process (Cheney and Kincaid, 2009) for orthonormalizing the column vectors of W̃ in a complex inner product space. We employ the latter scheme in our implementation.
+
+MCEM
+
+To treat the loading coefficients {sn} fully as latent random variables, we integrate them out from the posterior distribution (9) by using a Hamiltonian Monte Carlo (HMC) method (Duane et al., 1987) due to the fact that direct sampling is difficult. This scheme includes two main steps:
+
+Draw a random sample of size S of the latent variables {sn} via HMC sampling based on current parameters Θ(k). Let sjn, j = 1, · · ·, S, denote the jth sample for the subject n. A Hamiltonian function H(s,β) = U(s) + V(β) that consists of a potential energy U(s) = −log p(s |J; Θ) and a kinetic energy V(β) = −log g(β), where g(β) is typically an independent Gaussian distribution on an auxiliary variable β, is constructed to simulate the sampling system. Starting from the current point (s,β), the Hamiltonian function H produces a candidate point (ŝ, β̂) that is accepted as a new sample with probability paccept=min(1,exp(-U(s^)-V(β^)+U(s)+V(β))).
+
+The sample mean is taken to approximate the expectation: (11) ϒ(Θ∣Θ(i))≈1S∑j=1S∑n=1Nlogp(sjn∣Jn;Θ(i)),
+
+where the superscript (i) denotes the current state of the parameter set Θ.
+
+Maximize the expectation function ϒ to update parameters Θ. By setting its derivatives with respect to I and σ2 to zero, we obtain closed-form updates for the atlas template I and noise variance σ2 as I=∑j=1S∑n=1NI∘ϕjn∣Dϕjn∣∑j=1S∑n=1N∣Dϕjn∣,σ2=1SMN∑j=1S∑n=1N‖Jn-I∘ϕjn-1‖L22.
+
+Since there is no closed-form update for W̃ and Λ, we use gradient ascent to estimate the principal initial velocity basis W̃ and the scaling matrix Λ. The gradients w.r.t. W̃, Λ of (11) are given as follows: ∇W∼ϒ=-∑j=1S∑n=1N[∇v∼jnϒ]t=0sjnTΛ,∇Λϒ=-∑j=1S∑n=1N(W∼sjnT[∇v∼jnϒ]t=0-1L∼Λ2(L∼Λ2+1)).
+
+5. Evaluation
+
+To evaluate the effectiveness of the proposed low-dimensional principal geodesic analysis (LPPGA) model, we applied the algorithm to brain MRI scans of 90 subjects from the ADNI study (Jack et al., 2008), aged 60 to 90. Fifty subjects have Alzheimer’s disease (AD) and the remaining 40 subjects are healthy controls. All MRI scans have the same resolution 128 × 128 ×128 with the voxel size of 1.25 ×1.25 ×1.25mm3. All images underwent the preprocessing of skull stripping, downsampling, intensity normalization to [0,1] interval, bias field correction, and co-registration with affine transformations.
+
+We first estimate a full collection of principal modes q = 89 for our model, using α = 3.0, c = 3.0 for the differential operator ℒ̃ with p = 163 dimensions of the initial velocity field ṽ, which is similar to the settings used in pairwise diffeomorphic image registration (Zhang and Fletcher, 2015b). The number of time steps for integration in geodesic shooting is set to 10. We initialize the atlas I to be the average of image intensities, Λ to be the identity matrix, sn to be the all-ones vector, and the principal initial velocity matrix W̃ to be the principal components estimated by TPCA (Vaillant et al., 2004) that runs linear PCA in the space of initial velocity fields after atlas building. For the HMC sampling of the MCEM variant of our model, we use the step size of 0.01 for leap-frog integration with 20 units of time discretization in integration of EPDiff equations.
+
+To investigate the ability of our model to capture anatomical variability, we use the loading coefficients s = {s1, · · ·, sN} as a shape descriptor in a statistical study. The idea is to test the hypothesis that the principal modes estimated by our method are correlated significantly with clinical information such as mini-mental state examination (MMSE), Alzheimer’s Disease Assessment Scale (ADAS), and Clinical Dementia Rating (CDR). We project the transformations that are derived from the estimated atlas I0 and each individual from a testing dataset with 40 subjects onto the estimated principal modes. We then fit the clinical score MMSE, ADAS, and CDR using a linear regression model on the computed loading coefficients.
+
+We use the previous state of PPGA (Zhang and Fletcher, 2014) in a high dimensional image space and TPCA (Vaillant et al., 2004) as two baseline methods. In order to conduct a fair comparison, we keep all the parameters including regularization and time steps for numerical integration fixed across the three algorithms. To evaluate the model stability, we rerun the entire experiment 50 times on randomly sampled subsets of 50 images.
+
+6. Results
+
+Figure 3 reports the cumulative variance explained by the model as a function of the model size. Both variants of our approach LPPGA-MCEM and LPPGA-MAP achieve higher representation accuracy than the two state-of-the-art baseline algorithms across the entire range of model sizes. This is mainly because that conducting statistical analysis in the low dimensional space improves the gradient-based optimization landscape, where local minima often occur in a high dimensional image space. The Monte Carlo sampling of MCEM algorithm further reduces the risk of getting stuck in local minima by allowing random steps away from the current minimal solution.
+
+Table 1 reports the number of principal modes required to achieve the same level of shape variation across the entire dataset. Our model LPPGA-MCEM / LPPGA-MAP captures better shape changes while using fewer number of principal modes, which also means that our model estimates more compact representation of the image data.
+
+Figure 4 visualizes the first three modes of variation in this cohort by shooting the estimated atlas I along the initial velocities ṽ = aiW̃iΛi (ai = {−2, −1, 0, 1, 2}, i = 1,2,3). We also show the log determinant of the Jacobian at ai = 2. The first mode of variation clearly reflects that changes in the ventricle size, which is the dominant source of variability in the brain shape. The algorithm estimates standard deviation of the image noise to be σ = 0.02.
+
+Figure 5 reports run time and memory consumption for building the full model of anatomical variability. Our approach LPPGA-MAP offers an order of magnitude improvement in both the run time and memory requirements while providing a more powerful model of variability. While the MCEM variant is computationally more expensive than all baseline methods due to the sampling procedure, it provides better statistical analysis of regression (as reported in Table 2) than the two baseline algorithms using the first two principal modes. The higher F and R2 statistics indicate that our approach captures more variation of the MMSE scores than the other models. Another advantage of such Monte Carlo approach is that it provides consistent statistics in noisy case (Allassonnière et al., 2007) and better model selection.
+
+7. Discussion and Conclusion
+
+We presented a low dimensional probabilistic framework for factor analysis in the space of diffeomorphisms. Our model explicitly optimizes the fit of the principal modes to the data in a low dimensional space of bandlimited velocity fields, which results in (1) better data fitting, and (2) dramatically lower computational cost with more powerful statistical analysis. We developed an inference strategy based on MAP to estimate parameters, including the principal modes, noise variance, and image atlas simultaneously. Our model also enables Monte Carlo sampling because of the efficient low dimensional parametrization. We demonstrated that the estimated low dimensional latent loading coefficients provide a compact representation of the anatomical variability and yield a better statistical analysis of anatomical changes associated with clinical variables.
+
+This work represents the first step towards efficient probabilistic models of shape variability based on high-dimensional diffeomorphisms. There are several avenues for future work to build upon our model. We will explore Bayesian variants of shape analysis that infer the inherent dimensionality directly from the data by formulating dimensionality reduction with a sparsity prior. Reducing the dimensionality to the inherent modes of shape variability has the potential to improve hypothesis testing, classification, and mixture models. A multiscale strategy like that of Sommer et al. (2013) can be added to our model to make the inference even faster. Moreover, since Monte Carlo sampling is computationally more tractable in our model, we can automatically estimate the regularization parameter jointly with the shape variability model. This eliminates the effort of hand-tuning on parameters and enables uncertainty quantification of the hidden variables. Another interesting avenue is to estimate an even more sharp atlas that has clearer details of brain structures such as sulci. Since the atlas is essentially the average over intensities of all inter-subjects, it is possible that structures with relatively large differences across subjects get smoothed out under the spatially-invariant smoothness constraints. Therefore, developing a spatially-varying kernel that penalizes local smoothness is desirable for the problem of atlas estimation.
+
+This work was supported by NIH NIBIB NAC P41EB015902, NIH NINDS R01NS086905, NIH NICHD U01HD087211, NCIGT NIH P41EB015898, and Wistron Corporation. The data collection and sharing for this project was funded by the ADNI (National Institutes of Health Grant U01 AG024904). All the investigators within the ADNI provided data but did not participate in the analysis or writing of this paper.
+
+Figure 1 Velocity fields in spatial and Fourier domain.
+
+Figure 2 Principal analysis of diffeomorphisms.
+
+Figure 3 Cumulative variance explained by principal modes estimated from our model (LPPGA-MCEM and LPPGA-MAP) and baseline algorithms (PPGA-MAP and TPCA).
+
+Figure 4 Top to bottom: first, second and third principal modes of brain shape variation estimated by our model LPPGA-MCEM for varying amounts of the corresponding principal mode, and log determinant of the transformation Jacobians at 2Λi (regions of expansion in red and contraction in blue). Axial and coronal views are shown.
+
+Figure 5 Comparison of run time and memory consumption. The implementation employed a message passing interface (MPI) parallel programming for all methods and distributed 90 subjects to 10 processors.
+
+Table 1 Number of principal modes that achieves 90% and 95% of total variance.
+
+Method	90%	95%	
+LPPGA-MCEM	9	17	
+LPPGA-MAP	11	20	
+PPGA-MAP	15	27	
+TPCA	19	35	
+
+Table 2 Comparison of linear regression models on the first two principal mode for our model (LPPGA-MCEM / LPPGA-MAP) and the baseline algorithms (PPGA and TPCA) on 40 brain MRIs from ADNI.
+
+(a) MMSE	
+Model	Residual	R 2	F	p-value	
+LPPGA-MCEM	4.42	0.19	21.68	1.13e−5	
+LPPGA-MAP	4.45	0.18	19.47	2.18e−5	
+PPGA	4.49	0.16	17.96	5.54e−5	
+TPCA	4.53	0.14	16.34	1.10e−4	
+(b) ADAS	
+Model	Residual	R 2	F	p-value	
+LPPGA-MCEM	8.25	0.21	13.14	1.033e−5	
+LPPGA-MAP	8.36	0.19	11.68	3.20e−5	
+PPGA	8.41	0.18	11.10	5.09e−5	
+TPCA	8.65	0.17	10.75	1.03e−4	
+(c) CDR	
+Model	Residual	R 2	F	p-value	
+LPPGA-MCEM	2.21	0.22	24.78	3.16e−6	
+LPPGA-MAP	2.22	0.20	23.99	4.37e−6	
+PPGA	2.23	0.19	22.92	6.77e−6	
+TPCA	2.25	0.17	21.54	2.88e−5	
+
+Highlights
+
+Develop a joint probabilistic model of principal geodesic analysis based on a low dimensional shape descriptor.
+
+Find a more compact representation of anatomical variability with much lower computational cost.
+
+Improve statistical analysis for clinical studies.
+
+1 The auto-correlation operates on zero-padded signals followed by truncating back to the bandlimits in each dimension to guarantee the output remains bandlimited.
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service to our customers we are providing this early version of the manuscript. The manuscript will undergo copyediting, typesetting, and review of the resulting proof before it is published in its final citable form. Please note that during the production process errors may be discovered which could affect the content, and all legal disclaimers that apply to the journal pertain.
+
+
+Allassonnière S Amit Y Trouvé A 2007 Toward a coherent statistical framework for dense deformable template estimation Journal of the Royal Statistical Society, Series B 69 3 29
+Arnol’d VI 1966 Sur la géométrie différentielle des groupes de Lie de dimension infinie et ses applications à l’hydrodynamique des fluides parfaits Ann Inst Fourier 16 319 361
+Beg M Miller M Trouvé A Younes L 2005 Computing large deformation metric mappings via geodesic flows of diffeomorphisms International Journal of Computer Vision 61 139 157
+Bookstein FL 1997 Morphometric tools for landmark data: geometry and biology Cambridge University Press
+Cheney W Kincaid D 2009 Linear algebra: Theory and applications The Australian Mathematical Society 110
+Christensen GE Rabbitt RD Miller MI 1993 A deformable neuroanatomy textbook based on viscous fluid mechanics 27th Ann. Conf. on Inf. Sciences and Systems Citeseer 211 216
+Cootes TF Taylor CJ Cooper DH Graham J 1995 Active shape models-their training and application Computer vision and image understanding 61 38 59
+Duane S Kennedy A Pendleton B Roweth D 1987 Hybrid Monte Carlo Physics Letters B 195 216 222
+Edelman A Arias T Smith S 1998 The geometry of algorithms with orthogonality constraints SIAM Journal on Matrix Analysis and Applications 20 303 353
+Fletcher PT Lu C Joshi S 2003 Statistics of shape via principal geodesic analysis on Lie groups Computer Vision and Pattern Recognition IEEE I 95
+Francesco B 1995 Invariant affine connections and controllability on Lie groups Technical Report. technical Report for Geometric Mechanics California Institute of Technology
+Gerig G Styner M Shenton ME Lieberman JA 2001 Shape versus size: Improved understanding of the morphology of brain structures Medical Image Computing and Computer-Assisted Intervention Springer 24 32
+Gori P Colliot O Worbe Y Marrakchi-Kacem L Lecomte S Poupon C Hartmann A Ayache N Durrleman S 2013 Bayesian atlas estimation for the variability analysis of shape complexes Medical Image Computing and Computer-Assisted Intervention Springer 267 274
+Jack CR Bernstein MA Fox NC Thompson P Alexander G Harvey D Borowski B Britson PJ Whitwell LJ Ward C 2008 The alzheimer’s disease neuroimaging initiative (adni): MRI methods Journal of Magnetic Resonance Imaging 27 685 691 18302232
+Joshi S Davis B Jomier M Gerig G 2004 Unbiased diffeomorphic atlas construction for computational anatomy NeuroImage 23 S151 S160 15501084
+Miller MI Trouvé A Younes L 2006 Geodesic shooting for computational anatomy Journal of Mathematical Imaging and Vision 24 209 228 20613972
+Nemmi F Sabatini U Rascol O Péran P 2015 Parkinson’s disease and local atrophy in subcortical nuclei: insight from shape analysis Neurobiology of aging 36 424 433 25174648
+Onofrey JA Staib LH Papademetris X 2013 Semi-supervised learning of nonrigid deformations for image registration International MICCAI Workshop on Medical Computer Vision Springer 13 23
+Pizer SM Fritsch DS Yushkevich PA Johnson VE Chaney EL 1999 Segmentation, registration, and measurement of shape variation via image object shape Medical Imaging, IEEE Transactions on 18 851 865
+Qiu A Younes L Miller MI 2012 Principal component based diffeomorphic surface mapping Medical Imaging, IEEE Transactions on 31 302 311
+Sommer S Lauze F Nielsen M Pennec X 2013 Sparse multi-scale diffeomorphic registration: the kernel bundle framework Journal of mathematical imaging and vision 46 292 308
+Sweet A Pennec X 2010 A log-euclidean statistical analysis of dti brain deformations MICCAI 2010 Workshop on Computational Diffusion MRI
+Twining C Cootes T Marsland S Petrovic V Schestowitz R Taylor C 2005 A unified information-theoretic approach to groupwise non-rigid registration and model building Information Processing in Medical Imaging Springer 1 14
+Vaillant M Miller MI Younes L Trouvé A 2004 Statistics on diffeomorphisms via tangent space representations NeuroImage 23 S161 S169 15501085
+Vialard FX Risser L Holm D Rueckert D 2011 Diffeomorphic atlas estimation using Kärcher mean and geodesic shooting on volumetric images MIUA
+Vialard FX Risser L Rueckert D Cotter CJ 2012 Diffeomorphic 3d image registration via geodesic shooting using an efficient adjoint calculation International Journal of Computer Vision 97 229 241
+Younes L Arrate F Miller M 2009 Evolutions equations in computational anatomy NeuroImage 45 S40 S50 19059343
+Zhang M Fletcher PT 2014 Bayesian principal geodesic analysis in diffeomorphic image registration Medical Image Computing and Computer-Assisted Intervention–MICCAI 2014 Springer 121 128
+Zhang M Fletcher PT 2015a Bayesian principal geodesic analysis for estimating intrinsic diffeomorphic image variability Medical image analysis 25 37 44 26159890
+Zhang M Fletcher PT 2015b Finite-dimensional lie algebras for fast diffeomorphic image registration International Conference on Information Processing in Medical Imaging Springer 249 260
+Zhang M Wells WM III Golland P 2016 Low-dimensional statistics of anatomical variability via compact representation of image deformations International Conference on Medical Image Computing and Computer-Assisted Intervention Springer 166 173

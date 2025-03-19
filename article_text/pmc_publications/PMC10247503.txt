@@ -1,0 +1,359 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101604520
+41136
+IEEE J Biomed Health Inform
+IEEE J Biomed Health Inform
+IEEE journal of biomedical and health informatics
+2168-2194
+2168-2208
+
+37030725
+10247503
+10.1109/JBHI.2023.3257081
+NIHMS1883748
+Article
+Attention-Guided Autoencoder for Automated Progression Prediction of Subjective Cognitive Decline with Structural MRI
+Guan Hao Department of Radiology and Biomedical Research Imaging Center, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA.
+
+Yue Ling Department of Geriatric Psychiatry, Shanghai Mental Health Center, Shanghai Jiao Tong University School of Medicine, Shanghai 200030, China.
+
+Yap Pew-Thian Department of Radiology and Biomedical Research Imaging Center, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA.
+
+Xiao Shifu Department of Geriatric Psychiatry, Shanghai Mental Health Center, Shanghai Jiao Tong University School of Medicine, Shanghai 200030, China.
+
+Bozoki Andrea Department of Neurology, University of North Carolina at Chapel Hill, NC 27599, USA.
+
+Liu Mingxia Senior Member, IEEE Department of Radiology and Biomedical Research Imaging Center, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA.
+
+Corresponding authors: M. Liu (mxliu@med.unc.edu) and L. Yue (bellinthemoon@hotmail.com).
+18 3 2023
+6 2023
+05 6 2023
+08 6 2023
+27 6 29802989
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Subjective cognitive decline (SCD) is the preclinical stage of Alzheimer’s disease (AD) which happens even earlier than mild cognitive impairment (MCI). Progressive SCD will convert to MCI with the potential of further evolving to AD. Therefore, early identification of progressive SCD with neuroimaging techniques (e.g., structural MRI) is of great clinical value for early intervention of AD. However, existing MRI-based machine/deep learning methods usually suffer the small-sample-size problem and lack interpretability. To this end, we propose an interpretable autoencoder model with domain transfer learning (IADT) for progression prediction of SCD. Firstly, the proposed model can leverage MRIs from both the target domain (i.e., SCD) and auxiliary domains (e.g., AD and NC) for progressive SCD identification. Besides, it can automatically locate the disease-related brain regions of interest (defined in brain atlases) through an attention mechanism, which shows good interpretability. In addition, the IADT model is straightforward to train and test with only 5~10 seconds on CPUs and is suitable for medical tasks with small datasets. Extensive experiments on the publicly available ADNI dataset and a private CLAS dataset have demonstrated the effectiveness of the proposed method.
+
+Index Terms—
+
+Subjective cognitive decline
+Alzheimer’s disease
+domain adaptation
+MRI
+autoencoder
+interpretability
+
+pmcI. Introduction
+
+AS one of the main causes of dementia and death, Alzheimer’s disease (AD) has affected millions of older people around the world [1]. As illustrated in Fig. 1, AD is characterized as a chronic neurodegenerative process with an extended spectrum. Its prodromal stage is mild cognitive impairment (MCI), while an even earlier preclinical stage is termed as subjective cognitive decline (SCD) or subjective memory complaint (SMC) [2], [3]. Growing evidence has verified that individuals with SCD may suffer higher risks of evolving to AD. Thus progression prediction of SCD is of great clinical value for early intervention of the brain disease progress. Neuroimaging has been shown as an effective technology for understanding the mechanisms of different brain disorders and has already been adopted for the progression prediction of SCD [4], [5].
+
+Structural magnetic resonance imaging (sMRI) is a widely used imaging modality for AD-spectrum research [6], [7]. As the preclinical stage of AD, it typically takes several years for a progressive SCD (pSCD) subject to evolve to MCI, which makes the data collection a time-consuming and challenging task. Although several previous studies have applied machine learning to MRI-based SCD progression prediction [8]–[11], they usually suffer from the small-sample-size problem. Compared with small-sized SCD samples, there are much more AD and normal control (NC) samples, such as those in the public ADNI database [6]. Thus, it is interesting to employ these relatively large-scale AD and NC samples to assist the task of SCD progression prediction. From a clinical point of view, as shown in Fig. 1, AD typically goes through the following stages (extended spectrum): NC→stable SCD (sSCD)→ progressive SCD (pSCD)→stable MCI (sMCI)→progressive MCI (pMCI)→AD. Across the full spectrum of AD, sSCD is close to NC while pSCD is close to AD, thus the model trained on AD and NC samples could be helpful to assist the task of pSCD vs. sSCD classification. Several studies [12]–[14] have revealed that machine/deep learning models trained on AD and NC samples can achieve good results when applied directly to the task of pMCI vs. sMCI classification. In this work, we propose to leverage AD and NC samples for the training for pSCD vs. sSCD classification. In addition, we are interested in finding important brain regions-of-interest (ROIs) that are associated with SCD progression, thus helping enhance the interpretability of learning-based diagnostic systems.
+
+Based on these motivations, we propose an interpretable autoencoder model with domain transfer learning (IADT) with application to SCD progression prediction. As illustrated in Fig. 2, the IADT model includes four key components: (1) a feature encoder that learns the shared subspace representations of different domains, (2) an attention component that helps detect disease-related brain regions of interest, (3) a decoding module that reconstructs the original input, (4) a classification module that is responsible for the identification of brain disorders. During training, the labeled AD/NC samples are used to train the classification module, while unlabeled SCD samples are used to train the reconstruction module. A domain adaptation loss is utilized to enforce the distribution of source domain (AD and NC) and target domain (pSCD and sSCD) to get close. Through training with these losses, the network can learn some features that are both discriminative to brain disorders and reflect the properties of SCD, thus can be applied to pSCD vs. sSCD classification.
+
+The contributions of this work are listed as follows: This paper proposes an interpretable autoencoder model with attention mechanism which can automatically locate the important brain regions that are related to subjective cognitive decline. This helps enhance the interpretability of MRI biomarkers learned by deep learning to improve their utility in clinical practice.
+
+The proposed network structure can leverage MRIs from both the target domain (i.e., SCD) and auxiliary source domains (e.g., AD and NC) for SCD progression prediction to increase their utility in clinical practice and improve clinical diagnosis.
+
+To evaluate the effectiveness of the proposed IADT model, we conduct experiments on the ADNI and CLAS datasets. Our method achieves state-of-the-art results on SCD progression prediction with good interpretability.
+
+The rest part of this paper is structured as follows. Related studies are first reviewed in Section II. The materials used in this work are introduced in Section III. Section IV introduces the proposed method in detail. Section V presents experimental settings, evaluation metrics, competing methods, and experimental results. The brain ROIs highlighted by the model and the influence of several key parameters are analyzed in Section VI. The paper is finally concluded in Section VII.
+
+II. Related Works
+
+A. Learning-based SCD Progression Prediction
+
+As the preclinical stage of AD, SCD has attracted growing awareness in the field of brain disease analysis. Existing studies on SCD can be roughly divided into non-neuroimaging-based methods and neuroimaging-based methods. Engedal et al. [15] explore electroencephalography (EEG) with a statistical method to predict SCD conversion. Engedal et al. [16] use demographic information through machine learning to predict the progression of SCD. Since structural MRIs have been widely used in brain disorder identification, numerous machine learning methods have been proposed to deal with AD-related brain disorder classification [17], [18]. Yue et al. [8] utilize cost-sensitive support vector machine (CSVM) for SCD progression prediction based on clinical and MRI features. Felpete et al. [9] use SVM and random forest for the prediction of SCD conversion. Lin et al. [10] introduce sparse coding for MRI feature selection and use random forest for SCD progression prediction. Liu et al. [11] propose a GAN-based framework to synthesize PET and MRI data of SCD which can increase the training data and assist SCD progression prediction. Despite the progress, identifying progressive SCD (pSCD) and stable SCD (sSCD) individuals is still a challenging task due to the small-sample-size problem and insignificant pathological brain changes. Since SCD is a preclinical stage of AD, how to leverage the knowledge from AD/NC classification (with a relatively large amount of labeled samples, and significant pathological brain changes) to SCD progression prediction is an open problem with clinical value.
+
+B. Domain Adaptation for AD-related Disease Identification
+
+Transfer learning [19]–[21] and domain adaptation [22], [23] have been used to tackle problems when the target domain has relatively fewer data and different distribution from the source domain. These methods do not require identical distribution of training/source data and test/target data and can share knowledge between different domains. Some studies use transfer learning for early diagnosis of AD. Cheng et al. [24] propose a transferable support vector machine with cross-domain kernel learning for MCI conversion prediction. With the recent progress of deep learning (DL), some methods leverage deep neural networks through fine-tuning to facilitate transfer learning for AD analysis [25]. Lian et al. [14] reveal that training a deep network with AD and NC samples is beneficial for MCI conversion prediction. These transfer learning methods indicate that AD has inherent relationship with its early stages (e.g., MCI), thus we explore leveraging knowledge learned from AD and NC for predicting SCD progression.
+
+III. Materials
+
+A. Data Acquisition
+
+We employ T1-weighted structural MRIs from two datasets in this work for model training and test. The first one is the publicly available brain MRI dataset, i.e., Alzheimer’s Disease Neuroimaging Initiative (ADNI) [6]1. We use 3T T1-weighted structural MRIs of 159 AD patients and 201 normal controls (NC) from the ADNI dataset in this work.
+
+The second dataset is the Chinese Longitudinal Aging Study (CLAS) dataset [26]. This dataset includes 76 SCD subjects with 3T T1-weighted structural MRIs. There are 24 progressive SCD (pSCD) and 52 stable SCD (sSCD) subjects. These pSCD subjects have evolved to MCI within the next 84 months, while the sSCD ones remain stable. The demographic information for these two datasets is shown in Table I. To analyze the statistical difference, we use hypothesis testing at the 5% significance level, while the null hypothesis is “there is no significant difference”. Specifically, we adopt paired t-test to evaluate the difference between these two groups (i.e., pSCD and sSCD) in terms of age. The p-value is 0.1177, which accepts the null hypothesis at the 5% significance level. This indicates that statistically the ages of these two cohorts, i.e., pSCD and sSCD, have no significant difference.
+
+We also analyze the relationship between the classification output and the age, cognition scores (MMSE scores). Specifically, the age and MMSE are set as the input variables, and classification result (pSCD: 1, sSCD: 0) is the response output. We adopt logistic regression to fit the relationship between the input (age, MMSE) and output (pSCD or sSCD). We got the p-values: 0.2405 and 0.1578 for the age and MMSE, respectively, which indicates that the coefficients for age and MMSE are not significant for pSCD/sSCD.
+
+B. Image Preprocessing and MRI Feature Extraction
+
+All the T1-weighted MRIs are preprocessed through a standard pipeline, including 1) skull stripping, 2) intensity inhomogeneity correction, 3) registration to the Automated Anatomical Labeling (AAL) template [27], and 4) re-sampling to the resolution of 1×1×1 mm3. We use Freesurfer2 to facilitate skull stripping and adopt the SPM software package3 to conduct the other MRI preprocessing steps. All the processed MRIs have the identical dimension of 181 × 217 × 181.
+
+For statistical analysis and model training, we extract ROI features from MRIs based on AAL. The AAL atlas is an anatomical parcellation of the spatially normalized T1 volume which has labeled 90 brain regions of interest. During computation, the AAL atlas is used as a mask. The features of a brain MRI are then calculated as the volumes of gray matter in each of the 90 brain regions. The dimension of the ROI feature is 90, and each dimension reflects the gray matter volume in the corresponding brain region. The advantage of ROI features is that they contain prior knowledge from neuroscientists and have good interpretability for indicating which brain areas are more closely related to the disease classification.
+
+IV. Methodology
+
+A. Problem Formulation
+
+We leverage domain adaptation for SCD progression prediction. Suppose the joint feature space of samples and the corresponding labels are represented as 𝒳 × 𝒴. We define a source domain 𝒟S and a target domain 𝒟T on the feature space, but they have different distributions. A total of ns samples with category labels are provided in the source domain, i.e., 𝒟S={(xiS,yiS)}i=1ns, while a number of nt samples are given the target domain i.e., 𝒟T={(xjT)}j=1nt. The same set of category labels is shared by the source and target domains. In our work, AD and NC samples are set as the source domain (AD: 1, NC: 0), while pSCD and sSCD samples are the target domain (pSCD: 1, sSCD: 0). The goal is to train a model with labeled source domain samples and unlabeled/labeled target domain samples so the learned model can generalize well to target data for label estimation.
+
+B. Interpretable Autoencoder with Domain Transfer
+
+As illustrated in Figure 2, the proposed interpretable autoencoder with domain transfer (IADT) framework consists of 4 modules. (1) The attention component automatically detects the most discriminative brain MRI features (ROIs) of the input data. (2) The encoder projects the input data from the original feature space to a latent compressed feature space. (3) The decoder reconstructs the input data from the intermediate compressed representations to its original feature space. (4) The classifier predicts the category labels. In the training phase, the source data and target data first go through the attention module for “feature filtering”. Then the data are fed into the encoder module and projected into a low-dimensional latent feature space. A maximum mean discrepancy (MMD) loss is facilitated on these compressed representations of source and target data to reduce their domain difference. With the compressed representations, a classifier is trained with the category labels (source domain) to enforce the projected latent features more discriminative to brain disorders. Meanwhile, a decoder is trained using reconstruction loss to enforce the projected latent features containing the most useful information within the target data. In the test stage, the trained classifier is directly applied to the target domain (SCD) for prediction (i.e., pSCD vs. sSCD classification).
+
+C. Attention Mechanism for Brain ROI Selection
+
+Brain disorders have a close relationship with specific brain areas [28]–[31]. Since we use brain ROI feature as input, we aim to identify which regions are more disease-related automatically to enhance interpretability of MRI biomarkers. As illustrated in Fig. 3, the 90-dimensional ROI feature is used as the network input, denoted as I = (R1, R2, ⋯, Rn). The feature is fed into an attention network that consists 90 neurons. The softmax is used as the activation function to output a probability (weight) on each dimension of the 90-dimension feature with a summation of 1, i.e., w = [w1, w2, ⋯, wn], ∑i=1nwi=1. These weights are then multiplied with the original input ROI feature to get weighted features. From the output probabilities of the attention module, we can analyze the importance of different brain regions.
+
+D. Feature Encoding and Adaptation
+
+After feature importance weighting by the attention module, data from the source and target domains are fed into the feature encoder. The feature encoder projects the data into a low-dimensional latent space. To achieve this, we design a three-layer multiple-layer-perception (MLP) with 90, 64, 32 neurons, respectively. After encoding, all the data have been projected to the 32-dimensional space. The encoders for the source and target domains share the same weights. To align the feature distributions of source and target data in the projected space, we adopt maximum mean discrepancy (MMD) loss which is defined as: (1) MMDk2=‖Ep[ϕ(xs)]−Eq[ϕ(xt)]‖ℋk2
+
+where ℋk represents the Reproducing Kernel Hilbert Space (RKHS) endowed with a kernel function k, and k(xs, xt) = 〈ϕ(xs), ϕ(xs)〉. By minimizing the MMD loss, the source and target data distributions in the latent space can get closer.
+
+E. Joint Classification and Reconstruction
+
+In our model, the encoder module plays the role of learning domain-sharing features. To this end, the training of the encoder should be driven by tasks with certain supervisions. For AD/NC samples, due to their relatively large amount and abundant label information, a classification module is trained with these labeled source data with the cross-entropy loss as: (2) ℒcls=∑i=1N−yiln(y^i)−(1−yi)ln(1−y^i)
+
+where yi is the label (0, 1) and y^i is the output of the classifier. For target data, i.e., SCD samples, since there is no label information provided during training, we use the reconstruction loss as supervision. Specifically, a decoder is linked to the output of the encoder, trying to reconstruct the original input target MRI. The decoder has a symmetric structure to the encoder, with 32, 64, 90 neurons in each layer, respectively. We use ℒ1 norm in the reconstruction loss: (3) ℒrecon=∑i=1N‖xit−x^it‖1
+
+where xit denotes the i-th sample in the target domain while x^it is the corresponding reconstructed result by the decoder.
+
+The classification and reconstruction modules are trained jointly and they provide supervision for the learning process. Through joint training, the encoder is encouraged to learn features that are both discriminative to brain disorders and reflect properties of SCD data. It should be noted that the total number of target samples (SCD) is much smaller than the source data (AD/NC). To facilitate joint training, the SCD samples must be enhanced. Here we simply duplicate the SCD samples to make them have an equal number with the AD/NC samples. This can make the classification and reconstruction modules updated each training epoch. To avoid a bias towards the AD/NC data, the reconstruction loss for SCD data can be allocated a relatively higher weight during training. The overall loss ℒ for training is calculated as: (4) ℒ=λ1ℒmmd+λ2ℒcls+ℒrecon
+
+where λ1 and λ2 are the parameters to control the contributions of the three terms in Eq. (4).
+
+F. Implementation
+
+The proposed IADT is implemented by the PyTorch software package. The Adam optimizer is utilized for training with a learning rate of 0.001. A linear kernel is adopted as the kernel function for the MMD loss in Eq. (1). The parameters λ1 and λ2 in Eq. (4) are set to 0.1 and 0.1, respectively. The model is trained for 60 epochs with a batch size of 128. The overall training and test take around 5~10 seconds.
+
+V. Experiment
+
+A. Experimental Setup
+
+In our experiment, we use the ADNI dataset as the source domain, while the CLAS dataset is used as the target domain. The model architecture keeps fixed throughout the experiment.
+
+For performance evaluation, we utilize five metrics, i.e., classification accuracy (ACC), balanced accuracy (BAC), sensitivity (SEN), specificity (SPE), and area under the ROC curve (AUC). Let TP, TN, FP, FN represent true positive, true negative, false positive and false negative, respectively. Then each metric is calculated as follows. ACC=TP+TNTP+TN+FP+FN, SEN=TPTP+FN, SPE=TNTN+FP, and BAC=SEN+SPE2. Please note that a higher value for each metric indicates a better classification performance.
+
+B. Competing Methods
+
+The proposed method is compared with the following seven methods, including one baseline method, four statistical learning methods, and two deep learning methods.
+
+(1) Baseline.
+
+This method uses logistic regression, one of the most popular classification models in neuroimaging analysis [32]–[34] for structural MRI-based SCD progression prediction. It is trained on the AD/NC samples from ADNI, and then applied to CLAS for pSCD/sSCD classification.
+
+(2) Transfer component analysis (TCA) [35].
+
+In TCA, source and target data are projected to the subspace spanned by several transfer components. These transfer components are learned in the reproducing kernel Hilbert space using maximum mean discrepancy (MMD). After that, a logistic classifier trained with source data (AD/NC) is used to facilitate pSCD/sSCD classification in the projected feature space. We use a linear kernel for feature learning. The subspace dimension of TCA is set to 40, with λ = 0.01 and γ = 0.1.
+
+(3) Geodesic flow kernel (GFK) [36].
+
+In this method, a domain specific n-dimensional subspace is calculated for the source and target data. Then the source and target data are projected into an intermediate subspace along the shortest geodesic path connecting these two n-dimensional subspaces on the Grassmann manifold. After adaptation, a logistic classifier is adopted to conduct pSCD vs. sSCD classification using these projected data. In our experiment, we set the subspace dimension in GFK to 20.
+
+(4) Subspace alignment (SA) [37].
+
+In this method, the source data is projected into the source subspace and the target data is represented by the target subspace. Both of them use their principal components as the subspace representation. Then a transformation matrix that maps the source subspace to the target one is learned to mitigate domain shift. After adaptation, a logistic classifier is trained to do pSCD vs. sSCD classification using these projected data. The subspace dimension in SA is set to 20.
+
+(5) Correlation alignment (CORAL) [38].
+
+In this method, domain shift is reduced through alignment of the second-order statistics of source and target domains. After adaptation, a logistic classifier is used for pSCD vs. sSCD classification using these aligned data. CORAL only calculates the covariance of source and target features without any additional parameters.
+
+(6) Normal transfer learning (TL).
+
+In this method, a four-layer multiple-layer perception (MLP) with 90, 64, 32, and 2 neurons is used as the network architecture of the learning model. The network is firstly pretrained with AD and NC samples, and then fine-tuned with 10% of the pSCD and sSCD samples in the CLAS dataset. The fine-tuned network is then applied to the remaining pSCD and sSCD samples for testing.
+
+(7) VoxCNN [39].
+
+VoxCNN is a deep 3D convolutional neural network for structural MRI-based brain disorder classification. It is composed of 10 convolution layers for feature learning. The size of filter kernel is 3 × 3 × 3, and the number of filters for each layer is 8, 8, 16, 16, 32, 32, 32, 64, 64, and 64, respectively. Two fully-connected layers are utilized for classification. Note that this network takes 3D volumetric data (MRIs) as input. We first train the VoxCNN with AD and NC samples from the ADNI dataset, then directly apply it for pSCD/sSCD classification on the CLAS dataset.
+
+C. Results of SCD Progression Prediction
+
+We conduct experiments on the ADNI and CLAS datasets for SCD progression prediction, i.e., pSCD vs. sSCD classification. Label information of CLAS is not available during our model training. The performance of different methods is listed in Table II. From Table II, we have the following observations.
+
+First, in terms of ACC and BAC, the baseline has an inferior performance to the other competing methods. This indicates that domain shifts among different domains can significantly affect a machine learning model. Meanwhile, the adaptation-based methods can achieve better results than the baseline, which implies the effectiveness of domain adaptation. Second, the IADT outperforms the other methods by a large margin. This can be attributed to two reasons. 1) Most competing methods conduct adaptation through alignment of the source and target in an unsupervised way, i.e., the label information of the source data is not utilized in the adaptation process. We argue that incorporating the label information of source domain enables the model to be more discriminative. 2) The attention mechanism in our model can select more important features for classification which is helpful for training.
+
+To further evaluate the generalization ability of the proposed method, we apply the well-trained model to unseen SMC samples from ADNI, without any model retraining. T1-weighted MRIs of 21 progressive SMC (pSMC) and 90 stable SMC (sSMC) samples from ADNI are used. All these MRIs are pre-processed in the same way as those from CLAS. We conduct pSMC vs. sSMC classification using our model and compare its performance with the baseline (i.e., logistic classifier) and report the results in Fig. 4. As can be seen from this figure, the proposed method has good generalization ability on independent ADNI data.
+
+D. Comparison with State-of-the-Art Methods
+
+Our method is further compared with several state-of-the-arts for structural MRI-based pSCD vs. sSCD classification. These methods include: 1) Cost-Sensitive SVM (CSVM) [8], 2) Random Forest [9] and 3) Generative Adversarial Network [40]. We reproduce these methods and test them on the same dataset. As for the CSVM, it is implemented through an SVM with a linear kernel and is trained with a cost matrix (01010). The RF is built through an ensemble of decision tree models. The GAN is composed of a generator network with 3 convolution layers, 3 residual blocks, and 2 deconvolution layers, and a discriminator network with 5 convolution layers.
+
+The prediction results are reported in Table III. From Table III, our method achieves better or comparable performance than the state-of-the-art methods. More specifically, our model achieves higher accuracy, balanced accuracy (i.e., 71.05%, 69.87%) and specificity (i.e., 73.08%) which are much better than the other three state-of-the-art methods, even though GAN is a complex deep-learning method. Note that the GAN model utilizes both MRI and PET data with much more training data (both original and synthetic images) than ours. Thus it achieves a higher SEN and AUC value. Despite this, our model still achieves comparable performance. Considering that the proposed model only takes 5~10 seconds on CPUs to train while the GAN typically takes several days, our model has made a good balance between accuracy and efficiency.
+
+E. Results on MCI Conversion Prediction
+
+We evaluate the proposed model in the task of MCI to AD conversion prediction, i.e., pMCI vs. sMCI classification. A total of 393 MCI subjects (167 pMCI, 226 sMCI) with structural MRIs are used as the unlabeled target domain, while AD and NC samples are adopted as the labeled source domain. The pMCI subjects have converted to AD within 36 months while sMCI have not. We still extract ROI features to represent each subject. The VoxCNN directly takes MRIs as the input for end-to-end training. It is firstly pretrained with AD and NC samples and then applied for MCI conversion prediction. The results of different methods for MCI conversion prediction are reported in Table IV. From the results, we have the following observations. 1) Our method achieves better or comparable results than the other methods. This verifies the effectiveness of our method for early identification of Alzheimer’s disease. 2) The VoxCNN achieves a good result. This is consistent with related studies [13], [14], implying a deep CNN directly trained with MR images is able to perform well on MCI tasks. Despite that, the proposed model still achieves better results and makes a balance between effectiveness and efficiency.
+
+VI. Discussion
+
+A. Data Distribution Visualization
+
+We extract MRI features of source data (AD&amp;NC samples from ADNI) and target data (SCD samples from CLAS) learned by the encoder. The source and target data (represented by ROI-based MRI features) distribution before and after domain adaptation is visualized using t-SNE [41], as shown in Fig. 5. From Fig. 5, the two domains have significant distribution differences in the original space. After adaptation, the proposed encoder is able to learn some shared features that can decrease the domain shift between two datasets.
+
+B. Discriminative Brain Regions
+
+It is helpful to identify the brain regions that are more closely linked to SCD progression. Thus we explore the top ten brain ROIs automatically identified by the attention module of our model. We first aggregate the progressive SCD instances that have been correctly identified by our model. Then they are fed into the network and get their attention vectors which are computed by the attention module. Each element in the attention vector reflects the corresponding feature’s importance. The mean value of the attention vectors is used to indicate the brain region contribution (for visualization, we also minus the minimum value of the vector for each element). The discriminative ROIs selected by our model for pSCD identification on CLAS and pMCI vs. sMCI classification on ADNI are shown in Fig. 6 and Fig. 7, respectively. We list the top ten ROIs for pSCD identification (first two columns) and pMCI vs. sMCI classification (last two columns) in Table V. We also visualize five discriminative brain regions (based on AAL) located by our method for pSCD identification on CLAS and MCI-to-AD conversion prediction on ADNI in Fig. 8.
+
+From Table V, it can be observed that the most informative brain regions include the precuneus, hippocampus and certain gyrus areas. Especially, the precuneus is a brain region involved in a variety of cognitive functions, which include episodic memory retrieval, mental imagery strategies, and consciousness [42]–[44]. It is recently reported as a critical brain area for the memory and cognition impairment observed in early stage of AD [45]–[47]. Also, the hippocampus is a complex brain structure which lies in the temporal lobe. It plays a major role in memory and learning [48]–[50]. Studies have revealed that it can be affected in a variety of neurological disorders such as AD [51]–[53]. We also find an interesting phenomenon from our results that progressive SCD is more closely linked with the left brain areas rather than the right part. This has also been found by some related studies [8].
+
+C. Ablation Study
+
+To investigate the classification performance with other MRI features, we further use CNN features as the input of the proposed IADT model, and test its performance for pSCD vs. sSCD classification. Specifically, we use a 3D CNN which is pretrained with brain MRIs from other data sources as the feature extractor. Then the 3D CNN extracts features of the source data (AD/NC samples) and target data (SCD samples), respectively. The learned features are then fed into our model for adaptation and classification. In practice, we adopt a widely-used 3D VGG-Net CNN for brain MRI classification network, i.e., VoxCNN [39]. It is pretrained with 205 AD and 231 NC samples acquired from other independent subjects in ADNI. The network involves 10 convolution layers, and the embeddings from the last activation of the convolution layer are used as the CNN feature. The dimension of CNN feature is 256. We also apply VoxCNN to pSCD vs. sSCD classification, and compare the result with our method, as shown in Fig. 9a. It can be observed that the proposed model outperforms CNN in most cases. The CNN model has a trend of overfitting to the negative samples (sSCD) whereas our model is able to achieve a much more balanced accuracy. We also compare our method with ROI features and CNN features, as shown in Fig. 9b. From the results, the model with CNN features achieves higher AUC values while ROI features enable the model to achieve higher classification accuracy. Overall, their performances are comparable without dominant advantages over each other in SCD progression prediction.
+
+D. Parameter Analysis
+
+1) Influence of Dimension of Latent Space:
+
+The encoder in our model plays the role of projecting source and target data into a shared latent space. Since this space is a compressed representation of the original features, the dimension of latent space is tunable. We explore the influence of this dimension and calculate the AUC values under different dimensions. The result is reported in Fig. 10. It can be observed that the model can achieve relatively good classification performance when the dimension of latent space is between 10~40. This implies that low-dimension spaces can be explored for cross-domain adaptation in the task of SCD progression prediction.
+
+2) Influence of Losses:
+
+There are three losses for our model training as shown in Eq. 4. Since the target data (SCD) number is tiny, the reconstruction loss ℒrecon plays an important role in reflecting the target data information. Thus we fix this parameter to 1 in Eq. 4 for the reconstruction loss, and vary the values of λ1 and λ2 to explore their influences. Specifically, we independently change the values of λ1 and λ2 from 0.001, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, and compute the corresponding AUC values for the pSCD vs. sSCD classification task. The result is reported in Fig. 11.
+
+From Fig. 11, we can see that when the λ2 is relatively small (≤0.02), the overall classification performance in terms of AUC is not good. This indicates the importance of the classification module in our model. When its contribution is reduced, the model will lose discrimination toward brain disorders. In addition, in most cases, the classification performance with respect to λ1 and λ2 is stable, which demonstrates that our model is not very sensitive to parameters.
+
+VII. CONCLUSION
+
+In this paper, we propose an interpretable autoencoder model with domain transfer (IADT) for SCD progression prediction. Our model takes brain ROI features as the input. An attention module helps automatically find the most discriminative brain disorder-related regions. The domain adaptation and the joint training of the classification and reconstruction modules help the model learn domain-invariant features. Our model has three advantages: 1) good performance on small-sample-sized datasets which has extensive applications in medical imaging; 2) good interpretability which can help analyze disease-related brain areas with different brain atlases; and 3) simple architecture and fast training/running speed. It only takes 5~10 seconds on CPUs to train and test the model. In the future, we will incorporate multi-modality features into our framework for further analysis.
+
+Acknowledgment
+
+H. Guan, P.-T. Yap, A. Bozoki and M. Liu were supported in part by NIH grant RF1AG073297. Part of the data used in this work were obtained from Alzheimer’s Disease Neuroimaging Initiative (ADNI). The investigators within ADNI contributed to the design and implementation of ADNI and provided data but did not participate in analysis or writing of this article.
+
+Fig. 1: Progression of AD pathology [2] (top) and the differences between our method from conventional methods (bottom). MCI: mild cognitive impairment; SCD: subjective cognitive decline; pSCD: progressive SCD; sSCD: stable SCD.
+
+Fig. 2: Illustration of the main framework of the proposed IADT model for MRI-based SCD progression prediction.
+
+Fig. 3: Illustration of the attention module of the proposed IADT model for SCD progression prediction.
+
+Fig. 4: Results of pSMC vs. sSMC classification on ADNI.
+
+Fig. 5: Data distribution of the source (AD&amp;NC samples from ADNI) and target data (SCD samples from CLAS) before and after the domain adaptation processing.
+
+Fig. 6: Discriminative power (weights) of different ROIs outputted by the attention module of our model for progressive SCD identification.
+
+Fig. 7: Discriminative power (weights) of different Brain ROIs outputted by the attention module of our model for MCI-to-AD conversion prediction (i.e., pMCI vs. sMCI classification).
+
+Fig. 8: Important brain regions identified by the proposed IADT in progressive SCD identification on CLAS (top) and MCI-to-AD conversion prediction on ADNI (bottom).
+
+Fig. 9: Ablation study of our method with CNN features.
+
+Fig. 10: Influence of dimension of the latent feature space on pSCD vs. sSCD classification.
+
+Fig. 11: Influence of the parameter of λ1 (y-axis) and λ2 (x-axis) on pSCD vs. sSCD classification in terms of AUC values.
+
+TABLE I: Demographic information of the subjects for SCD progression prediction. The values are denoted in the form of “mean±standard deviation”. F/M: Female/Male.
+
+Dataset	Category	Gender (F/M)	Age	MMSE	
+ADNI	AD	67/92	74.4±8.1	23.1±2.2	
+NC	105/95	73.4±6.2	29.0±1.3	
+	pSMC	9/12	73.9±5.9	27.8±2.0	
+sSMC	55/35	71.9±5.4	28.5±1.9	
+CLAS	pSCD	13/11	71.3±6.6	26.8±2.6	
+sSCD	27/25	68.6±7.2	27.7±2.2	
+
+TABLE II: Performance (%) of eight methods for SCD progression prediction (i.e., pSCD vs. sSCD classification), and p-values via paired sample t-test between our method and each of the competing methods.
+
+Method	ACC	BAC	AUC	SEN	SPE	p &lt; 0.05	
+Baseline	57.89	54.65	58.17	45.83	63.46	Yes	
+TCA	60.53	59.94	55.85	58.33	61.54	Yes	
+GFK	59.21	57.85	58.81	54.17	61.54	Yes	
+SA	61.84	59.78	60.26	54.17	65.38	Yes	
+CORAL	59.21	60.10	56.01	62.50	57.69	Yes	
+TL	64.47	59.46	60.50	45.83	73.08	Yes	
+VoxCNN	67.11	54.65	55.45	20.83	88.46	Yes	
+IADT (Ours)	71.05	69.87	64.90	66.67	73.08	–	
+
+TABLE III: Performance comparison of the proposed model and state-of-the-art methods for SCD progression prediction.
+
+Method	Model	ACC (%)	BAC (%)	AUC (%)	SEN (%)	SPE (%)	p &lt; 0.05	
+Yue et al. [8]	Cost-Sensitive SVM	53.95	56.25	51.52	62.50	50.00	Yes	
+Felpete et al. [9]	Random Forest	59.21	57.85	63.66	54.17	61.54	Yes	
+Liu et al. [40]	GAN	65.50	67.05	71.30	72.50	61.60	–	
+IADT (Ours)	Attention Autoencoder	71.05	69.87	64.90	66.67	73.08	–	
+
+TABLE IV: Performance (%) of seven methods for MCI-to-AD conversion prediction (i.e., pMCI vs. sMCI classification).
+
+Method	ACC	BAC	AUC	SEN	SPE	p &lt; 0.05	
+Baseline	64.12	64.04	69.20	63.47	64.60	Yes	
+TCA	60.56	60.71	62.24	61.68	59.73	Yes	
+GFK	65.14	64.92	70.08	63.47	66.37	Yes	
+SA	65.14	64.92	70.09	63.47	66.37	Yes	
+CORAL	64.38	64.26	69.84	63.47	65.04	Yes	
+VoxCNN	70.51	69.89	74.74	80.61	59.18	Yes	
+IADT (Ours)	73.54	73.00	75.70	69.46	76.55	–	
+
+TABLE V: Ten discriminative brain ROIs selected by the attention module of our model for progressive SCD identification (i.e., pSCD vs. sSCD classification) on CLAS and MCI-to-AD conversion prediction (i.e., pMCI vs. sMCI classification) on ADNI.
+
+pSCD vs. sSCD	pMCI vs. sMCI	
+Index	ROI Name	Index	ROI Name	
+67	Precuneus left	32	Anterior cingulate	
+86	Middle temporal gyrus right	35	Posterior cingulate gyrus left	
+55	Fusiform gyrus left	8	Middle frontal gyrus right	
+37	Hippocampus left	90	Inferior temporal gyrus right	
+57	Postcentral gyrus left	6	Superior frontal gyrus	
+44	Calcarine fissure right	37	Hippocampus left	
+72	Caudate nucleus right	76	Lenticular nucleus	
+64	Supramarginal gyrus right	21	Olfactory cortex left	
+83	Temporal pole left	49	Superior occipital gyrus left	
+61	Inferior parietal left	66	Angular gyrus right	
+
+1 https://ida.loni.usc.edu
+
+2 https://surfer.nmr.mgh.harvard.edu/
+
+3 https://www.fil.ion.ucl.ac.uk/spm/
+
+
+References
+
+[1] Goedert M and Spillantini MG , “A century of Alzheimer’s disease,” Science, vol. 314 , no. 5800 , pp. 777–781, 2006.17082447
+[2] Jessen F , “A conceptual framework for research on subjective cognitive decline in preclinical Alzheimer’s disease,” Alzheimer’s &amp; Dementia, vol. 10 , no. 6 , pp. 844–852, 2014.
+[3] Rabin LA , Smart CM , and Amariglio RE , “Subjective cognitive decline in preclinical Alzheimer’s disease,” Annual Review of Clinical Psychology, vol. 13 , pp. 369–396, 2017.
+[4] Wang X , Huang W , Su L , Xing Y , Jessen F , Sun Y , Shu N , and Han Y , “Neuroimaging advances regarding subjective cognitive decline in preclinical Alzheimer’s disease,” Molecular Neurodegeneration, vol. 15 , no. 1 , pp. 1–27, 2020.31964406
+[5] Parker AF , Ohlhauser L , Scarapicchia V , Smart CM , Szoeke C , and Gawryluk JR , “A systematic review of neuroimaging studies comparing individuals with subjective cognitive decline to healthy controls,” Journal of Alzheimer’s Disease, pp. 1–23, 2022.
+[6] Jack CR Jr , “The Alzheimer’s Disease Neuroimaging Initiative (ADNI): MRI methods,” Journal of Magnetic Resonance Imaging, vol. 27 , no. 4 , pp. 685–691, 2008.18302232
+[7] Bron EE , “Standardized evaluation of algorithms for computer-aided diagnosis of dementia based on structural MRI: The CADDementia challenge,” NeuroImage, vol. 111 , pp. 562–579, 2015.25652394
+[8] Yue L , Hu D , Zhang H , Wen J , Wu Y , Li W , Sun L , Li X , Wang J , Li G , and other, “Prediction of 7-year’s conversion from subjective cognitive decline to mild cognitive impairment,” Human Brain Mapping, vol. 42 , no. 1 , pp. 192–203, 2021.33030795
+[9] Felpete A , Valladares-Rodríguez S , Mallo SC , Lojo-Seoane C , Facal D , Belleville S , Juncos-Rabadán O , and Pereiro AX , “Predicting progression in subjective cognitive decline (SCD) using a machine learning (ML) approach: The role of the complain’s severity: Neuropsychology/early detection of cognitive decline with neuropsychological tests,” Alzheimer’s &amp; Dementia, vol. 16 , 2020.
+[10] Lin H , Jiang J , Li Z , Sheng C , Du W , Li X , and Han Y , “Identification of subjective cognitive decline due to Alzheimer’s disease using multimodal MRI combining with machine learning,” Cerebral Cortex, 2022.
+[11] Liu Y , Yue L , Xiao S , Yang W , Shen D , and Liu M , “Assessing clinical progression from subjective cognitive decline to mild cognitive impairment with incomplete multi-modal neuroimages,” Medical Image Analysis, vol. 75 , p. 102266, 2022.
+[12] Zhang F , Pan B , Shao P , Liu P , Shen S , Yao P , Xu RX , “A single model deep learning approach for alzheimer’s disease diagnosis,” Neuroscience, vol. 491 , pp. 200–214, 2022.35398507
+[13] Guan H , Wang L , Yao D , Bozoki A , and Liu M , “Learning transferable 3D-CNN for MRI-based brain disorder classification from scratch: An empirical study,” in International Workshop on Machine Learning in Medical Imaging. Springer, 2021, pp. 10–19.
+[14] Lian C , Liu M , Zhang J , and Shen D , “Hierarchical fully convolutional network for joint atrophy localization and Alzheimer’s disease diagnosis using structural MRI,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 42 , no. 4 , pp. 880–893, 2018.30582529
+[15] Engedal K , “The power of EEG to predict conversion from mild cognitive impairment and subjective cognitive decline to dementia,” Dementia and Geriatric Cognitive Disorders, vol. 49 , no. 1 , pp. 38–47, 2020.32610316
+[16] Pereiro AX , “Relevance of complaint severity in predicting the progression of subjective cognitive decline and mild cognitive impairment: A machine learning approach,” Journal of Alzheimer’s Disease, vol. 82 , no. 3 , pp. 1229–1242, 2021.
+[17] Mirzaei G , Adeli A , and Adeli H , “Imaging and machine learning techniques for diagnosis of Alzheimer’s disease,” Reviews in the Neurosciences, vol. 27 , no. 8 , pp. 857–870, 2016.27518905
+[18] Tanveer M , Richhariya B , Khan RU , Rashid AH , Khanna P , Prasad M , and Lin C , “Machine learning techniques for the diagnosis of Alzheimer’s disease: A review,” ACM Transactions on Multimedia Computing, Communications, and Applications, vol. 16 , no. 1s , pp. 1–35, 2020.
+[19] Cheplygina V , de Bruijne M , and Pluim JP , “Not-so-supervised: A survey of semi-supervised, multi-instance, and transfer learning in medical image analysis,” Medical Image Analysis, vol. 54 , pp. 280–296, 2019.30959445
+[20] Valverde JM , Imani V , Abdollahzadeh A , De Feo R , Prakash M , Ciszek R , and Tohka J , “Transfer learning in magnetic resonance brain imaging: A systematic review,” Journal of Imaging, vol. 7 , no. 4 , p. 66, 2021.34460516
+[21] Pan SJ and Yang Q , “A survey on transfer learning,” IEEE Transactions on Knowledge and Data Engineering, vol. 22 , no. 10 , pp. 1345–1359, 2009.
+[22] Guan H and Liu M , “Domain adaptation for medical image analysis: A survey,” IEEE Transactions on Biomedical Engineering, vol. 69 , no. 3 , pp. 1173–1185, 2022.34606445
+[23] Csurka G , Domain adaptation in computer vision applications. Springer International Publishing, 2017.
+[24] Cheng B , Liu M , Zhang D , Munsell BC , and Shen D , “Domain transfer learning for MCI conversion prediction,” IEEE Transactions on Biomedical Engineering, vol. 62 , no. 7 , pp. 1805–1817, 2015.25751861
+[25] Mehmood A , Yang S , Feng Z , Wang M , Ahmad AS , Khan R , Maqsood M , and Yaqub M , “A transfer learning approach for early diagnosis of Alzheimer’s disease on MRI images,” Neuroscience, vol. 460 , pp. 43–52, 2021.33465405
+[26] Xiao S , Lewis M , Mellor D , McCabe M , Byrne L , Wang T , Wang J , Zhu M , Cheng Y , Yang C , “The China longitudinal ageing study: Overview of the demographic, psychosocial and cognitive data of the Shanghai sample,” Journal of Mental Health, vol. 25 , no. 2 , pp. 131–136, 2016.26758526
+[27] Tzourio-Mazoyer N , Landeau B , Papathanassiou D , Crivello F , Etard O , Delcroix N , Mazoyer B , and Joliot M , “Automated anatomical labeling of activations in SPM using a macroscopic anatomical parcellation of the MNI MRI single-subject brain,” NeuroImage, vol. 15 , no. 1 , pp. 273–289, 2002.11771995
+[28] Pegueroles J , Vilaplana E , Montal V , Sampedro F , Alcolea D , Carmona-Iragui M , Clarimon J , Blesa R , Lleó A , Fortea J , “Longitudinal brain structural changes in preclinical Alzheimer’s disease,” Alzheimer’s &amp; Dementia, vol. 13 , no. 5 , pp. 499–509, 2017.
+[29] Wenk GL , “Neuropathologic changes in Alzheimer’s disease,” Journal of Clinical Psychiatry, vol. 64 , pp. 7–10, 2003.
+[30] Mu Y and Gage FH , “Adult hippocampal neurogenesis and its role in Alzheimer’s disease,” Molecular Neurodegeneration, vol. 6 , no. 1 , pp. 1–9, 2011.21211002
+[31] Ott BR , “Brain ventricular volume and cerebrospinal fluid biomarkers of Alzheimer’s disease,” Journal of Alzheimer’s Disease, vol. 20 , no. 2 , pp. 647–657, 2010.
+[32] Langer DL , Van der Kwast TH , Evans AJ , Trachtenberg J , Wilson BC , and Haider MA , “Prostate cancer detection with multi-parametric MRI: Logistic regression analysis of quantitative T2, diffusion-weighted imaging, and dynamic contrast-enhanced MRI,” Journal of Magnetic Resonance Imaging, vol. 30 , no. 2 , pp. 327–334, 2009.19629981
+[33] Divya R and Shantha Selva Kumari R , “Genetic algorithm with logistic regression feature selection for Alzheimer’s disease classification,” Neural Computing and Applications, vol. 33 , no. 14 , pp. 8435–8444, 2021.
+[34] Wachinger C , “Domain adaptation for Alzheimer’s disease diagnostics,” NeuroImage, vol. 139 , pp. 470–479, 2016.27262241
+[35] Pan SJ , Tsang IW , Kwok JT , and Yang Q , “Domain adaptation via transfer component analysis,” IEEE Transactions on Neural Networks, vol. 22 , no. 2 , pp. 199–210, 2010.21095864
+[36] Gong B , Shi Y , Sha F , and Grauman K , “Geodesic flow kernel for unsupervised domain adaptation,” in IEEE Conference on Computer Vision and Pattern Recognition, 2012, pp. 2066–2073.
+[37] Fernando B , Habrard A , Sebban M , and Tuytelaars T , “Unsupervised visual domain adaptation using subspace alignment,” in Proceedings of the IEEE International Conference on Computer Vision, 2013, pp. 2960–2967.
+[38] Sun B , Feng J , and Saenko K , “Return of frustratingly easy domain adaptation,” in Proceedings of the AAAI Conference on Artificial Intelligence, vol. 30 , no. 1 , 2016.
+[39] Korolev S , Safiullin A , Belyaev M , and Dodonova Y , “Residual and plain convolutional neural networks for 3D brain MRI classification,” in 14th IEEE International Symposium on Biomedical Imaging (ISBI), 2017, pp. 835–838.
+[40] Liu Y , Pan Y , Yang W , Ning Z , Yue L , Liu M , and Shen D , “Joint neuroimage synthesis and representation learning for conversion prediction of subjective cognitive decline,” in International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, 2020, pp. 583–592.
+[41] Van der Maaten L and Hinton G , “Visualizing data using t-SNE,” Journal of Machine Learning Research, vol. 9 , no. 11 , 2008.
+[42] Lundstrom BN , Petersson KM , Andersson J , Johansson M , Fransson P , and Ingvar M , “Isolating the retrieval of imagined pictures during episodic memory: Activation of the left precuneus and left prefrontal cortex,” NeuroImage, vol. 20 , no. 4 , pp. 1934–1943, 2003.14683699
+[43] Cavanna AE and Trimble MR , “The precuneus: a review of its functional anatomy and behavioural correlates,” Brain, vol. 129 , no. 3 , pp. 564–583, 2006.16399806
+[44] Hebscher M , Meltzer JA , and Gilboa A , “A causal role for the precuneus in network-wide theta and gamma oscillatory activity during complex memory retrieval,” eLife, vol. 8 , p. e43114, 2019.30741161
+[45] Karas G , Scheltens P , Rombouts S , Van Schijndel R , Klein M , Jones B , Van Der Flier W , Vrenken H , and Barkhof F , “Precuneus atrophy in early-onset Alzheimer’s disease: A morphometric structural MRI study,” Neuroradiology, vol. 49 , no. 12 , pp. 967–976, 2007.17955233
+[46] Scheff SW , Price DA , Schmitt FA , Roberts KN , Ikonomovic MD , and Mufson EJ , “Synapse stability in the precuneus early in the progression of Alzheimer’s disease,” Journal of Alzheimer’s Disease, vol. 35 , no. 3 , pp. 599–609, 2013.
+[47] Koch G , Bonnì S , Pellicciari MC , Casula EP , Mancini M , Esposito R , Ponzo V , Picazio S , Di Lorenzo F , Serra L , “Transcranial magnetic stimulation of the precuneus enhances memory and neural activity in prodromal Alzheimer’s disease,” NeuroImage, vol. 169 , pp. 302–311, 2018.29277405
+[48] Eichenbaum H , Otto T , and Cohen NJ , “The hippocampus—what does it do?” Behavioral and neural biology, vol. 57 , no. 1 , pp. 2–36, 1992.1567331
+[49] Hannula DE and Greene AJ , “The hippocampus reevaluated in unconscious learning and memory: At a tipping point?” Frontiers in Human Neuroscience, vol. 6 , p. 80, 2012.22518102
+[50] Gonzalez WG , Zhang H , Harutyunyan A , and Lois C , “Persistence of neuronal representations through time and damage in the hippocampus,” Science, vol. 365 , no. 6455 , pp. 821–825, 2019.31439798
+[51] Hyman BT , Van Hoesen GW , Damasio AR , and Barnes CL , “Alzheimer’s disease: Cell-specific pathology isolates the hippocampal formation,” Science, vol. 225 , no. 4667 , pp. 1168–1170, 1984.6474172
+[52] Shi F , Liu B , Zhou Y , Yu C , and Jiang T , “Hippocampal volume and asymmetry in mild cognitive impairment and Alzheimer’s disease: Meta-analyses of MRI studies,” Hippocampus, vol. 19 , no. 11 , pp. 1055–1064.
+[53] Perrotin A , de Flores R , Lamberton F , Poisnel G , La Joie R , de la Sayette V , Mezenge F , Tomadesso C , Landeau B , Desgranges B , “Hippocampal subfield volumetry and 3D surface mapping in subjective cognitive decline,” Journal of Alzheimer’s Disease, vol. 48 , no. s1 , pp. S141–S150, 2015.

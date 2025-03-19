@@ -1,0 +1,408 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101604520
+41136
+IEEE J Biomed Health Inform
+IEEE J Biomed Health Inform
+IEEE journal of biomedical and health informatics
+2168-2194
+2168-2208
+
+28749360
+5785578
+10.1109/JBHI.2017.2732287
+NIHMS915528
+Article
+Multi-Hypergraph Learning for Incomplete Multi-Modality Data
+Liu Mingxia Member, IEEE Department of Radiology and BRIC, University of North Carolina at Chapel Hill, North Carolina 27599, USA
+
+Gao Yue Senior Member, IEEE Department of Radiology and BRIC, University of North Carolina at Chapel Hill, North Carolina 27599, USA
+
+Yap Pew-Thian Senior Member, IEEE Department of Radiology and BRIC, University of North Carolina at Chapel Hill, North Carolina 27599, USA
+
+Shen Dinggang Senior Member, IEEE †Department of Radiology and BRIC, University of North Carolina at Chapel Hill, North Carolina 27599, USA
+Department of Brain and Cognitive Engineering, Korea University, Seoul 02841, Republic of Korea
+
+† Corresponding author: D. Shen (dgshen@med.unc.edu)
+25 10 2017
+26 7 2017
+7 2018
+01 7 2019
+22 4 11971208
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Multi-modality data convey complementary information that can be used to improve the accuracy of prediction models in disease diagnosis. However, effectively integrating multi-modality data remains a challenging problem especially when the data are incomplete. For instance, more than half of the subjects in the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database have no fluorodeoxyglucose positron emission tomography (FDG-PET) and cerebrospinal fluid (CSF) data. Currently, there are two commonly-used strategies to handle the problem of incomplete data: 1) discard samples having missing features, and 2) impute those missing values via specific techniques. In the first case, a significant amount of useful information is lost and, in the second case, additional noise and artifacts might be introduced into the data. Also, previous studies generally focus on the pairwise relationships among subjects, without considering their underlying complex (e.g., high-order) relationships. To address these issues, in this paper, we propose a multi-hypergraph learning (MHL) method for dealing with incomplete multi-modality data. Specifically, we first construct multiple hypergraphs to represent the high-order relationships among subjects by dividing them into several groups according to the availability of their data modalities. A hypergraph regularized transductive learning method is then applied to these groups for automatic diagnosis of brain diseases. Extensive evaluation of the proposed method using all subjects in the baseline ADNI database indicates that our method achieves promising results in AD/MCI classification, compared with state-of-the-art methods.
+
+Index Terms
+
+Multi-modality
+incomplete data
+hypergraph
+Alzheimer’s disease
+classification
+
+I. Introduction
+
+Alzheimer’s disease (AD) is characterized by progressive impairment of neurons and the connections between neurons, leading to loss of cognitive/memory function and ultimately death. This disease has been regarded as the major challenge to global health care systems [1], and it is estimated that the total prevalence of AD in the United States is about 13.8 million by 2050 [2]. Until now, much effort has been made to investigate computer-aided brain disease diagnosis approaches, aiming to prevent or postpone the onset of AD or its prodrome, i.e., mild cognitive impairment (MCI) [3].
+
+Recent research and clinical studies have investigated extensive candidate biomarkers, and reported that fluorodeoxyglucose positron emission tomography (PET) measurements, structural magnetic resonance imaging (MRI), and cerebrospinal fluid (CSF) biomarkers are among the best-established biomarkers for AD progression and pathology [3]. Specifically, feature representations (e.g., cortical thickness, connectivity information, and regional volumetric measures) extracted from MRI can be adopted to measure AD-related brain abnormalities [4]–[11]. With PET data, one can detect the abnormality in cerebral metabolic rate for glucose in the brain [12]–[16]. Besides, CSF total-tau (t-tau), CSF tau hyperphosphorylated at threonine 181 (p-tau) and the decrease of CSF amyloid β (Aβ) are shown to be related to the cognitive decline in AD/MCI patients [17], [18]. Previous computer-aided disease diagnosis studies have reported that multi-modality data (e.g., MRI, PET, and CSF) can provide complementary information [19]–[22], which can be used for improving the diagnostic results for AD/MCI.
+
+One common challenge in the multi-modality analysis is that there may be missing values in some modalities, which is called incomplete data problem [19], [20]. For instance, the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database, which consists of data for AD, MCI, and normal control (NC) subjects with multiple data modalities (e.g., MRI, PET, and CSF), is not complete for all modalities [23]. In the baseline ADNI database, all subjects have MRI data, and only about half subjects have PET and CSF data. Possible reasons for this may include poor data quality, high cost involved with PET scanning and patient dropouts. For instance, CSF data collection requires invasive tests (e.g., lumbar puncture), which might deter patient commitment [19].
+
+In the domain of neuroimaging analysis, researchers have developed various approaches to deal with incomplete data [19], [20]. The first type of methods simply removes subjects with incomplete data. This will unfortunately result in discarding a large amount of the acquired data and may lead to significant reduction of sample size [24]. The second type of methods aims to impute the missing values via specific data imputation techniques [25], [26]. Some well-known imputation techniques include expectation maximization (EM) [27], singular value decomposition (SVD) [28] and matrix completion [29]. Although these methods may help to process those randomly missing data, they often cannot handle missing data that are in a block-wise manner [19], where subjects have missing values in a whole modality (instead of missing some features in a specific modality). Also, imputation methods may introduce additional imputation artifacts, and thus, degrade the data quality [29]. Different from these two categories, several other methods have been recently developed to directly handle the incomplete data directly, without having to discard incomplete data or to impute missing data [19], [20]. For instance, Yuan et al. [19] proposed a multi-source feature (iMSF) learning method using all subjects in ADNI with at least one available data modality. Xiang et al. [20] developed a sparse feature learning method for handling incomplete multi-modality data without imputation. However, the main disadvantage of these methods is that they model only the pairwise relationships between subjects. Intuitively, the higher-order relationships among subjects can be used to improve the learning performance of computer-aided AD/MCI diagnosis.
+
+In this paper, we propose a multi-hypergraph learning (MHL) approach based on incomplete multi-modality data for the automatic diagnosis of AD/MCI, where the high-order relationships among subjects can be modeled explicitly. To be specific, we first divide the dataset into several groups depending on whether the data for a certain modality is available. In this way, each group contains subjects with complete data from a particular combination of different modalities. Then, we construct a hypergraph to model the high-order relationships among subjects in each group. Next, we combine the hyperedges given by multi-hypergraphs associated with those groups and compute a hypergraph Laplacian matrix. Finally, a hypergraph-regularized transductive learning model is used for AD/MCI diagnosis.
+
+The major contributions of this paper are summarized below. First, we propose a data grouping strategy for multimodality data, and each group is corresponding to a particular combination of multiple modalities. Second, we develop a multi-hypergraph classification model, by explicitly modeling the inherent high-order relationships among subjects via hypergraphs. Third, we conduct extensive experiments on ADNI to empirically analyze our method, including four binary classification tasks (i.e., AD vs. NC, MCI vs. NC, AD vs. MCI, and pMCI vs. sMCI). The experimental results demonstrate the effectiveness of our proposed method.
+
+The work in this paper is different from our previous study in [30]. First, while the focus of [30] is to exploit the coherence among different data groups (with each group containing data from a particular combination of different modalities), we focus on modeling the high-order relationships among subjects in this study. Second, the strategies for making use of the multi-modality data are different. In [30], we learn optimal weights for different groups from data via a view-aligned hypergraph classification model. In this work, we treat each group equally and propose to learn weights for hyperedges from data automatically. Third, the hypergraph construction methods are different. In [30], we adopt sparse representation for constructing hypergraphs, where the similarity measure is based on the sparse coefficients. In this work, we use the star expansion strategy [31] to generate multiple hyperedges in each group, where Euclidean distance is used as the similarity measure.
+
+The rest of the paper is organized as follows. We first present background information in Section II. In Section III, we describe data pre-processing method and our proposed multi-hypergraph learning approach. In Section IV, we describe experimental settings and reports experimental results. In Section V, we compare our method with related approaches and investigate the influences of parameters. In Section VI, we conclude this work and discuss future research directions.
+
+II. Background
+
+A. Hypergraph based Transductive Learning
+
+As a typical semi-supervised learning method, transductive learning incorporates not only labeled data but also unlabeled data for improving the performance of supervised learning methods [32], [33]. Generally, transductive learning assumes that the data lie in manifolds and clusters. Based on these two assumptions, many transductive learning methods have been proposed, such as transductive support vector machine [32], graph based learning [34], [35] and hypergraph learning [34], [36]–[38]. Among various transductive learning methods, hypergraph learning achieves promising performance in practice. Here, we denote scalars, vectors, and matrices using normal italic letters, boldface lowercase letters, and boldface uppercase letters, respectively. We further list important notations and definitions used in this paper in Table I.
+
+A hypergraph is represented by 𝒢 = (𝒱, ℰ, w), where 𝒱 is a set of vertices (each representing a subject), ℰ is a set of hyperedges (each connecting two or more vertices) and w = (wi) ∈ ℛNe is the weight vector for Ne hyeredges. Each hyperedge ei (i = 1, 2, ⋯, Ne) is assigned a weight wi. In hypergraphs, a hyperedge can connect more than two vertices, through which high-order relationships can be modeled explicitly [34], [36]. In comparison, each edge in a simple graph connects only two vertices. The incidence matrix H = (hij) ∈ ℛN × Ne of hypergraph 𝒢 encodes the relationships among vertices. The (i, j)-entry of the incidence matrix H indicates whether vertex υi is connected with other vertices in the hyperedge ej, i.e., (1) hij={1,if  υi∈ej0,otherwise
+
+The vertex degree and the hyperedge degree are defined, respectively, as (2) d(υi)=∑ej∈ℰwjhij
+
+and (3) δ(ej)=∑υi∈𝒱hij
+
+We let Dυ and De be diagonal matrices containing the vertex degrees and the hyperedge degrees, respectively. Denote W = (Wij) ∈ ℛNe × Ne as the diagonal matrix of hyperedge weights, with the diagonal element Wii = 1. Previous approaches for computing the hypergraph Laplacian can be categorized into two classes [34]. The first class aims to construct a simple graph from the initial hypergraph, e.g., star expansion [31], clique expansion [31] and Rodriquez’s Laplacian [39]. In the second class, we define a hypergraph Laplacian based on analogs from simple graph Laplacian, e.g., normalized Laplacian [34] and Bolla’s Laplacian [40]. Recently, Benson et al. [38] proposed a hypergraph construction method to capture the high-level information inside a graph. In this paper, we adopt the method proposed in [34] to compute the hypergraph Laplacian. Letting Θ=Dυ−1/2HWDe−1HTDυ−1/2, the hypergraph Laplacian is defined as Ł = I − Θ. We define the hypergraph Laplacian regularizer Ω(f) as in [34] (4) Ω(f)=fTŁf=12∑ei∈ℰ∑υj,υk∈𝒱wihjihkiδ(ei)(fjd(υj)−fkd(υk))2
+
+B. ADNI Database
+
+This study is based on the incomplete multi-modality data from the baseline ADNI database (ADNI-1) [23]. In ADNI, subjects are divided into three categories (i.e., AD, MCI, and NC) based on particular criteria such as Mini-Mental State Examination (MMSE) scores. To be specific, general inclusion or exclusion criteria used in ADNI are listed in the following: 1) mild AD: MMSE scores between 20–26 (inclusive), CDR of 0.5 or 1.0 and meet NINCDS/ADRDA criteria for probable AD; 2) MCI: MMSE scores between 24–30 (inclusive), a memory complaint, have objective memory loss measured by education adjusted scores on Wechsler Memory Scale Logical Memory II, a CDR of 0.5, absence of significant levels of impairment in other cognitive domains, essentially preserved activities of daily living and an absence of dementia; and 3) NC: Mini-Mental State Examination (MMSE) scores between 24–30 (inclusive), a Clinical Dementia Rating (CDR) of 0, non-depressed, non MCI and non-demented.
+
+Besides, many MCI subjects could convert to AD within several months after the baseline time, while the others may keep stable over time. Accordingly, we further categorized those MCI subjects into two classes, i.e., progressive MCI (pMCI) and stable MCI (sMCI). Specifically, if the diagnosis for a particular subject was MCI at baseline but this subject converted to AD after baseline within 24 months, this subjects is defined as pMCI. In contrast, an sMCI subject was diagnosed as MCI at all available time points (0 – 96 months). The detailed description for each category is given online (http://adni.loni.usc.edu).
+
+III. Method
+
+A. Data Pre-Processing
+
+There are 807 subjects in the baseline ADNI database, including 186 AD subjects, 395 MCI subjects (169 pMCI and 226 sMCI), and 226 NCs. All 807 subjects in ADNI have T1-weighted structural MRI data, while only 396 subjects have PET data and 406 subjects have CSF data. That is, in the baseline ADNI database, the missing data are in a block-wise manner, i.e., subjects have missing values in a whole modality, instead of missing some features in a specific modality. In Table II, we report demographic and clinical information of all subjects used in this study.
+
+We process MR and PET images and extract the region of interest (ROI) features from these two data modalities. Specifically, using MIPAV (http://mipav.cit.nih.gov/index.php), we first apply anterior commissure (AC)-posterior commissure (PC) correction for MR images. We then re-sample those images to have the resolution of 256 × 256 × 256 and correct intensity inhomogeneity via N3 algorithm [41]. In the next step, we perform skull stripping, and remove the cerebellum by warping a labeled template to each skull-stripped image. Then, FAST [42] in the FSL software package (http://fsl.fmrib.ox.ac.uk/fsl/fslwiki) is adopted to segment the human brain into three tissue types, i.e., gray matter, white matter, and cerebrospinal fluid (CSF). After registration via HAMMER [43], we obtain a subject-labeled image, by using a template with 93 ROIs [44]. For each subject, we finally extract the volumes of GM tissue in 93 ROIs as feature representations, normalized by the total intracranial volume. Here, the total intracranial volume is estimated by the summation of GM, WM and CSF volumes from 93 ROIs. On the other hand, for those PET images, we first align each PET image onto its corresponding MR image via affine transformation. Then, the average intensity of each ROI in the PET image is computed as the feature representation for that subject. Also, we use five CSF biomarkers for representing subjects, i.e., amyloid β (Aβ42), CSF total tau (t-tau), CSF tau hyperphosphorylated at threonine 181 (p-tau) and two tau ratios with respect to Aβ42 (i.e., t-tau/Aβ42 and p-tau/Aβ42). In this way, we now have a 191-dimensional feature vector for each subject having complete multi-modality data, including 93 MRI features, 93 PET features, and 5 CSF features.
+
+B. Multi-Hypergraph Construction with Incomplete Multi-Modality Data
+
+Although several methods have been proposed to handle the incomplete data directly without having to discard incomplete data or to impute missing data [19], [20], these methods can only model pairwise relationships between subjects. That is, the high-order relationships among subjects are not captured to further improve the performance of disease diagnosis. For addressing this issue, we propose a multi-hypergraph learning (MHL) method to handle block-wise incomplete multi-modality data, by explicitly incorporating the high-order relationships among subjects into the learning process. As shown in Fig. 1, we first divide the whole dataset into several groups according to the availability of the data associated with a particular combination of modalities. For each group, we construct a hypergraph to model the complex relationships among subjects. We then compute the hypergraph Laplacian matrix based on the hypergraphs associated with different groups. Finally, we perform hypergraph based transductive classification to predict class labels for new testing subjects.
+
+We illustrate the multi-hypergraph construction approach in Fig. 2 by using three modalities (i.e., MRI, PET, and CSF) as an example. In Fig. 2, each column in the data matrix represents a subject with three data modalities, while each row denotes a feature vector among all subjects in a specific modality (some entries may have missing values). We first partition the whole dataset into six groups, including three inter-modality groups (i.e., Group 1, Group 2, and Group 3) and three single-modality groups (i.e., Group 4, Group 5, and Group 6). In this study, we denote subjects in inter-modality groups as those having features from two or more modalities, while subjects in single-modality groups as those having only data from a single modality. As shown in Fig. 2, subjects in Group 1 have PET and MRI features, subjects in Group 2 have features from three modalities (i.e., PET, MRI, and CSF), subjects in Group 3 have MRI and CSF features, while subjects in Groups 4–6 have only CSF, MRI, and PET features, respectively. In each group, we have complete feature representations for each subject. We believe that such data grouping method has at least two advantages. First, we can make full use of subjects with data from at least one modality via such grouping, which is particularly important for dealing with the problem of incomplete multi-modality data. In this way, more available information can be used in the learning process. Second, such data grouping method can largely broaden the feature space by concatenating features from different modalities, through which one can get much richer feature representation. Note that such data grouping method is a general means for problems with complete multimodality or multi-view data to expand the feature space.
+
+Motivated by [31], [45], we construct the hyperedges via the star expansion strategy, by varying the neighborhood size for each vertex (with a vertex representing a specific subject), where the Euclidean distance is used for computing the neighbors. In Fig. 3, we give an illustration of our hyperedge construction strategy. As shown in Fig. 3, with the vertex υ as the center, we vary the neighborhood size s (i.e., s = 3, 5, 7) to generate three hyperedges (i.e., e1υ,e2υ and e3υ), with each hyperedge connecting the vertex υ and its s-nearest neighbors. Since different neighborhood sizes reflect different scales of data structure, the hyperedges constructed by using different neighborhood sizes reflect both local and semi-local structure information of the original data. Finally, we combine the hyperedges generated from multiple groups to compute a hypergraph Laplacian matrix [34], which will be used in a hypergraph based transductive classification model.
+
+C. Multi-Hypergraph based Classification
+
+Since hypergraphs of the different groups share the same vertices, representing all the subjects, we combine the hypergraphs via the incidence matrix H̃ = [H1, H2, ⋯, HG], where Hg∈ℛN×Neg (g = 1, 2, ⋯, G) is the incidence matrix corresponding to the g-th group. It is worth noting that, if a vertex represented by the g-th group of feature representation has missing values, no hyperedge in Hg covers this vertex. Using the hypergraphs constructed for the groups, a binary classification problem can be formulated as estimating the relevance score vector f = (fi) ∈ ℛN for the N samples, which is as follows: (5) arg minf{Ω(f)+λℛemp(f)}
+
+where the first term Ω(f) = fTŁf is a hypergraph regularization term defined in Eq. (4), where Ł=I−Dυ−1/2H∼WDe−1H∼TDυ−1/2. The second term is the empirical loss term computed based on the training data, and λ is a tuning parameter for trade-off between empirical loss and regularization. Solving problem in Eq. (5) allows knowledge learned from the training data to be transferred to the testing data [32]. In this work, we adopt the square loss function (6) ℛemp(f)=‖f−y‖2=∑υi∈𝒱(fi−yi)2
+
+where y = (yi) ∈ ℛN is the label vector for the N samples. For the i-th sample, we let yi = 1 if it belongs to the positive class, yi = −1 if it belongs to the negative class, and yi = 0 if its class is unknown.
+
+Since different hyperedges may play different roles in modeling the structure information of data, there may be different weights for those hyperedges. For jointly learn the hyperedge weights and the estimated class labels automatically from data, we reformulate the problem in Eq. (5) as follows: (7) arg minf,WfTŁf+λ‖f−y‖2+μ‖W‖F2
+
+s.t.∑i=1NeWii=1,∀Wii≥0
+
+where the last term in Eq. (7) and those constraints are used to penalize the complexity of weighting values for hyperedges.
+
+The objective function in Eq. (7) is not jointly convex with respect to f and W [46]. Fortunately, it is convex with respect to f when W is fixed, and also convex with respect to W give a fixed f. In this study, we adopt an alternating optimization algorithm to solve the problem in Eq. (7). That is, we first fix W and optimize f, and the objective function in Eq. (7) can be reformulated as minimizing the following (8) Q=fTŁf+λ‖f−y‖2
+
+By differentiating Q with respect to f, we obtain (9) f=(Ł+λI)−1y
+
+In the second step, we optimize W with the learned f in the first step. Denote Λ=fTDυ−1/2H∼, and the objective function in Eq. (7) can be rewritten as follows (10) arg minWfTŁf+μ‖W‖F2
+
+s.t.∑i=1NeWii=1,∀Wii≥0
+
+Then, the partial derivative of Eq. (10) with respect to W is as follows (11) ∂∂W{fTŁf+μ‖W‖F2+η(∑i=1NeWii−1)}=0
+
+(12) ⇒W=ΛTΛDe−1−ηI2μ
+
+η=ΛDe−1ΛT−2μNe
+
+The above-mentioned two steps are performed iteratively until convergence. In the experiments, the iteration number is fixed as 20 empirically.
+
+IV. Experiments
+
+A. Methods for Comparison
+
+In the experiments, we first compare our MHL method with four baseline imputation-based approaches. These baseline methods utilize various data imputation techniques to impute missing features, which are summarized in the following: Zero. In this method, those missing values are simply filled with zeros. If we first normalize the original data to have unit standard deviation and zero mean, this method is equal to the mean value imputation method. More specifically, those missing values are filled with the means of values that are available in the same row.
+
+k-Nearest Neighbor (KNN) [47], [48]. In KNN method, we simply fill the missing value with weight mean of its k-nearest neighbor rows. Specifically, we first identify the feature rows that are most similar to the one with the missing value via KNN algorithm, and then fill that missing values with the weighted mean of values in neighboring rows. Similar to the study in [49], the weight for a specific neighboring row is inversely proportional to the Euclidean distance between this neighboring row and the row with missing values.
+
+Expectation Maximization (EM) [27]. This method imputes the missing values using the expectation maximization algorithm. To be specific, in the E step, we first estimate the mean and the covariance matrix from the feature matrix, and then fill those missing values with estimates from the previous M step (or initialized as zeros). In the M step, based on the available values, estimated mean and covariance, we fill those missing elements with conditional expectation values. Then, the mean and the covariance will be re-estimated based on the filled feature matrix. In EM method, the above mentioned two steps will be repeated until convergence.
+
+Singular Value Decomposition (SVD) [28]. The missing values are iteratively filled-in based on matrix completion with the low-rank approximation. Specifically, we first fill those missing values with initial guesses (e.g., zeros), followed by a singular value decomposition (SVD) process to generate a low-rank approximation of a filled-in matrix. Based on the low-rank estimation matrix, we will update the missing elements with their corresponding values in this matrix. Similarly, we will perform SVD again to obtain a new updated matrix, and repeat such process until convergence.
+
+We further compare our method with state-of-the-art methods for dealing with incomplete multi-modality data in the field of neuroimaging analysis. These methods include: 1) incomplete Multi-Source Feature (iMSF) learning [19], 2) Ingalhalikar’s Algorithm [50], 3) incomplete Source-Feature Selection (iSFS) [20] method, and 4) a matrix shrunk and completion (MSC) method [49]. In the following, we briefly introduce these methods. Incomplete Multi-Source Feature (iMSF) Learning [19]. Using the similar data grouping technique as in our method, iMSF regards the classification problem with incomplete multi-modality data as a sparse multitask learning problem, without discarding or imputing incomplete data. As shown in [19], iMSF is effective in finding informative features from incomplete multimodality data. Two versions of iMSF are available based on two particular loss functions (i.e., least squares loss and logistic loss), including least-squares (iMSF-Least) and logistic loss (iMSF-Logistic).
+
+Ingalhalikar’s Algorithm [50]. In this method, an ensemble classification technique is used to fuse outputs of multiple classifiers, where these classifiers are built based on different subsets of subjects with complete feature representations. Specifically, this method first groups the original incomplete multi-modality data into multiple subsets, and then adopts the signal-to-noise ratio coefficient filter algorithm to perform feature selection. Using those selected features, it constructs a linear discriminant analysis (LDA) [51] classifier in each individual subset. Finally, the classification results from all subjects are fused by a particular ensemble strategy for making a final decision for a new testing subject. Two versions of this method are available based on different ensemble strategies. The first one, denoted as Ingalhalikar-Weighted, adopts the weighted averaging strategy, where each classifier is assigned a particular weight based on its classification error on the training data. The second one, denoted as Ingalhalikar-Average, is based on the averaging strategy, where all classifiers are assigned equal weights.
+
+Incomplete Source-Feature Selection (iSFS) method [20]. In iSFS, subjects with incomplete multi-modality data are first partitioned into several groups according to the availability of data modalities. Then, a feature learning model is developed to find the most informative features from different data groups. That is, all subjects can be used in this method, without any discarding or imputation operation.
+
+Matrix Shrinkage and Completion (MSC) method [49]. In MSC, the input features and the output label vector are first combined into an incomplete matrix. Then, this incomplete matrix is further partitioned into several sub-matrices, with each one containing subjects with complete feature representation (w.r.t. certain combinations of multimodalities). A multi-task learning model is adopted to select both discriminative features and informative samples in each individual sub-matrix, leading to a shrunk matrix. Based on an EM imputation method [27], MSC finally completes those missing feature values and unknown target outputs of the shrunk matrix.
+
+In this experiments, the proposed MHL method, Ingalhalikar’s algorithm, and MSC can directly perform classification tasks based on incomplete multi-modality data. The other methods need to either impute the missing data (e.g., Zero, KNN, EM, and SVD) or select a subset of features (e.g., iMSF, and iSFS). Motivated by [19], [20], in the experiments, we adopt support vector machine (SVM) classification [52] after data imputation using Zero/KNN/EM/SVD and feature selection using iMSF/iSFS. A linear SVM is used in the experiments, since the max-margin classification nature of the linear SVM results in good generalizability [20].
+
+B. Experimental Settings
+
+We adopt a 10-fold cross-validation strategy [24] for performance evaluation. The subjects are partitioned into 10 subsets, and each subset has roughly equal number of subjects. Each time one subset is used as the testing set, while the remaining 9 subsets are adopted as the training set. In order to avoid any bias introduced by random partitioning of the data, such process is repeated 10 times, and we record the average classification results. To optimize parameters for different methods, we further perform an inner 10-fold cross-validation using each training set. Specifically, we further partition each training set into 10 subsets for cross-validation parameter selection [20]. Similar to [19], the neighborhood size k for KNN is selected from {3, 5, 7, 9, 11, 15, 20}. For the SVD-based imputation method, the rank parameter is chosen from {5, 10, 15, 20, 25, 30}. The regularization parameter λ for iMSF is chosen from {10−5, 10−4, ⋯, 101}. The parameters λ and μ for MHL and C for SVM are chosen from {10−3, 10−2, ⋯, 104}. The neighborhood sizes of {3, 5, 7, 9, 11, 15, 20} are used to construct multiple hyperedges in MHL. The influence of the neighborhood size is discussed in Section V-D.
+
+Seven metrics are used for performance evaluation: classification accuracy (ACC), sensitivity (SEN), specificity (SPE), balanced accuracy (BAC), positive predictive value (PPV), negative predictive value (NPV) and the area under the receiver operating characteristic curve (AUC) [53]. Let TP, TN, FP, and FN denote True Positive, True Negative, False Positive, and False Negative, respectively. And the evaluation metrics are defined as: ACC=TP+TNTP+TN+FP+FN;SEN=TPTP+FN;SPE=TNTN+FP;BAC=SEN+SPE2;PPV=TPTP+FP;NPV=TNTN+FN. The McNemar test [54] is used to evaluate the statistical significance of the difference between classification accuracies of two methods. We report the p-values in Tables III–VI and mark statistically significant differences (p &lt; 0.05) with the asterisk (*).
+
+C. Comparison with Baseline Methods
+
+We first compare MHL with four baseline imputation-based methods, including Zero, KNN [47], [48], EM [27] and SVD [28]. In Tables III–VI, we report results for four classification tasks: AD vs. NC, MCI vs. NC, AD vs. MCI, and pMCI vs. sMCI, respectively, where the best results are marked in boldface. We also show the receiver operating characteristic (ROC) curves achieved by different method in Fig. 4. From Tables III–VI and Fig. 4, we can observe that MHL consistently outperforms the competing methods regarding all seven evaluation criteria in four classification tasks. For instance, MHL achieves an accuracy of 90.29% and an AUC of 89.77% for AD-NC classification, outperforming other methods. The superiority of MHL is confirmed by the fact that the differences are all statistically significant as shown in the tables. On the other hand, it is interesting to observe from Table V and Fig. 4(c) that, for AD-MCI classification, the sensitivity achieved by MHL and other methods are low. This implies that it is difficult to distinguish AD from MCI, because MCI (the prodrome of AD) might manifest abnormalities similar to AD.
+
+D. Comparison with State-of-the-art Methods
+
+We further compare MHL with six state-of-the-art methods for AD/MCI classification, including two versions of Ingalhalikar’s algorithm (i.e., Ingalhalikar-Weighted, and Ingalhalikar-Average) [50], two versions of iMSF (i.e., iMSF-Least, and iMSF-Logistic) [19], iSFS [20], and MSC [49]. The results for different classification tasks are reported in Tables VII–X. Note that in these tables, we directly report the results of iSFS [20] and MSC [49] in their respective reference papers. From Tables VII–X, we can observe that the proposed MHL method achieves the best ACC values in four classification tasks, and outperforms six competing methods regarding AUC in both AD vs. MCI and pMCI vs. sMCI classification tasks.
+
+E. Computational Complexity
+
+According to Section III-B, the computational complexity for hypergraph construction is 𝒪(GN2), where G is the number of data grouping (e.g., G = 6 for ADNI with MRI, PET and CSF data modalities), and N is the number of subjects in the database. Besides, the computational complexity for the hypergraph regularized transductive classification is 𝒪(N2T), where T is the iteration number for solving the optimization problem in Eq. (7). Hence, the overall computational complexity of the proposed MHL method is 𝒪(N2).
+
+We further empirically compare the computational time cost between MHL and 8 competing methods. Table XI reports the computational time costs of different methods in AD vs. NC classification. From Table XI and Table VII, we can see that the computational time cost of MHL is similar to that of iMSF-Logistic, while the classification results achieved by MHL are much higher than those of iMSF-Logistic.
+
+V. Discussion
+
+We compare MHL with a simple graph method and a single-modality method in Section V-A and V-B, respectively. In Section V-C, MHL is further compared with the commonly used classifier, i.e., SVM. Section V-D and V-E investigate the influences of neighborhood size in hyperedge construction and regularization parameters.
+
+A. Comparison with Simple Graph
+
+We compare MHL with a simple graph method (Simple-Graph), which is based on [34] and uses the normalized graph Laplacian for transductive classification. Note that a simple graph can only model pairwise relationships among subjects. Similar to MHL, the regularization parameter in SimpleGraph is selected from {10−3, 10−2, ⋯, 104} via cross validation. Figure 5 shows that MHL achieves the better results in most cases. For instance, MHL is superior to SimpleGraph in AD vs. MCI and pMCI vs. sMCI classification. These results support the fact that explicitly modeling complex relationships among subjects can boost the learning performance.
+
+B. Comparison with Single-Modality
+
+In the proposed MHL method, we use not only single-modality data, but also inter-modality data (with features from more than one modalities). We now investigate whether using inter-modality data can improve diagnosis performance. We run MHL with data from only one single-modality (i.e., data in Groups 4–6 in Fig. 2) that is called MHL-1 in this paper. Figure 6 shows that MHL performs better than MHL-1 in all cases, indicating that inter-modality data improve the diagnostic accuracy.
+
+C. Comparison with SVM
+
+We compare MHL with the commonly used linear SVM classifier, using only the complete MRI data. For a fair comparison, the parameter C for SVM is chosen from {10−3, 10−2, ⋯, 104}, which is similar to MHL. Figure 7 shows that MHL outperforms SVM in most cases. In particular, MHL achieves better results for pMCI vs. sMCI classification in seven evaluation criteria. In addition to the improved performance, another advantage of MHL over SVM is that MHL can perform classification directly using incomplete multi-modality data, while SVM is only suitable for problems with complete data.
+
+D. Influence of Neighbor Size
+
+As mentioned in Section III, in each group, we construct multiple hyperedges by varying the neighborhood size. To investigate the effectiveness of such strategy, we compare MHL with its variant that uses only one fixed neighborhood size (denoted as MHL-2) in AD-NC classification. Figure 8 shows that, in most cases, MHL achieves better performance than MHL-2. The superiority of MHL can be attributed to its ability to capture both local and semi-local structure information captured by our hyperedge construction method.
+
+E. Influence of Parameters
+
+Here we evaluate the influence of two regularization parameters (i.e., λ and μ) in Eq. (7) on the performance of MHL, with results shown in Fig. 9 and Fig. 10, respectively. The value of λ and μ are varied within {10−3, 10−2, ⋯, 104}. Figure 9 indicates that when the value of λ is larger than 50, MHL generally achieves better results in both accuracy and AUC. This trend is stable with the increase of λ. From Fig. 10, we can see that the performance of the proposed MHL method is overall stable using different μ, and the best ACC and AUC are achieved when μ ≤ 1.
+
+F. Limitations
+
+In this work, we validate the effectiveness of our proposed MHL method on the baseline ADNI database with MRI, PET, and CSF incomplete multi-modality data. Although MHL yields promising results in four classification tasks, there are still several limitations in our method. First, we partition data into multiple groups (corresponding to combinations of modalities), and simply treat different groups equally. Actually, different groups could play different roles in modeling the structure information of data. It is reasonable to further learn the optimal weights for multiple groups to further improve the performance of the proposed method, which is one of our future works. On the other hand, the proposed method can only deal with problems of block-wise incomplete data. For more general problems (e.g., with missing values in a specific modality for some subjects), we can first adopt a simple technique (e.g., EM or SVD) to impute these missing values, and then partition subjects into different groups, followed by multi-hypergraph construction and hypergraph based classification using our proposed model. Besides, due to the computational cost in hypergraph construction, our method cannot efficiently deal with large-scale samples. As a future work, we will investigate the deep learning based methods for dealing with the problem of incomplete multi-modality data, by using our proposed multi-modal data grouping strategy.
+
+VI. Conclusion
+
+In this paper, we propose a multi-hypergraph learning (MHL) method to effectively utilize incomplete multimodality data for AD/MCI diagnosis. We first divide the whole dataset into several groups according to data availability for different combinations of modalities. Each of these groups contains subjects with complete data. We then construct a hypergraph to explicitly model the complex relationships among subjects in each group. With the combination of hyperedges in multiple hypergraphs, we compute the hypergraph Laplacian matrix that is finally utilized for hypergraph regularized transductive classification. Experimental results on the baseline ADNI database demonstrate that MHL makes effective use of incomplete multi-modality data and improves AD/MCI diagnostic accuracy. MHL is general and can be extended to other problems with incomplete multi-modality data, such as those involved in longitudinal studies.
+
+This study was supported by NIH grants (EB006733, EB008374, EB009634, MH100217, AG041721, AG042599, AG010129, AG030514). Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database. The investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this study. A complete listing of ADNI investigators can be found online https://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf.
+
+Fig. 1 The proposed multi-hypergraph learning method for incomplete multi-modality data. The main steps include 1) data grouping, 2) hypergraph construction, 3) hypergraph Laplacian computation, and 4) hypergraph based transductive classification.
+
+Fig. 2 Illustration of the proposed group-based multi-hypergraph construction method. First, subjects are divided into G (G = 6 in this study) groups according to the data availability of a certain combination of modalities. As MRI data are complete in ADNI, there are in total six combinations of modalities, giving six groups, each containing subjects with complete data. Note that we use different shapes to denote different feature representations since they may be different across groups (e.g., circles for Group 1 and squares for Group 3). A hypergraph is constructed for each group, giving in total G hypergraphs.
+
+Fig. 3 Hyperedge construction using different neighborhood sizes. Regarding vertex υ as the center, we vary the neighborhood size s (i.e., s = 3, 5, 7), and generate three hyperedges (i.e., e1υ,e2υ and e3υ), each connecting the vertex υ and its s-nearest neighbors.
+
+Fig. 4 ROC curves achieved by five different methods in (a) AD vs. NC, (b) MCI vs. NC, (c) AD vs. MCI, and (d) pMCI vs. sMCI classification tasks. Here, different colors denote the ROC curves achieved by five different methods.
+
+Fig. 5 Comparison of MHL with a simple graph (SimpleGraph) method.
+
+Fig. 6 Comparison of MHL with MHL-1, where MHL-1 only uses single-modality data (i.e., MRI, PET, and CSF) to construct hypergraphs.
+
+Fig. 7 Comparison between SVM and the proposed MHL method using complete MRI data from the baseline ADNI database.
+
+Fig. 8 Comparison between MHL and MHL-2 in AD vs. NC classification, where MHL-2 constructs hyperedges using one fixed neighborhood size.
+
+Fig. 9 Results achieved by MHL using different values of λ.
+
+Fig. 10 Results achieved by MHL using different values of μ.
+
+TABLE I Notations
+
+Notation	Definition	
+𝒢 = (𝒱, ℰ, w)	𝒢 denotes a hypergraph, while 𝒱, ℰ and w represent the set of vertices, the set of hyperedges and the weights of hyperedges, respectively.	
+N	The number of vertices in the hypergraph 𝒢, i.e., N = |𝒱|.	
+Ne	The total number of hyperedges, i.e., Ne = |ℰ|.	
+Neg	The number of hyperedges in the g-th group.	
+W	The diagonal matrix of the hyperedge weights, W ε ℛNe×Ne.	
+d(υi)	The degree of the vertex υi.	
+δ(ej)	The degree of the hyperedge ej.	
+D υ	The diagonal matrix of the vertex degrees, Dυ ε ℛN×N.	
+D e	The diagonal matrix of the hyperedge degrees, De ε ℛNe×Ne.	
+H g	The incidence matrix for the hypergraph in the g-th group, and Hg ε ℛN×Ne.	
+y	The N-dimensional label vector of N samples, with element yi = 1 if the i-th sample belongs to the positive class, yi = −1 if the i-th sample belongs to the negative class, and otherwise yi = 0.	
+f	The relevance score vector for N samples, f ε ℛN.	
+
+TABLE II Demographic and clinical information of subjects in the baseline ADNI database.
+
+	AD	MCI	NC	
+Male/Female	99/87	254/141	118/108	
+Age (Mean±SD)	75.40 ± 7.60	74.90 ± 7.30	76.00 ± 5.00	
+Edu. (years) (Mean±SD)	14.70 ± 3.10	15.70 ± 3.00	16.00 ± 2.90	
+MMSE (Mean±SD)	23.30 ± 2.00	27.00 ± 1.80	29.10 ± 1.00	
+CDR (Mean±SD)	0.75 ± 0.25	0.50 ± 0.03	0.00 ± 0.00	
+Note: Values reported as Mean ± Stand Deviation (SD); MMSE: mini-mental state examination; CDR: Clinical Dementia Rating.
+
+TABLE III Comparison with baseline imputation-based methods: AD vs. NC classification (%)
+
+	Zero	KNN	EM	SVD	MHL (Ours)	
+ACC	84.48	85.20	84.23	86.37	90.29	
+SEN	77.96	70.98	67.76	80.78	84.40	
+SPE	89.84	96.91	97.78	90.87	95.13	
+BAC	83.90	83.94	82.77	85.82	89.77	
+PPV	87.01	94.91	96.14	87.78	93.45	
+NPV	83.36	80.31	78.82	85.64	88.11	
+AUC	83.90	83.94	82.77	85.82	89.77	
+	
+p-value	0.0017*	0.0014*	0.0038*	0.0037*	−	
+
+TABLE IV Comparison with baseline imputation-based methods: MCI vs. NC classification (%)
+
+	Zero	KNN	EM	SVD	MHL(ours)	
+ACC	67.74	67.25	68.06	71.32	74.35	
+SEN	81.20	79.12	80.96	83.46	86.25	
+SPE	44.49	46.69	45.93	50.16	53.74	
+BAC	62.84	62.91	63.44	66.80	70.01	
+PPV	71.71	72.17	72.87	74.44	76.35	
+NPV	58.07	56.76	64.24	63.82	69.31	
+AUC	62.84	62.91	63.44	64.49	70.01	
+	
+p-value	0.0013*	0.0013*	0.0043*	0.0054*	−	
+
+TABLE V Comparison with baseline imputation-based methods: AD vs. MCI classification (%)
+
+	Zero	KNN	EM	SVD	MHL(ours)	
+ACC	72.41	72.75	73.79	72.93	79.65	
+SEN	29.08	30.68	29.96	26.35	39.24	
+SPE	92.89	92.64	95.94	94.93	98.73	
+BAC	60.99	61.66	62.95	60.64	68.98	
+PPV	72.25	72.99	74.94	77.39	93.58	
+NPV	74.16	74.06	73.71	73.40	77.49	
+AUC	60.99	61.66	61.45	60.64	69.98	
+	
+p-value	0.0051*	0.0056*	0.0024*	0.0013*	−	
+
+TABLE VI Comparison with baseline imputation-based methods: pMCI vs. sMCI classification (%)
+
+	Zero	KNN	EM	SVD	MHL(ours)	
+ACC	66.83	65.82	65.82	66.58	74.68	
+SEN	51.49	53.85	56.07	51.37	68.49	
+SPE	78.13	74.61	73.41	78.36	79.47	
+BAC	64.81	64.23	64.74	64.86	73.98	
+PPV	63.81	60.88	62.04	63.72	79.13	
+NPV	68.79	68.87	70.09	67.70	72.85	
+AUC	64.81	64.23	64.74	67.54	71.98	
+	
+p-value	0.0032*	0.0035*	0.0033*	0.0037*	−	
+
+TABLE VII Comparison with state-of-the-art methods: AD vs. NC classification (%)
+
+	ACC	SEN	SPE	AUC	
+Ingalhalikar-Weighted	83.03	78.54	86.72	89.82	
+Ingalhalikar-Average	81.07	76.37	84.94	87.39	
+iMSF-Least	86.41	76.91	94.24	85.57	
+iMSF-Logistic	86.97	75.78	93.90	86.34	
+iSFS	88.48	88.95	88.16	88.56	
+MSC	88.50	83.70	92.70	94.40	
+MHL(ours)	90.29	84.40	95.13	89.77	
+
+TABLE VIII Comparison with state-of-the-art methods: MCI vs. NC classification (%)
+
+	ACC	SEN	SPE	AUC	
+Ingalhalikar-Weighted	62.58	65.42	57.73	64.40	
+Ingalhalikar-Average	61.61	64.16	57.28	62.07	
+iMSF-Least	70.64	81.62	54.42	63.02	
+iMSF-Logistic	71.61	82.83	54.73	63.78	
+MSC	71.50	75.30	64.90	77.30	
+MHL(ours)	74.35	86.25	53.74	70.01	
+
+TABLE IX Comparison with state-of-the-art methods: AD vs. MCI classification (%)
+
+	ACC	SEN	SPE	AUC	
+Ingalhalikar-Weighted	63.44	47.51	66.22	63.24	
+Ingalhalikar-Average	63.10	45.46	65.71	61.69	
+iMSF-Least	73.44	23.68	96.95	60.31	
+iMSF-Logistic	73.96	25.36	96.95	61.16	
+MHL(ours)	79.65	39.24	98.73	69.98	
+
+TABLE X Comparison with state-of-the-art methods: pMCI vs. sMCI classification (%)
+
+	ACC	SEN	SPE	AUC	
+Ingalhalikar-Weighted	62.58	65.42	57.73	64.40	
+Ingalhalikar-Average	61.61	64.16	57.28	62.07	
+iMSF-Least	70.64	71.62	54.42	63.02	
+iMSF-Logistic	71.61	72.83	54.73	63.78	
+MHL(ours)	74.68	68.49	79.47	71.98	
+
+TABLE XI Runtime comparison of different methods in AD vs. NC classification
+
+Method	Time (s)	
+Zero	0.48	
+KNN	1.55	
+EM	1.93	
+SVD	2.92	
+Ingalhalikar-Weighted	2.55	
+Ingalhalikar-Average	2.35	
+iMSF-Least	2.71	
+iMSF-Logistic	4.16	
+MHL(ours)	4.01	
+
+
+1 Brookmeyer R Johnson E Ziegler-Graham K Arrighi HM Forecasting the global burden of Alzheimer’s disease Alzheimer’s &amp; Dementia 3 3 186 191 2007
+2 Association A 2013 Alzheimer’s disease facts and figures Alzheimer’s &amp; Dementia 9 2 208 245 2013
+3 Reiman EM Langbaum JB Tariot PN Alzheimer’s prevention initiative: A proposal to evaluate presymptomatic treatments as quickly as possible Biomarkers in Medicine 4 1 3 14 2010 20383319
+4 Cuingnet R Gerardin E Tessieras J Auzias G Lehéricy S Habert M-O Chupin M Benali H Colliot O Automatic classification of patients with Alzheimer’s disease from structural MRI: A comparison of ten methods using the ADNI database NeuroImage 56 2 766 781 2011 20542124
+5 Wolz R Julkunen V Koikkalainen J Niskanen E Zhang DP Rueckert D Soininen H Lötjönen J Multi-method analysis of MRI images in early diagnostics of Alzheimer’s disease PLOS ONE 6 10 e25446 2011 22022397
+6 Zhang J Gao Y Gao Y Munsell BC Shen D Detecting anatomical landmarks for fast Alzheimer’s disease diagnosis IEEE Transactions on Medical Imaging 35 12 2524 2533 2016 27333602
+7 Liu F Zhou L Shen C Yin J Multiple kernel learning in the primal for multimodal Alzheimer’s disease classification IEEE Journal of Biomedical and Health Informatics 18 3 984 990 2014 24132030
+8 Zhang J Liu M An L Gao Y Shen D Alzheimer’s disease diagnosis using landmark-based features from longitudinal structural MR images IEEE Journal of Biomedical and Health Informatics 2017
+9 Bron EE Smits M Niessen WJ Klein S Feature selection based on the SVM weight vector for classification of dementia IEEE Journal of Biomedical and Health Informatics 19 5 1617 1626 2015 25974958
+10 Zhang J Liu M Shen D Detecting anatomical landmarks from limited medical imaging data using two-stage task-oriented deep neural networks IEEE Transactions on Image Processing 26 10 4753 4764 2017 28678706
+11 Liu M Zhang D Shen D Relationship induced multi-template learning for diagnosis of Alzheimer’s disease and mild cognitive impairment IEEE Transactions on Medical Imaging 35 6 1463 1474 2016 26742127
+12 Chetelat G Desgranges B De La Sayette V Viader F Eustache F Baron J-C Mild cognitive impairment can FDG-PET predict who is to rapidly convert to Alzheimer’s disease? Neurology 60 8 1374 1377 2003 12707450
+13 Herholz K Salmon E Perani D Baron J Holthoff V Frölich L Schönknecht P Ito K Mielke R Kalbe E Discrimination between Alzheimer dementia and controls by automated analysis of multicenter FDG PET NeuroImage 17 1 302 316 2002 12482085
+14 Foster NL Heidebrink JL Clark CM Jagust WJ Arnold SE Barbas NR DeCarli CS Turner RS Koeppe RA Higdon R FDG-PET improves accuracy in distinguishing frontotemporal dementia and Alzheimer’s disease Brain 130 10 2616 2635 2007 17704526
+15 Li F Tran L Thung K-H Ji S Shen D Li J A robust deep model for improved classification of AD/MCI patients IEEE Journal of Biomedical and Health Informatics 19 5 1610 1616 2015 25955998
+16 Lian C Ruan S Denoeux T Jardin F Vera P Selecting radiomic features from fdg-pet images for cancer treatment outcome prediction Medical image analysis 32 257 268 2016 27236221
+17 Hansson O Zetterberg H Buchhave P Londos E Blennow K Minthon L Association between CSF biomarkers and incipient Alzheimer’s disease in patients with mild cognitive impairment: A follow-up study The Lancet Neurology 5 3 228 234 2006 16488378
+18 Kawarabayashi T Younkin LH Saido TC Shoji M Ashe KH Younkin SG Age-dependent changes in brain, CSF, and plasma amyloid β protein in the tg2576 transgenic mouse model of Alzheimer’s disease The Journal of Neuroscience 21 2 372 381 2001 11160418
+19 Yuan L Wang Y Thompson PM Narayan VA Ye J Multi-source feature learning for joint analysis of incomplete multiple heterogeneous neuroimaging data NeuroImage 61 3 622 632 2012 22498655
+20 Xiang S Yuan L Fan W Wang Y Thompson PM Ye J Bilevel multi-source learning for heterogeneous block-wise missing data NeuroImage 102 192 206 2014 23988272
+21 Liu M Zhang D Shen D View-centralized multi-atlas classification for Alzheimer’s disease diagnosis Human Brain Mapping 36 5 1847 1865 2015 25624081
+22 Cao X Yang J Gao Y Guo Y Wu G Shen D Dual-core steered non-rigid registration for multi-modal images via bi-directional image synthesis Medical Image Analysis 2017
+23 Jack CR Bernstein MA Fox NC Thompson P Alexander G Harvey D Borowski B Britson PJ Whitwell JL Ward C The Alzheimer’s disease neuroimaging initiative (ADNI): MRI methods Journal of Magnetic Resonance Imaging 27 4 685 691 2008 18302232
+24 Hastie T Tibshirani R Friedman J Franklin J The elements of statistical learning: Data mining, inference and prediction The Mathematical Intelligencer 27 2 83 85 2005
+25 Lakshminarayan K Harp SA Goldman RP Samad T Imputation of missing data using machine learning techniques ACM SIGKDD Conference on Knowledge Discovery and Data Mining 1996 140 145
+26 Little RJ Rubin DB Statistical Analysis with Missing Data John Wiley &amp; Sons 2014
+27 Schneider T Analysis of incomplete climate data: Estimation of mean values and covariance matrices and imputation of missing values Journal of Climate 14 5 853 871 2001
+28 Golub GH Reinsch C Singular value decomposition and least squares solutions Numerische Mathematik 14 5 403 420 1970
+29 Candés EJ Recht B Exact matrix completion via convex optimization Foundations of Computational Mathematics 9 6 717 772 2009
+30 Liu M Zhang J Yap P-T Shen D View-aligned hypergraph learning for Alzheimer’s disease diagnosis with incomplete multimodality data Medical Image Analysis 36 123 134 2017 27898305
+31 Zien JY Schlag MD Chan PK Multilevel spectral hypergraph partitioning with arbitrary vertex sizes IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems 18 9 1389 1399 1999
+32 Joachims T Transductive inference for text classification using support vector machines Proceedings of the 16th International Conference on Machine Learning 99 1999 200 209
+33 Agarwal S Branson K Belongie S Higher order learning with graphs Proceedings of the 23rd International Conference on Machine Learning ACM 2006 17 24
+34 Zhou D Huang J Schölkopf B Learning with hypergraphs: Clustering, classification, and embedding Advances in Neural Information Processing Systems 2006 1601 1608
+35 Wang F Zhang C Label propagation through linear neighborhoods IEEE Transactions on Knowledge and Data Engineering 20 1 55 67 2008
+36 Berge C Minieka E Graphs and Hypergraphs North-Holland Publishing Company Amsterdam 1973 7
+37 Gao Y Wang M Tao D Ji R Dai Q 3-D object retrieval and recognition with hypergraph analysis IEEE Transactions on Image Processing 21 9 4290 4303 2012 22614650
+38 Benson AR Gleich DF Leskovec J Higher-order organization of complex networks Science 353 6295 163 166 2016 27387949
+39 Rodriguez J On the Laplacian spectrum and walk-regular hypergraphs Linear and Multilinear Algebra 51 3 285 297 2003
+40 Bolla M Spectra, euclidean representations and clusterings of hypergraphs Discrete Mathematics 117 1 19 39 1993
+41 Sled JG Zijdenbos AP Evans AC A nonparametric method for automatic correction of intensity nonuniformity in MRI data IEEE Transactions on Medical Imaging 17 1 87 97 1998 9617910
+42 Zhang Y Brady M Smith S Segmentation of brain MR images through a hidden Markov random field model and the expectation-maximization algorithm IEEE Transactions on Medical Imaging 20 1 45 57 2001 11293691
+43 Shen D Davatzikos C HAMMER: Hierarchical attribute matching mechanism for elastic registration IEEE Transactions on Medical Imaging 21 11 1421 1439 2002 12575879
+44 Kabani N A 3D neuroanatomical atlas of the human brain NeuroImage 7 4 1998
+45 Gao Y Wang M Zha Z-J Shen J Li X Wu X Visual-textual joint relevance learning for tag-based social image search IEEE Transactions on Image Processing 22 1 363 376 2013 22692911
+46 Boyd S Vandenberghe L Convex Optimization Cambridge University Press 2004
+47 Hastie T Tibshirani R Sherlock G Eisen M Brown P Botstein D Imputing Missing Data for Gene Expression Arrays 1999
+48 Troyanskaya O Cantor M Sherlock G Brown P Hastie T Tibshirani R Botstein D Altman RB Missing value estimation methods for DNA microarrays Bioinformatics 17 6 520 525 2001 11395428
+49 Thung K-H Wee C-Y Yap P-T Shen D Neurodegenerative disease diagnosis using incomplete multi-modality data via matrix shrinkage and completion NeuroImage 91 386 400 2014 24480301
+50 Ingalhalikar M Parker WA Bloy L Roberts TP Verma R Using multiparametric data with missing features for learning patterns of pathology Medical Image Computing and Computer-Assisted Intervention–MICCAI 2012 Springer 2012 468 475
+51 Scholkopft B Mullert K-R Fisher discriminant analysis with kernels Neural Networks for Signal Processing IX 1 1 1999
+52 Chang C-C Lin C-J Libsvm: A library for support vector machines ACM Transactions on Intelligent Systems and Technology 2 3 27 2011
+53 Fletcher RH Fletcher SW Fletcher GS Clinical Epidemiology: The Essentials Lippincott Williams &amp; Wilkins 2012
+54 Dietterich TG Approximate statistical tests for comparing supervised classification learning algorithms Neural Computation 10 7 1895 1923 1998 9744903

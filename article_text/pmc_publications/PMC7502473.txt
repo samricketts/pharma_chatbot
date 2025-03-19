@@ -1,0 +1,398 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101142069
+31835
+Neuroinformatics
+Neuroinformatics
+Neuroinformatics
+1539-2791
+1559-0089
+
+32253701
+7502473
+10.1007/s12021-020-09459-7
+NIHMS1582345
+Article
+COMPUTING UNIVARIATE NEURODEGENERATIVE BIOMARKERS WITH VOLUMETRIC OPTIMAL TRANSPORTATION: A PILOT STUDY
+Tu Yanshuai a*
+Mi Liang a*
+Zhang Wen a
+Zhang Haomeng a
+Zhang Junwei b
+Fan Yonghui a
+Goradia Dhruman c
+Chen Kewei c
+Caselli Richard J. d
+Reiman Eric M. c
+Gu Xianfeng b
+Wang Yalin a
+The Alzheimer’s Disease Neuroimaging Initiativeǂ
+a School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, Tempe, AZ, USA
+b Department of Computer Science, Stony Brook University, Stony Brook, NY, USA
+c Banner Alzheimer’s Institute, Phoenix, AZ, USA
+d Department of Neurology, Mayo Clinic Arizona, Scottsdale, AZ, USA
+* Equal Contributions.
+
+Please address correspondence to: Dr. Yalin Wang, School of Computing, Informatics, and Decision Systems Engineering, Arizona State University, P.O. Box 878809, Tempe, AZ 85287 USA, Phone: (480) 965-6871, Fax: (480) 965-2751, ylwang@asu.edu
+8 4 2020
+10 2020
+01 10 2021
+18 4 531548
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Changes in cognitive performance due to neurodegenerative diseases such as Alzheimer’s disease (AD) are closely correlated to the brain structure alteration. A univariate and personalized neurodegenerative biomarker with strong statistical power based on magnetic resonance imaging (MRI) will benefit clinical diagnosis and prognosis of neurodegenerative diseases. However, few biomarkers of this type have been developed, especially those that are robust to image noise and applicable to clinical analyses. In this paper, we introduce a variational framework to compute optimal transportation (OT) on brain structural MRI volumes and develop a univariate neuroimaging index based on OT to quantify neurodegenerative alterations. Specifically, we compute the OT from each image to a template and measure the Wasserstein distance between them. The obtained Wasserstein distance, Wasserstein Index (WI) for short to specify the distance to a template, is concise, informative and robust to random noise. Comparing to the popular linear programming-based OT computation method, our framework makes use of Newton’s method, which makes it possible to compute WI in large-scale datasets. Experimental results, on 314 subjects (140 Aβ+ AD and 174 Aβ- normal controls) from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) baseline dataset, provide preliminary evidence that the proposed WI is correlated with a clinical cognitive measure (the Mini-Mental State Examination (MMSE) score), and it is able to identify group difference and achieve a good classification accuracy, outperforming two other popular univariate indices including hippocampal volume and entorhinal cortex thickness. The current pilot work suggests the application of WI as a potential univariate neurodegenerative biomarker.
+
+
+1. Introduction
+
+Brain morphometry studies the measurement of brain structures and changes during development, aging, learning, disease, and evolution (Daniel et al. 2009). Modern techniques analyze noninvasive neuroimaging data typically obtained from Magnetic Resonance Imaging (MRI) using mathematical and statistical methods. A ubiquitous approach for brain morphometry is population-based analysis, e.g. Volume or Voxel-based morphometry (VBM) (Abell et al. 1999; Ashburner and Friston 2000; Woermann et al. 1999; Worsley et al. 2004; Wright et al. 1995) and tensor-based morphometry (Chung et al. 2007; Davatzikos 1997; Thompson et al. 2000; Wang et al. 2010; Woods 2003). These methods are used to identify differences in the local composition of brain tissues, while discounting large-scale differences in gross anatomy and position (Mechelli et al. 2005), in order to discover the general trend of disease burden and progression. Some efforts have been made to develop new techniques to automatically quantify the abnormality of brain structure, especially for studies of neurodegenerative diseases such as Alzheimer’s disease (AD). In the past decade, an increasing number of methods have focused on extracting biomarkers and generating statistical models to characterize brain shape differences in the group level e.g., (Ahmed et al. 2015; Redlich et al. 2014; Schmitter et al. 2015).
+
+A univariate and personalized neurodegeneration measure based on an individual’s brain scans with high diagnostic accuracy would be highly desirable for clinical use (Sabuncu et al. 2016). For example, single-valued MRI-based atrophy is used as a neurodegeneration marker in the recently proposed AD descriptive “A/T/N” (amyloid, tau, neurodegeneration) system (Jack et al. 2016) to define AD clinically. This descriptive system allows categorizing multidomain biomarker findings at the individualized level in a format that is easy to understand and use. Rather than conceptualizing AD primarily as a clinicopathological entity, in this system AD is diagnosed using biomarkers such as brain imaging or by measuring substances in the cerebral spinal fluid. This change may allow preclinical AD diagnosis on presymptomatic patients (Knopman et al. 2018). However, in a recent report (Illán-Gala et al. 2018), it was reported that the currently available neurodegeneration biomarkers, including hippocampal volume and cortical signature of AD (Dickerson et al. 2009), were poorly correlated both in the whole sample and along the AD continuum. On the other hand, for randomized clinical trials (RCT), regulatory agencies, including the Food and Drug Administration (FDA), requires conventional univariate hypothesis testing and its associated statistical power analysis (Langbaum et al. 2013). It may avoid statistical correction for multiple comparisons and reduce overfitting. For this purpose, a univariate neuroimaging biomarker is also important. Therefore, to advance computational neuroanatomy to clinical usage, a robust method to quantify global brain image difference using a statistically powerful univariate neurodegeneration imaging biomarker will be highly advantageous for clinical diagnosis and prognosis.
+
+A variety of univariate structural MRI biomarker software and algorithms have been developed in the past decade (Cardenas et al. 2011; CortechsLabs 2018; Racine et al. 2018; Vemuri and Others 2008), Meanwhile, a few multivariate analysis frameworks (Gutman et al. 2013; Hua et al. 2011) took statistics or machine learning approaches to optimize the minimum sample size estimation for clinical trials. Most of these algorithms are based on region-of-interest (ROI) analysis, obtaining a univariate imaging biomarker by summarizing image information from some ROIs. In general, existing univariate brain structural MRI biomarker research can be divided into two categories: (1) techniques that focus on morphometry changes of several structural measures including grey matter (Dickerson et al. 2009; Fox et al. 1999; Racine et al. 2018), and entorhinal cortex (Cardenas et al. 2011; Dickerson et al. 2001; Tapiola et al. 2008); and (2) imaging scores relying on image analysis of some ROIs selected by a machine learning-based feature selection (Gutman et al. 2013, 2015b; Vemuri et al. 2008) or statistical p-map analysis (Dickerson et al. 2009; Hua et al. 2011; Racine et al. 2018). However, issues with these techniques remain. First, although AD is typically associated with an amnestic clinical presentation and disruption of the medial temporal lobe, it has become increasingly clear that heterogeneity exists within this disease and a variety of regions are altered during the AD development course. For example, it was reported that the temporal atrophy factor and cortical atrophy factor showed different association with memory and executive function (Zhang et al. 2016). Therefore, ROI-based analyses may focus on one ROI while overlooking other important ROIs. Second, these approaches strongly depend on ROI segmentation results. It is challenging to obtain accurate segmentation results from noisy brain images, which are common in clinical analyses.
+
+After normalization by a global factor, brain images can be regarded as a 3D probability distribution in the Euclidean domain, where (1) the intensity of each voxel is non-negative, (2) the total intensity is one, and (3) the distance between two voxels is their Euclidean distance. Therefore, the problem of comparing brain images voxel by voxel can be converted to the problem of comparing corresponding distributions. The Wasserstein shape space theory (Villani 2008), which measures the similarity between two probability distributions on a given metric space, can be adapted to compute a stable and accurate brain imaging morphometry index. Manifold shape space theory has been applied to brain atlas estimation (Fletcher 2013; Fletcher et al. 2009), shape space analysis (Gutman et al. 2015a; Kurtek et al. 2011) and morphometry study (Shi et al. 2017; Younes et al. 2009). Thus far, the optimal transportation-base study has been used to explain the regression of clinical variables (Gerber et al. 2018), neonatal cortical surface atlas construction (Chen et al. 2019), and functional brain template estimation (Bazeille et al. 2019). However, the Wasserstein shape space theory, metric defined on the Optimal Transport, has not been frequently studied for imaging index research (Shi and Wang 2019; Zhang et al. 2017). An advantage of Wasserstein distance (WD) for imaging morphometry index research is the geodesic distance between shape space points gives a continuous and refined shape difference measure, which is particularly useful for computing a personalized imaging index. As well, WD studies the transportation between two probability measures on a given manifold. Thus it is robust to image noise (Engquist and Foroese 2013).
+
+In this paper, by generalizing our prior work on volumetric Wasserstein distance computation (Mi et al. 2017, 2018), we propose a framework to compute the volumetric Wasserstein distance of structural MR images and explore its application as a potential univariate neurodegenerative biomarker. With the proposed framework, a volumetric Wasserstein distance will be computed for each MR image from its optimal transportation (OT) map to the template image. We hypothesize that the computed Wasserstein distance may be used as a robust and efficient univariate structural MRI index. We validate the proposed method on brain structural MR images from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) cohort, including 140 Aβ positive AD patients and 174 Aβ negative healthy control subjects. Here, we set out to test whether our new system can compute a reliable univariate neurodegenerative index and whether the new single index is able to capture AD-induced brain morphometry abnormalities.
+
+2. Method and Materials
+
+2.1 Theoretical Background
+
+2.1.1 Optimal Transportation
+
+Suppose M is a metric space and P(M) is the space of all Borel probability measures on M. Without losing generality, suppose X(x, μ) and Y(y, v) are two such measures, i.e. X ∈ P(M), Y ∈ P(M). Then, we have 1 = ∫M μ(x)dx = ∫M v(y)dy, with the supports ΩX = {m ∈ M |μ(m) &gt; 0} and ΩY = {m ∈ M |v(m) &gt; 0}. We call a mapping π : X(x, μ) → Y(y, v) a measure-preserving one if the measure of any subset B of Y is equal to the measure of the origin of subset B in X, which means μ(π−1(B)) = v(B), ∀B ⊂ Y. Given a transportation cost function c:M×M→ℝ0+, the problem of optimal transportation (OT) is to find the measure-preserving mapping πoptimal : X → Y that minimizes the total cost, (1) πoptimal(X,Y)=argπmin∫Mc(x,π(x))μ(x)dx
+
+For simplicity, we refer to π as the optimal transportation plan.
+
+2.1.2 Wasserstein Distance
+
+Suppose X(x, μ) and Y(y, v) are two probability measures with the supports ΩX on M ⊂ Rn, respectively. We define the transportation cost as the distance to the exponent of p: c(x, π(x)) = d(x, π(x))p. The minimum cost between X and Y is called the Wasserstein distance: (2) Wp(X,Y)= def (inf ∑xd(x,π(x))pμ(x))1p
+
+The Wasserstein distance is equipped with metric properties and is thus often adopted for measuring the similarity between probability distributions. The details of the optimal transportation problem and the properties of the Wasserstein distance can be found in Villani (Villani 2003). In this work, we focus on W2, the 2-Wasserstein distance.
+
+To obtain the 2-Wasserstein distance between X(x, μ) and Y(y, v), we first computed the volumetric harmonic map from each domain to a unit hypersphere, φ1:M→Sn and φ2:N→Sn. If n = 3, we call it a unit ball. We then parameterized this canonical space, Sn, with Cartesian coordinates and obtained the empirical measures X′(x, μ) and Y′(y, v) on the new supports φ1(ΩX) and φ2(ΩY). Next, we computed the OT-Map, T : X′ → Y′ which induces the Wasserstein distance W2 (X′, Y′). To make the data eligible for discrete OT, we discretized y′ into a relatively sparse point set P(p, v). With the abuse of notation, we use v for both Y′ and P. We formulated the Wasserstein distance as follows: (3) W(M,P)=∑i=1kd2(mi,pi)μi
+
+where d2(mi, pj) =‖ mi − pj ‖2 and pj = π(mi).
+
+2.2 Wasserstein Index Computation Framework
+
+Researchers have produced useful results for image and shape analysis with the Wasserstein distance, including retrieval (Rubner et al. 2000) and interpolation (Solomon et al. 2015). These results demonstrate that similar objects share a smaller Wasserstein distance, i.e. similar objects are closer in Wasserstein space (see Appendix for definition). We raised the question whether similar brain images will also be close to each other in the Wasserstein space and, more importantly, whether this is also true for brain images from normal controls and images from other clinical groups.
+
+In the context of brain mapping in discrete settings, we treated brain images as the empirical measures of brain tissues. Given two brain images X(x, μ) and Y(y, v), the goal was to find the OT, π : X → Y, such that the total transportation cost is the minimum. Figure 1 shows our overall computation framework from a brain image to its Wasserstein index, i.e. the Wasserstein distance between brain images to the MNI152 template.
+
+In the following sections, we describe pre-processing, resampling, harmonic mapping, optimal transportation, and the Wasserstein index.
+
+2.2.1 Pre-processing
+
+The structural MRI scans used for each subject were T1-weighted acquired at 1.5T (Jack et al. 2008). We used FreeSurfer (Fischl 2012) to extract cortical surfaces, brain volumes, and several imaging statistics (e.g., hippocampal volumes).
+
+2.2.2 Resampling
+
+Brain images were resampled into their tetrahedral representations. Starting with cortical surfaces as boundaries, TetGen (Si 2015) was used to generate tetrahedral meshes. Because surfaces and images are in the same space, each voxel intensity was directly projected to its nearest four vertices using KNN (Friedman et al. 1977). The value each vertex received was inversely proportional to the distance between the vertex and the voxel. Specifically, suppose the image and the mesh are aligned together, and a voxel v is surrounded by 4 vertices xai,ai=1,…,4, ai = 1, …, 4. Then, we have μ(xai)+=di−1/∑i=14di−1I(v), where di denotes Euclidean distance between each image voxel and its neighboring vertices, I(v) presents the voxel intensity, and μ(xai) is the vertex value which was treated as the empirical measure of the brain MRI for computing optimal transportation. The mesh values were then normalized by a global factor.
+
+2.2.3 Volumetric Harmonic Mapping
+
+Volumetric harmonic mapping was employed (Wang et al. 2004) to compute a common, convex, canonical space in order to compute OT. The volumetric harmonic mapping can deform an arbitrary tetrahedral mesh into a unit ball. We regarded a tetrahedral mesh X as a simplicial complex K under embedding f:|K|→X⊂ℝ3. Suppose xi and xj are two adjacent vertices, and f(xi) and (xj) are their coordinates in ℝ3. Then, our goal was to find the f′ that minimizes the minimizes the harmonic string energy, (4) E(f)=def∑(xi,xj)∈Kkxi,xj‖f(xi)−f(xj)‖2
+
+k is called the harmonic string constant. Suppose an edge (xixj) is shared by T tetrahedra. Then, we defined kxixj as the famous cotangent formula, (5) kxixj= def 112∑t=1Tltcot(θt)
+
+where lt is the length of the edge to which edge (xi, xj) is against and cot(θt) denotes the cotangent of the dihedral angle on that edge (Wang et al. 2004). Figure 2 depicts the geometric relations. The red line represents the edge (xi, xj) shared by several tetrahedra (two in Figure 2), two of which (one blue, one green) are shown in the figure.
+
+Following (Wang et al. 2004), we first computed a spherical conformal mapping of the brain surface (Gu et al. 2004) by gradient descent to reach f′. After the mapping, an arbitrary tetrahedral mesh was uniquely mapped to a unit ball. Figure 3 shows a brain mesh before and after the mapping. Colors indicate the intensities projected from the original images as the result of resampling. By using the boundary constraint, we preserved the orientation of all the meshes such that all the mesh values remained in the same space after mapping.
+
+2.2.4 Discrete Variational Optimal Transportation
+
+Having introduced continuous OT in Section 2.1.1, it is desired to define the discrete OT to fit the discrete brain image situations. Given a metric space M(m, g) with a Riemannian metric g its empirical measure X(x, μ), the continuous measure can be approximated by a discrete point set with Dirac measures, P(p, v) = {(pi, vi)|vi = vδ(pi), Σi vi = 1}, i = 1, …, n. Our goal was to find a discrete optimal transportation π : X(x, μ) → P(p, v) with the push-forward π#μ = v. We introduce a vector h = (h1, …, hn)T, a hyperplane on M, πi(h) : 〈m, pi〉 + hi = 0, and the piecewise linear function formed by all hyperplanes: (6) uh(m)=max{〈m,pi〉−hi},i=1,…,n
+
+Theorem 1.
+
+(Alexandrov 2005) Suppose Ω is a compact convex polytope with non-empty interior in ℝn and y1,…,yn⊂ℝn are n distinct points and v1, …, vn &gt; 0 so that ∑i=1nvi=vol(Ω). There exists a unique vector h=(h1,…,hn)T∈ℝn up to a translation factor (c, …, c)T such that the piecewise linear convex function θh(x) = max{〈x, yj〉 + hj} satisfies vol(x ∈ Ω| ∇θh(x) = yj) = vj.
+
+Furthermore, (Brenier 1991) proved that the gradient map ∇θ provides the solution to Monge’s OT problem, that is, ∇θh minimizes the transportation cost ∫Ω ‖ x − θh(x) ‖2. Therefore, given X and Y, h by itself induces OT.
+
+From Aurenhammer (Aurenhammer 1987), we know that a convex subdivision associated with a piecewise-linear convex function uh(x) on ℝn equals a power Voronoi diagram. A typical power cell of the power diagram on M⊂ℝn is defined as: Vi= def {m∈M|(m−pi)2−wi≤(m−pj)2−wj},∀j≠i.
+
+Accordingly, the power cell induced by the hyperplane πi(h) is Ui= def {m∈X|〈m,pi〉−hi≤〈m,pi〉−hj},∀j≠i, where hi=−|pi|2−wi2.
+
+In our formulation, Brenier’s gradient map ∇uh : Vi(h) → pi “transports” each Vi(h) to a specific point pi. The total mass of Vi(h) to the specific point pi is denoted as: wi(h)=∑x∈Vi(h)μ(x). Now, we define an energy function, (7) E(h)= def ∫0h(h)∑i=1nwi(ξ)dξ−∑i=1nvihi+C,
+
+with the constraint of ∑i=0nhi=0. Eq. 7 is convex with respect to h (Gu et al. 2016), which makes its optimization tractable via Newton’s method. The gradient of the energy is (8) ∇E(h)=(w1(h)−v1,…,wn(h)−vn)T.
+
+The Hessian matrix of E(h) can be geometrically formulated by using the power Voronoi diagram. It has the form of (9) H= def (∂2E(h)∂hi∂hj).
+
+Specifically, suppose two cells Vi(h) and Vj(h) intersect at a hyperplane fij = Vi(h) ∩ Vj(h), as shown in Figure 4. Then, the second-order derivatives can be expressed as: (10) ∂2E(h)∂hi∂hj={∑k∫fikμ(x)dx‖pk−pi‖,∀k,if fik≠∅, and i=j−∫fijμ(x)dx‖pj−pi‖,fij≠∅, and i≠j0 otherwise.
+
+where ‖·‖ is the Euclidean norm and ∫fikμ(x)dx=vol(fij). By Newton’s method, at each step, we solve a linear system, (11) Hδh=∇E(h),
+
+and update the height vector h ← h − λδh until δh is below a pre-defined threshold. The step λ is an empirical value. The initial value of h is set to (0, 0, …, 0)T. Letting π denote the OT-Map π : X(x, μ) → (p, v), we showed the complete algorithm for computing π in Algorithm 1. Figure 5 illustrates an extreme example of discrete optimal transportation.
+
+Algorithm 1 Discrete variational optimal transportation
+
+Data: A convex set X(x,μ) = {(x1,μ1),…,(xk,μk)}, Dirac measures P(p,v) = {(p1,v1),…, (pl,vl)}, a threshold ∈, and a step λ.	
+Result: Discrete optimal transportation map π: X(x, μ) → P(p, v), represented as (V, h).	
+1:	h ← (0,0,…,0).	
+2:	repeat	
+3:	  Compute V with current p, h.	
+4:	  Compute ω(h)={ωi=Σx∈Viv(x)}.	
+5:	  Compute ∇E(h) using Eq. 8.	
+6:	  Compute H using Eq. 9, 10.	
+7:	  h ← h – λH−1∇E(h).	
+	  while ∃ωi vanished	
+	   h ← h + λH−1∇E(h).	
+	   λ ← λ/2	
+	   h ← h – λH−1∇E(h).	
+8:	until |∇E(h)| &lt; ∈	
+9:	 return π.	
+
+2.2.5 Volumetric Wasserstein Distance
+
+An unweighted Voronoi diagram with a unit ball boundary was initialized. Then, the diagram was used to cluster the MNI152 template using k-means (Arthur and Vassilvitskii 2007). The total vertex values inside a particular cell were assigned to the corresponding Dirac point, i.e. vj←∑xi∈Vjμi. Figure 6 (left) shows the initial diagram with 56 cells. We treated the resulting Dirac measures as our template for computing the Wasserstein distance. From here, using Algorithm 2, we obtained the volumetric Wasserstein distance between a brain image and the Dirac measures. Figure 6 (right) shows the resulting diagram. After the OT mapping, the size of each Voronoi cell was adjusted so that each cell enclosed the vertices with measures whose total value approximates the Dirac measure of the cell.
+
+2.2.6 Wasserstein Index
+
+This study used the volumetric Wasserstein distance as a similarity measure for brain images. To use the Wasserstein distance as an index of an individual structural MR image, we selected the MNI152 Brain Template (Grabner et al. 2006) as the target. We used a relatively sparse uniform distribution to create an unweighted Voronoi diagram and used this diagram to cluster the image voxels of MNI152, regarding the resulting centroids as the template for indexing brain images such that each Voronoi diagram volume is proportional to the total measure within its Voronoi cell. Then, using Algorithm 2, we computed the Wasserstein index (WI) for each of the images.
+
+Algorithm 2: Computing the Wasserstein distance.
+
+Data: Two normalized domains M(m,μ),N(n,v)⊂ℝn.	
+Result: The volumetric Wasserstein distance W between M and N.	
+1:	Compute harmonic maps M′ = ψ(M), N′ = ψ(N).	
+2:	Discretize N′ into point set P(p, v).	
+3:	Compute the OT-Map π: M′ (m, μ) → P (p, v) according to Algorithm 1.	
+4:	Compute the Wasserstein distance W(M, P) according to Eq. 3.	
+5:	return W.	
+
+To compute the 3D Voronoi diagram, the algorithm was implemented in C/C++ and Voro++ was adopted (Rycroft 2009). We solved the linear system (Eq.11) using the least squares conjugate gradient solver from the Eigen library (Guennebaud et al. 2010). Our pipeline was published on http://gsl.lab.asu.edu/3dvot.
+
+2.3 Experiments and Validation
+
+2.3.1 Subjects
+
+Data used in this paper were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu) (Jack et al. 2008; Jagust et al. 2010). The ADNI was launched in 2003 as a public-private partnership led by Principal Investigator Michael W. Weiner, M.D. The primary goal of ADNI has been to test whether serial MRI, other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of mild cognitive impairment (MCI) and early AD.
+
+In this study, a total of 314 baseline structural MR images from the ADNI cohort were analyzed. Within this population, there are 140 Aβ positive AD patients and 174 Aβ negative normal control (NC) subjects. The Aβ positivity was determined using mean-cortical SUVR (standard uptake value ratio) with cerebellum as reference region. The threshold of 1.18 was determined by comparing the mean-cortical SUVR of neuropathologically confirmed Aβ positive AD patients with age matched cognitively unimpaired individuals. All subjects had a thorough clinical and cognitive assessment at the time of the acquisition, including the Mini-Mental State Examination (MMSE) score (Folstein et al. 1975), Clinical Dementia Rating (CDR) (Berg 1988), and Delayed Logical Memory Test (Wechsler 1987). The demographic information of studied subjects within groups in ADNI baseline dataset is shown in Table 1.
+
+2.3.2 Experimental Design
+
+In our experiments, we first studied the running time and numerical accuracy under different Dirac measure resolutions and empirically optimized the trade-off between accuracy loss and the time cost. To authenticate the robustness of our proposed Wasserstein index to noises, we evaluated the change of the index upon different Rician noise levels. We studied the correlation between the Wasserstein index and the Mini-Mental State Examination (MMSE) score (Folstein et al. 1975) to verify the correlation between our proposed index and cognitive measures.
+
+We applied the Student’s t test on univariate imaging biomarkers to study the statistical group difference. Specifically, we measured the difference between the mean biomarkers of two different groups (AD vs. control) by (12) t=1n/2U¯−V¯SUV
+
+where U¯ and V¯ are the univariate biomarker means of the two groups, n is the total subject number and SUV is the standard deviation. The denominator of t is the standard error of the difference between two means.
+
+A comparison of the accuracy with which the two groups could be distinguished from one another was evaluated for five measures: (1) the proposed WI, (2) Normalized Average Entorhinal Cortex Thickness, (2) Normalized Hippocampal Volume (n-HPV) segmented with FreeSurfer, (3) Normalized hippocampal Volume (n-HPV) segmented with volBrain (Manjón and Coupé 2016), Average Cortical Thickness, and (4) overall Brain Volume. With these univariate biomarkers, we performed 5-fold cross-validation on classification using the linear SVM (Cortes and Vapnik 1995). Accuracy rate and F1 scores (Powers 2011) were computed as the rate of accurate predictions and harmonic mean of precision and recall, respectively.
+
+To remove the effect of brain size, hippocampal volume was normalized by the left-brain volume, and the entorhinal cortex thickness was normalized by the average cortical thickness. We denote the normalized hippocampal volume as n-HPV and the normalized entorhinal cortex thickness as n-ECT in the rest of sections.
+
+3. Results
+
+3.1 Timing and Dirac Approximation Offset
+
+For the computation consideration, we resampled MNI152 into sparse points. We wish to keep the majority features of MNI152 template. Inevitably, the accuracy of resampling is depended on the number of sampling points. We evaluated the error of down-sampling with respect to the number of samples. Specifically, we tested the running time and this error under different resolutions ranging from 0.4 to 0.07, corresponding to a number of points from 171 to 12020. We report the results in Table 2 and Figure 7. All tests were run on a 3.40 GHz Intel i7–4770 CPU (single core) with 8.00 GB RAM.
+
+Table 2 shows that the error between the original template and our template decreased as the number of samples increased, while the time cost was the opposite. When the resampling resolution dropped from 0.3 to 0.1, the offset distance to the original measure also significantly decreased. After the resolution reached 0.1, there was no significant improvement in the error while the computational cost boosted to thousands of seconds. As a trade-off between effectiveness and efficiency, we choose to use the resolution of 0.1, throughout the study, if we perform down-sampling.
+
+3.2 Robustness to Imaging Noises
+
+We randomly pick a structural MR image from our dataset to test the robustness of our proposed index to noises. Specifically, we added noises to the image, producing several noisy samples and computing their WIs. We expected the WIs to indicate the noisy samples were very close to the original sample. The same process is conducted to the measure of the entorhinal cortex thickness and hippocampal volume for comparison. To remove the effect of brain size, hippocampal volume was normalized by the left-brain volume, and the entorhinal cortex thickness was normalized by the average cortical thickness. We denote the normalized hippocampal volume as n-HPV and the normalized entorhinal cortex thickness as n-ECT in the rest of sections.
+
+Gudbjartsson and Patz suggested that the noise existing in MR images follows a Rician distribution (Gudbjartsson and Patz 1995). We followed Ridgway and added Rician noises to the structural MR image (Gudbjartsson and Patz 1995). Assuming the normalized image with no noise is I0 ∈ [0, 255], the image In with Rician noise is generated by the following formula, where s is the noise level, and r1, r2~N(0,1). (13) In=(s r1+I0)2+(s r2)2
+
+We added the noise of a different level ranging from 10 to 100 with an interval of 10 each time to the normalized image, producing 10 noisy images. To get a brief idea of how much different noise levels influence the image quality, we add noise to the same MRI slice under different noise levels, as shown in Figure 8. We observe that for large noise, (noise level larger than 50), the image has been very vague. For most MRI scans, the images can be considered with small noise (noise level less than 30).
+
+Our proposed method was applied to these images, and the WIs of all the noisy images were obtained. In addition, the changes of the average entorhinal cortex thickness (ECT) and hippocampal volume (HPV) were captured using FreeSurfer. To create indices comparable to each other, we calculated the percentage change between each noisy image and the original one in terms of WI, ECT, and HPV, respectively. The relative changes under different levels of noise were then compared. Experiments were repeated five times, taking the average of the outcomes.
+
+Figure 9 depicts a comparison of the results. The Wasserstein index surpassed both HPV and ECT with the change staying closer to zero. However, HPV suffered from a vibration of around 1%, while ECT had a more significant change of around 2%. The upward trend of the WI suggests that our proposed index was sensitive to the global brain volume changes when the noise became strong enough to impact the original image substantially. Compared with HPV under different levels of noises, the trajectory of the WD was smoother and steadier. As shown in Figure 9, we found the WI was more robust than ECT and HPV when the noise level is low. Under strong noises, ECT and HPV did not show major changes compared with under mild noises while WI starts to diverge from the ground truth. As strong noises are rare, the current results show that our proposed WI is robust to normal image noises.
+
+3.3 Correlation with Clinical Cognitive Measures
+
+We tested the correlation between the Wasserstein index and a clinical cognitive measure, i.e., the Mini-Mental State Examination (MMSE) score (Folstein et al. 1975). As shown in Figure 10(a), the linear regression result suggests a negative correlation between WI and MMSE. It means that subjects diagnosed as AD tend to have smaller MMSEs and larger WIs. This result accords with other research (Jack et al. 2003). The model is significant at the 5% significance level with p-value &lt; 10−5. The root mean squared error is 4.01. To excerpt the influence of age, we also regress MMSE relative to WI and age, i.e. MMSE = k1WI + k2Age + c, the regression result is k1 = −8.96, k1 = −0.03 and b = 41.05 as shown in Figure 10(b). The result indicates the age influence on the correlation study is small.
+
+For comparison, we also plot the correlation between MMSE and two frequently used single indices—normalized n-ECT, normalized n-HPV (Cuingnet et al. 2011) in Figure 11 (a) and (b), respectively. ECT and HPV were measured by FreeSurfer (Fischl 2012). All the indices were calculated on the left cerebral hemisphere. Hippocampus volume was been normalized by the left-brain volume, and average entorhinal thickness was normalized by the average cortical thickness. Both models are significant at the 5% significance level with p-value &lt; 1 × 10−6. The significance level is consistent with ours while they have slightly better root mean squared errors (3.65 and 3.79, respectively). The results verified several prior researches (e.g. (Jack et al. 1999)) which proposed to use them as univariate neuroimaging biomarkers.
+
+3.4 Group Difference Analysis
+
+To determine the practicality of our framework for structural MR images as well as the robustness over large brain image datasets, we applied the framework to images from the ADNI cohort, including those from 140 Aβ positive AD patients and 174 Aβ negative NC subjects. We compared the WI with two frequently used single indices—average normalized n-ECT, normalized n-HPV—in terms of their statistical power (Cuingnet et al. 2011). ECT and HPV were measured by FreeSurfer (Fischl 2012). We also used another online hippocampus segmentation software package, volBrain (Manjón and Coupé 2016). All the indices were calculated on the left cerebral hemisphere. Hippocampal volume was been normalized by the left-brain volume, and average entorhinal thickness was normalized by the average cortical thickness.
+
+We first show the box-plots of these indices in Figure 12. The figure reveals that all four single indices have the statistical power to distinguish between AD and NC. We conducted t-tests on three indices to evaluate their statistical power in differentiating AD and NC. The p-values for these indices are 1.0 × 10−6 (with 1 million random permutations), showing that all the indices work equally well to differentiate these two groups.
+
+3.5. Classification Study
+
+We also tested the classification accuracy of the proposed WI along with other four indices obtained from FreeSurfer, including normalized entorhinal cortex thickness (n-ECT), normalized hippocampal volume (n-HPV), cortical thickness (CT), and brain volume (BV). Besides the n-HPV extracted from FreeSurfer, we also test the accuracy of n-HPV from VolBrain (Manjón and Coupé 2016). The classification accuracy may help illustrate the statistical power of different univariate neurodegenerative biomarkers. We trained a support vector machine with RBF kernel (Vapnik 1998) as the classifier and conducted 5-fold cross-validation on the same image dataset, which includes 140 Aβ positive AD patients and 174 Aβ negative CN subjects. Table 3 summarizes the classification accuracies of different indices. Among all the indices, WI achieved the highest accuracy of 82.2%, while n-ECT and n-HPV from FreeSurfer obtained 79.6% and 80.7% accuracy, respectively. The slightly better classification accuracy of our proposed Wasserstein index authenticates the feasibility of our method. We also report the F1 scores (Powers 2011) in Table 3, which shows that our proposed index achieves relatively balanced results than other MRI measures. One possible reason for the WI achieves better results is that it takes the full MRI distribution of the whole scan robustly, rather than specific regions of the compared indices.
+
+4 Discussion
+
+We present a framework to compute volumetric Wasserstein distances and Wasserstein index for structural MR images. The proposed framework leverages the ability of the Wasserstein distance as a shape metric and develops a robust and efficient univariate neurodegenerative biomarker. Preliminary results demonstrate that the Wasserstein index, a numerical number, has its potential for the analysis of neurodegenerative diseases such as AD. Our study has two main findings. First, we introduced a numerically efficient algorithm to compute the 3D optimal transportation with Newton’s method. Despite the convenience of using the Wasserstein distance to measure distributions, a limiting factor of Wasserstein distance is its computational complexity when solving the optimal transportation problem. This is especially true when dealing with high dimensional distributions. It is due to the fact that the optimal transport problem is to find πoptimal according to Equ. (1). i.e., from the image intensity distribution μ=∑iaiδxi to v=∑jbjδyj. For a transport plan between two 100×100×100 resolution MRI, the discrete transport matrix π can be as large as 106 × 106, let alone to search the best π which minimizes the transport cost. This is the reason that ur Rehman (ur Rehman et al. 2009) adopted GPU to improve efficiency. In practice, various methods approximate the optimal transportation in order to avoid heavy computation (Cuturi 2013; Solomon et al. 2015). With the proposed variational framework (Su et al. 2015a), we can efficiently compute volumetric Wasserstein distance with brain MR volume images. Further, mapping imaging data to a common space is a widely used approach for registration and matching of brain surfaces (Fischl et al. 1999; Thompson et al. 2004). Our prior work adopted sphere (Su et al. 2015b) and Poincaré disk (Shi et al. 2016) to compute Wasserstein distance on surfaces. However, few attempts have been made to directly map the whole brain MRI voxels to a 3D common space. With a volumetric harmonic map (Wang et al. 2004), our work computes harmonic maps between brain images and a solid sphere. The reason to choose harmonic maps is threefold. (1) In general, volumetric metric preserving mapping does not exist while the harmonic mapping minimizes the shape distortion. (2) Harmonic mapping, which measures the elastic energy of the deformation, is physically natural with a clear interpretation. (3) Harmonic mapping is numerically stable and efficient by solving an elliptic partial differential equation (Eck et al. 1995). This approach may provide new ideas into 3D brain imaging analysis research. Our second finding demonstrates the feasibility of the shape space, particularly Wasserstein shape space, for univariate neurodegenerative imaging biomarker development. Our experimental results demonstrate the potential that the proposed WI is robust to imaging noise, correlated with cognitive measures, and may be used in discriminating clinical groups.
+
+Recently, a variety of multivariate brain imaging biomarkers together with advanced machine learning algorithms were developed to study AD diagnosis and prognosis (as reviewed in (Rathore et al. 2017)). In the current work, the classification experiment of AD and NC is mainly used as an illustration. We think the main applications of univariate neuroimaging biomarkers will be to improve the N measure in the newly proposed “A/T/N” AD diagnosis system (Jack et al. 2016) and facilitate the AD clinical trials by reducing the minimum sample size (Lewis 1999). We agree that HV is a convenient and intuitive clinical measure. However, we argue that there are certain difficulties to select and extract these region-of-interest (ROI) so we hypothesize that a global image measure with strong theoretical guarantee would be also useful. Whether or not our approach provides more relevant information about neuroanatomical change than those afforded by other measurements (grey matter thickness (Dickerson et al. 2009), ROI such as hippocampal volume (Jack et al. 1999)) requires careful validation for each application. More importantly, we anticipate that our optimal transportation-based features may provide new measurements on structural MRI and will be complementary to these other features.
+
+In Figure 10, it is noticeable that there are subjects whose MMSE scores are very low (MMSE&lt;15). There is a possibility that these outlier MMSE scores helped achieve the linear relationship between our WI measure and MMSE. We further test the linear correlation by keeping subjects whose MMSE scores are bigger than 15. The new fitting is shown in Figure 13. We see that the new fitting slope (k=−9.03) does not change too much, compare to the original slope (k=−8.947). It supported that in the current dataset, with or without these five subjects with extremely low MMSE scores, our WI measure is linearly correlated with MMSE scores.
+
+Despite the promising initial results, three caveats remain. First, the dataset size, although well characterized in this study, is relatively small in our experiments. The OT is computational heavy even we provided an efficient computational framework. Similarly, the compared univariate biomarkers are limited. Although we have compared the performance with biomarkers like entorhinal cortex thickness, hippocampal volume, cortical thickness, and brain volume, the other brain features performance remains unknown. Second, as the WI is obtained by comparing the global image difference, there is a possibility that changes related to normal aging or other types of dementias become dominant in the resulting imaging index. Future studies may leverage the flexibility of the OT definition by taking different canonical space as the parameter domain. As shown in our prior work (Su et al. 2015a), we could give more/fewer weights μ to the important anatomical areas shown in Eq. 1 to achieve enlarged/decreased mapping results. Similar to (Racine et al. 2018), we may improve its statistical power by emphasizing those AD-related regions and deemphasizing those normal aging or other dementia-related regions (Racine et al. 2018). It is worth noting that our approach still does not demand a highly accurate ROI segmentation due to the OT probability distribution-based computation nature (Engquist and Foroese 2013). The third caveat is that optimal transportation research remains a fast-growing research field in both engineering (Arjovsky et al. 2017; Baumgartner et al. 2018; Shi et al. 2017; Younes 2010) and pure mathematics (Figalli et al. 2010; Villani 2008). The current work presents our initial efforts to study the possibility of the Wasserstein distance as a valid univariate neurodegenerative imaging biomarker. We hope the current pilot study could inspire new ideas on this topic and further advance brain morphometry research.
+
+5 Conclusion and Future Work
+
+We propose a framework to compute the volumetric Wasserstein distance on 3D images and explore its application as a univariate neurodegenerative imaging biomarker. Our work provides a tool for efficiently solving the OT problem in high-dimensional spaces and explores its application to characterizing AD on MR images. We have demonstrated that a shape space-based index, i.e., the WI, may be applied on MR images for brain morphometry. Our work may provide a new perspective for brain imaging analysis. Future work could include solving the OT problem for even higher-dimensional data, e.g., tensor images. Our general framework may be applied to study other brain imaging modalities, such as fluorodeoxyglucose positron emission tomography (FDG-PET) and functional MRI (fMRI). Our prior work (Mi et al. 2017) studied the feasibility of using 3D Wasserstein distance to study brain metabolism via FDG-PET image analysis. In future, we will continue to study whether other modality analyses or some cerebral region-based Wasserstein distance may improve presymptomatic diagnosis and treatment of neurodegenerative diseases.
+
+Acknowledgments
+
+This work was partially supported by National Health Institutes (R21AG043760 and RF1AG051710 to LM, WZ, YF and YW, R01EB025032 to HZ and YW, U54EB020403 to YF and YW, R01AG031581 and P30AG19610 to RJC and EMR, 3R01HL128818-04S1 to YW), National Science Foundation (DMS-1413417 and IIS-1421165 to LM, WZ, YF, and YW) and Arizona Alzheimers Consortium (to KC, RJC, EMR and YW).
+
+Data collection and sharing for this project was funded by the ADNI (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12-2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Appendix
+
+Definition: (Wasserstein Space) Recall M(m) is a metric space and P(M) is the space of all Borel probability measures on M, B(M). Formally, we named P(M) the Wasserstein space P(M) = {B(M)}. Suppose we compute the quadratic transportation distance between M and its image π(m), d(m, π(m))2. Then we have the 2-Wasserstein space, P2(M).
+
+Figure 1. The pipeline to compute the Wasserstein index (WI).
+
+Figure 2. Edge (xi, xj) (red) is shared by two tetrahedra (blue and green). Each has an edge and a dihedral angle against (xi, xj). Length lt and dihedral angle θt define the harmonic string constant.
+
+Figure 3. Volumetric harmonic map from a brain mesh to a unit ball. The feature (e.g. intensity) of each vertex remains the same.
+
+Figure 4. The intersection (blue) of Voronoi cells in 2D (left) and 3D (right) cases. The Hessian matrix is derived from the geometric relation between adjacent Voronoi cells.
+
+Figure 5. Discrete optimal transportation map. Gray points are empirical measure; red points are initial Dirac measures. Our method adjusts the size of each cell to enclose the empirical measures whose summation equals the corresponding Dirac.
+
+Figure 6. During optimal transportation, the 3D power Voronoi diagram adjusts the size of each cell to enclose sample points whose measures add up to its centroid’s Dirac measure.
+
+Figure 7. The Wasserstein distance between the Dirac measure template and the original image and the time to compute it under the different number of Dirac measures.
+
+Figure 8. Noisy images under different noise levels. For noise level larger than 50, the images have been relatively vague.
+
+Figure 9. The vibration of three structural MRI indices under Rician noises. Wasserstein index (orange) is more robust than entorhinal cortex thickness (blue) and hippocampal volume (green).
+
+Figure 10. (a) The scatter plot from the linear regression of n-ECT and the mini-mental state examination (MMSE). (b)The scatter plot from the linear regression of n-HPV and the mini-mental state examination (MMSE).
+
+Figure 11. (a)The scatter plot from the linear regression of WI and the mini-mental state examination (MMSE). The plot suggests a mild negative correlation between WI and MMSE. The root mean squared error from the linear regression model is 4.17. (b) The regression line with the consideration of age influence. The root mean squared error from the linear regression model is 4.13.
+
+Figure 12. An illustration of boxplots of the distributions of different indices for NC subjects and AD patients.
+
+Figure 13. Compare of fittings with/without subjects whose MMSE &lt;15.
+
+Table 1. Demographic information. (AD: Alzheimer’s disease, NC: Normal Control, F: Female, M: for male, and MMSE for mini-mental state examination)
+
+Group	Number of Subjects	Gender (F/M)	Age	MMSE score	
+Aβ+ AD	140	68/72	74.11±7.86	21.95±4.06	
+Aβ− NC	174	94/80	74.19±6.76	29.01±1.19	
+
+Table 2. Time to compute offset Wasserstein distance (WD) under different resolutions
+
+Resolution	0.3	0.25	0.2	0.15	0.12	0.1	0.09	0.08	0.07	
+Number of Points	171	257	515	1237	2401	4100	5695	8063	12020	
+Time/s	17	29	60	76	120	364	765	3071	9880	
+Offset WD	28.2	15.6	5.92	1.71	0.651	0.321	0.202	0.131	0.074	
+
+Table 3. Classification results from Alzheimer’s disease vs. normal control on structural MRI
+
+Measure	Accuracy	F1 Score	
+Wasserstein Index (WI)	82.2	85.4	
+Normalized Average Entorhinal Cortex Thickness (n-ECT) from FreeSurfer	79.6	83.0	
+Normalized Hippocampal Volume (n-HPV) from FreeSurfer	80.7	82.9	
+Normalized Hippocampal Volume (n-HPV) from VolBrain	78.3	81.3	
+Average Corticle Thickness from FreeSurfer	79.6	83.0	
+Brain Volume from Free Surfer	64.0	69.1	
+
+This Author Accepted Manuscript is a PDF file of a an unedited peer-reviewed manuscript that has been accepted for publication but has not been copyedited or corrected. The official version of record that is published in the journal is kept up to date and so may therefore differ from this version.
+
+ǂ Data used in the preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+Information Sharing Statement
+
+The dataset used in this paper is from ADNI (http://adni.loni.usc.edu/), and the program source code developed in this manuscript is publicly available here (http://gsl.lab.asu.edu/archive/3dwasserstein/). For assistance with running the program, please feel free to contact us.
+
+
+References
+
+Abell F , Krams M , Ashburner J , Passingham R , Friston K , Frackowiak R , (1999). The neuroanatomy of autism: a voxel-based whole brain analysis of structural scans. Neuroreport, 10 (8 ), 1647–1651.10501551
+Ahmed O. Ben , Benois-Pineau J , Allard M , Amar C. Ben , Catheline G , &amp; ADNI. (2015). Classification of Alzheimer’s disease subjects from MRI using hippocampal visual features. Multimedia Tools and Applications, 74 (4 ), 1249–1266.
+Alexandrov AD (2005). Convex polyhedra. Springer Science &amp; Business Media.
+Arjovsky M , Chintala S , &amp; Bottou L (2017). Wasserstein GAN. ArXiv e-prints.
+Arthur D , &amp; Vassilvitskii S (2007). k-means++: The advantages of careful seeding. In Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete algorithms (pp. 1027–1035).
+Ashburner J , &amp; Friston KJ (2000). Voxel-based morphometry--the methods. Neuroimage, 11 (6 Pt 1 ), 805–821.10860804
+Aurenhammer F (1987). Power diagrams: properties, algorithms and applications. SIAM Journal on Computing, 16 (1 ), 78–96.
+Baumgartner CF , Koch LM , Tezcan KC , &amp; Ang JX (2018). Visual Feature Attribution Using Wasserstein GANs. In Proc IEEE Comput Soc Conf Comput Vis Pattern Recognit (pp. 8309–8319).
+Bazeille T , Richard H , Janati H , &amp; Thirion B (2019). Local Optimal Transport for Functional Brain Template Estimation (pp. 237–248). Springer, Cham Accessed 11 July 2019
+Berg L (1988). Clinical Dementia Rating (CDR). Psychopharmacol Bull, 24 (4 ), 637–639.3249765
+Brenier Y (1991). Polar factorization and monotone rearrangement of vector-valued functions. Communications on pure and applied mathematics, 44 (4 ), 375–417.
+Cardenas VA , Chao LL , Studholme C , Yaffe K , Miller BL , Madison C , (2011). Brain atrophy associated with baseline and longitudinal measures of cognition. Neurobiology of Aging, 32 (4 ), 572–580.19446370
+Chen Z , Wu Z , Sun L , Wang F , Wang L , Lin W , (2019). Construction of 4D Construction of 4D Neonatal Cortical Surface Atlases Using Wasserstein Distance. Proceedings. IEEE International Symposium on Biomedical Imaging, 2019 , 995–998. Accessed 18 August 2019 31354918
+Chung MK , Dalton KM , Shen L , Evans AC , &amp; Davidson RJ (2007). Weighted Fourier representation and its application to quantifying the amount of gray matter. IEEE Trans. on Medical Imaging, 26 , 566–581.17427743
+CortechsLabs. (2018). NeuroQuant.
+Cortes C , &amp; Vapnik V (1995). Support-Vector Networks. Mach. Learn, 20 (3 ), 273–297.
+Cuingnet R , Gerardin E , Tessieras J , Auzias G , Lehericy S , Habert MO , (2011). Automatic classification of patients with Alzheimer’s disease from structural MRI: a comparison of ten methods using the ADNI database. Neuroimage, 56 (2 ), 766–781.20542124
+Cuturi M (2013). Sinkhorn distances: Lightspeed computation of optimal transport. In Advances in NIPS (pp. 2292–2300).
+Daniel M , Gaser C , Mietchen D , &amp; Gaser C (2009). Computational morphometry for detecting changes in brain structure due to development, aging, learning, disease and evolution. Frontiers in neuroinformatics, 3 (25 ).
+Davatzikos C (1997). Spatial transformation and registration of brain images using elastically deformable models. Comput. Vis. Image Understanding, 66 , 207–222.
+Dickerson BC , Bakkour A , Salat DH , Feczko E , Pacheco J , Greve DN , (2009). The cortical signature of Alzheimer’s disease: regionally specific cortical thinning relates to symptom severity in very mild to mild AD dementia and is detectable in asymptomatic amyloid-positive individuals. Cereb. Cortex, 19 (3 ), 497–510.18632739
+Dickerson BC , Goncharova I , Sullivan MP , Forchetti C , Wilson RS , Bennett DA , (2001). MRI-derived entorhinal and hippocampal atrophy in incipient and very mild Alzheimer’s disease. Neurobiol. Aging, 22 (5 ), 747–754.11705634
+Eck M , DeRose T , Duchamp T , Hoppe H , Lounsbery M , &amp; Stuetzle W (1995). Multiresolution analysis of arbitrary meshes. In Proceedings of the 22nd annual conference on Computer graphics and interactive techniques - SIGGRAPH ‘95 (pp. 173–182).
+Engquist B , &amp; Foroese B (2013). Application of the Wasserstein metric to seismic signals. arXiv.
+Figalli A , Maggi F , &amp; Pratelli A (2010). A mass transportation approach to quantitative isoperimetric inequalities. Inventiones mathematicae, 182 (1 ), 167–211.
+Fischl B (2012). FreeSurfer. Neuroimage, 62 2 , 774–781.22248573
+Fischl B , Martin IS , Roger BT , &amp; Dale AM (1999). High-resolution intersubject averaging and a coordinate system for the cortical surface. Human brain mapping, 8 (4 ), 272–284.10619420
+Fletcher PT (2013). Geodesic Regression and the Theory of Least Squares on Riemannian Manifolds. Int. J. Comput. Vision, 105 (2 ), 171–185.
+Fletcher PT , Venkatasubramanian S , &amp; Joshi S (2009). The geometric median on Riemannian manifolds with application to robust atlas estimation. Neuroimage, 45 (1 Suppl ), S143–152.19056498
+Folstein MF , Folstein SE , &amp; McHugh PR (1975). Mini-mental state. A practical method for grading the cognitive state of patients for the clinician. J. Psychiatr Res, 12 (3 ), 189–198.1202204
+Fox NC , Scahill RI , Crum WR , &amp; Rossor MN (1999). Correlation between rates of brain atrophy and cognitive decline in AD. Neurology, 52 (8 ), 1687–1689.10331700
+Friedman JH , Bentley JL , &amp; Finkel RA (1977). An algorithm for finding best matches in logarithmic expected time. ACM Trans. Math. Softw, 3 (3 ), 209–226.
+Gerber S , Niethammer M , Styner M , &amp; Aylward S (2018). Exploratory Population Analysis with Unbalanced Optimal Transport. In Medical image computing and computer-assisted intervention : MICCAI … International Conference on Medical Image Computing and Computer-Assisted Intervention (Vol. 11072 , pp. 464–472). Accessed 11 July 2019
+Grabner G , Janke AL , Budge MM , Smith D , Pruessner J , Collins DL , &amp; Others. (2006). Symmetric atlasing and model based segmentation: an application to the hippocampus in older adults. In Med Image Comput Comput Assist Interv (Vol. 9 , pp. 58–66).
+Gu X , Luo F , Sun J , &amp; Yau S-TT (2016). Variational principles for Minkowski type problems, discrete optimal transport, and discrete Monge-Ampere equations. Asian Journal of Mathematics, 20 (2 ), 383–398.
+Gu X , Wang Y , Chan T , Thompson T , &amp; Yau S (2004). Genus zero surface conformal mapping and its application to brain surface mapping. IEEE Transaction on Medical Imaging, 23 , 1–10.
+Gudbjartsson H , &amp; Patz S (1995). The Rician distribution of noisy MRI data. Magn Reson Med, 34 (6 ), 910–914.8598820
+Guennebaud G , Jacob B , &amp; Others. (2010). Eigen v3.
+Gutman BA , Fletcher PT , Cardoso MJ , Fleishman GM , Lorenzi M , Thompson PM , &amp; Ourselin S (2015a). A Riemannian Framework for Intrinsic Comparison of Closed Genus-Zero Shapes. Inf Process Med Imaging, 24 , 205–218.26221675
+Gutman BA , Hua X , Rajagopalan P , Chou YY , Wang Y , Yanovsky I , (2013). Maximizing power to track Alzheimer’s disease and MCI progression by LDA-based weighting of longitudinal ventricular surface features. Neuroimage, 70 , 386–401.23296188
+Gutman BA , Wang Y , Yanovsky I , Hua X , Toga AW , Jack CR , (2015b). Empowering imaging biomarkers of Alzheimer’s disease. Neurobiol. Aging, 36 Suppl 1(S1) , 69–80.
+Hua X , Gutman B , Boyle CP , Rajagopalan P , Leow AD , Yanovsky I , (2011). Accurate measurement of brain changes in longitudinal MRI scans using tensor-based morphometry. Neuroimage, 57 (1 ), 5–14.21320612
+Illán-Gala I , Pegueroles J , Montal V , Vilaplana E , Carmona-Iragui M , Alcolea D , (2018). Challenges associated with biomarker-based classification systems for Alzheimer’s disease. Alzheimer’s &amp; Dementia: Diagnosis, Assessment &amp; Disease Monitoring, 10 , 346–357.
+Jack CR , Bennett DA , Blennow K , Carrillo MC , Feldman HH , Frisoni GB , (2016). A/T/N: An unbiased descriptive classification scheme for Alzheimer disease biomarkers. Neurology, 87 (5 ), 539–547.27371494
+Jack CR , Bernstein MA , Fox NC , Thompson P , Alexander G , Harvey D , (2008). The Alzheimer’s Disease Neuroimaging Initiative: MRI methods. J Magn Reson Imaging, 27 (4 ), 685–691.18302232
+Jack CR , Petersen RC , Xu YC , O’Brien PC , Smith GE , Ivnik RJ , (1999). Prediction of AD with MRI-based hippocampal volume in mild cognitive impairment. Neurology, 52 (7 ), 1397–1403.10227624
+Jack CR , Slomkowski M , Gracon S , Hoover TM , Felmlee JP , Stewart K , (2003). MRI as a biomarker of disease progression in a therapeutic trial of milameline for AD. Neurology, 60 (2 ), 253–260.12552040
+Jagust WJ , J. WJ , B. D , C. K , F. NL , L. SM , (2010). The Alzheimer’s Disease Neuroimaging Initiative positron emission tomography core. Alzheimer’s &amp; Dementia, 6 (3 ), 221–229.
+Knopman DS , Haeberlein SB , Carrillo MC , Hendrix JA , Kerchner G , Margolin R , (2018). The National Institute on Aging and the Alzheimer’s Association Research Framework for Alzheimer’s disease: Perspectives from the Research Roundtable. Alzheimers Dement, 14 (4 ), 563–575.29653607
+Kurtek S , Klassen E , Ding Z , Jacobson SW , Jacobson JL , Avison MJ , &amp; Srivastava A (2011). Parameterization-invariant shape comparisons of anatomical surfaces. IEEE Trans Med Imaging, 30 (3 ), 849–858.21156390
+Langbaum JB , Fleisher AS , Chen K , Ayutyanont N , Lopera F , Quiroz YT , (2013). Ushering in the study and treatment of preclinical Alzheimer disease. Nat Rev Neurol, 9 (7 ), 371–381.23752908
+Lewis JA (1999). Statistical principles for clinical trials (ICH E9): an introductory note on an international guideline. Statistics in medicine, 18 (15 ), 1903–42. Accessed 10 August 2019 10440877
+Manjón JV , &amp; Coupé P (2016). volBrain: An Online MRI Brain Volumetry System. Frontiers in Neuroinformatics, 10 , 30 Accessed 3 June 2019 27512372
+Mechelli A , Price CJ , Friston KJ , &amp; Ashburner J (2005). Voxel-based morphometry of the human brain: methods and applications. Current medical Imaging reviews, 1 (2 ), 105–113.
+Mi L , Zhang W , Gu X , &amp; Wang Y (2018). Variational Wasserstein Clustering (pp. 336–352). Springer, Cham Accessed 10 August 2019
+Mi L , Zhang W , Zhang J , Fan Y , Goradia D , Chen K , (2017). An Optimal Transportation based Univariate Neuroimaging Index. Proc IEEE Int Conf Comput Vis, 2017 , 182–191.29225556
+Powers DM (2011). Evaluation: from precision, recall and F-measure to ROC, informedness, markedness and correlation.
+Racine AM , Brickhouse M , Wolk DA , &amp; Dickerson BC (2018). The personalized Alzheimer’s disease cortical thickness index predicts likely pathology and clinical progression in mild cognitive impairment. Alzheimers Dement (Amst), 10 , 301–310.29780874
+Rathore S , Habes M , Iftikhar MA , Shacklett A , &amp; Davatzikos C (2017). A review on neuroimaging-based classification studies and associated feature extraction methods for Alzheimer’s disease and its prodromal stages. NeuroImage, 155 , 530–548.28414186
+Redlich R , Almeida JJ , Grotegerd D , Opel N , Kugel H , Heindel W , (2014). Brain morphometric biomarkers distinguishing unipolar and bipolar depression. A voxel-based morphometry-pattern classification approach. JAMA Psychiatry, 71 (11 ), 1222–1230.25188810
+Rubner Y , Tomasi C , &amp; Guibas L (2000). The earth mover’s distance as a metric for image retrieval. International journal of computer vision, 40 (2 ), 99–121.
+Rycroft C (2009). A three-dimensional Voronoi cell library in C++. Lawrence Berkeley National Laboratory.
+Sabuncu MR , Ge T , Holmes AJ , Smoller JW , Buckner RL , Fischl B , (2016). Morphometricity as a measure of the neuroanatomical signature of a trait. Proc. Natl. Acad. Sci. U.S.A, 113 (39 ), E5749–5756.27613854
+Schmitter D , Roche A , Maréchal B , Ribes D , Abdulkadir A , Bach-Cuadra M , (2015). An evaluation of volume-based morphometry for prediction of mild cognitive impairment and Alzheimer’s disease. NeuroImage: Clinical, 7 , 7–17.25429357
+Shi J , &amp; Wang Y (2019). Hyperbolic Wasserstein Distance for Shape Indexing. IEEE Transactions on Pattern Analysis and Machine Intelligence, 1–1. Accessed 3 June 2019
+Shi J , Zhang W , Tang M , Caselli RJ , &amp; Wang Y (2017). Conformal invariants for multiply connected surfaces: Application to landmark curve-based brain morphometry analysis. Med Image Anal, 35 , 517–529.27639215
+Shi J , Zhang W , &amp; Wang Y (2016). Shape Analysis With Hyperbolic Wasserstein Distance. In Proc IEEE Comput Soc Conf Comput Vis Pattern Recognit (pp. 5051–5061).
+Si H (2015). TetGen, a Delaunay-based quality tetrahedral mesh generator. ACM Trans. Math. Softw, 41 (2 ), 11.
+Solomon J , de Goes F , Peyré G , Cuturi M , Butscher A , Nguyen A , (2015). Convolutional wasserstein distances: Efficient optimal transportation on geometric domains. ACM Trans. on Graphics, 34 (4 ), 66.
+Su Z , Wang Y , Shi R , Zeng W , Sun J , Luo F , &amp; Gu X (2015a). Optimal Mass Transport for Shape Matching and Comparison. In IEEE Transactions on Pattern Analysis and Machine Intelligence (Vol. 37 , pp. 2246–2259).26440265
+Su Z , Zeng W , Wang Y , Lu Z-L , Gu X , Zeng W , (2015b). Shape Classification Using Wasserstein Distance for Brain Morphometry Analysis. Inf. Process Med. Imaging, 411–423.26221691
+Tapiola T , Pennanen C , Tapiola M , Tervo S , Kivipelto M , Hanninen T , (2008). MRI of hippocampus and entorhinal cortex in mild cognitive impairment: a follow-up study. Neurobiol. Aging, 29 (1 ), 31–38.17097769
+Thompson PM , Giedd JN , Woods RP , MacDonald D , Evans AC , &amp; Toga AW (2000). Growth patterns in the developing brain detected by using continuum mechanical tensor maps. Nature, 404 (6774 ), 190–193.10724172
+Thompson PM , Hayashi KM , De Zubicaray GI , Janke AL , Rose SE , Semple J , (2004). Mapping hippocampal and ventricular change in Alzheimer disease. Neuroimage, 22 (4 ), 1754–1766.15275931
+ur Rehman T , Haber E , Pryor G , Melonakos J , &amp; Tannenbaum A (2009). 3D nonrigid registration via optimal mass transport on the GPU. Medical image analysis, 13 (6 ), 931–940.19135403
+Vapnik V (1998). Statistical Learning Theory. John Wiley and Sons.
+Vemuri P , &amp; Others. (2008). Alzheimer’s disease diagnosis in individual subjects using structural MR images: validation studies. Neuroimage, 39 (3 ), 1186–1197.18054253
+Vemuri P , Whitwell JL , Kantarci K , Josephs KA , Parisi JE , Shiung MS , (2008). Antemortem MRI based Structural Abnormality index (STAND)-scores correlate with postmortem Braak neurofibrillary tangle stage. Neuroimage, 42 (2 ), 559–567.18572417
+Villani C (2003). Topics in optimal transportation. American Mathematical Society, 58 .
+Villani C (2008). Optimal transport: old and new (Vol. 338). Springer Science &amp; Business Media.
+Wang Y , Gu X , Chan TF , Thompson PM , &amp; Yau S-T (2004). Volumetric harmonic brain mapping. In Biomedical Imaging: Nano to Macro, 2004. IEEE International Symposium on (pp. 1275–1278).
+Wang Y , Zhang J , Gutman B , Chan TF , Becker JT , Aizenstein HJ , (2010). Multivariate tensor-based morphometry on surfaces: Application to mapping ventricular abnormalities in HIV/AIDS. NeuroImage, 49 (3 ), 2141–2157.19900560
+Wechsler D (1987). Wechsler Memory Scale-Revised Manual. San Antonio, TX: Psychological Corporation.
+Woermann FG , Free SL , Koepp MJ , Sisodiya SM , &amp; Duncan JS (1999). Abnormal cerebral structure in juvenile myoclonic epilepsy demonstrated with voxel-based analysis of MRI. Brain, 122 (11 ), 2101–2108.10545395
+Woods RP (2003). Characterizing volume and surface deformations in an atlas framework: theory, applications, and implementation. Neuroimage, 18 (3 ), 769–788.12667854
+Worsley K , Taylor J , Tomaiuolo F , &amp; Lerch J (2004). Unified univariate and multivariate random field theory. Neuroimage, 23 , 189–195.
+Wright IC , McGuire PK , Poline JB , Travere JM , Murray RM , Frith CD , (1995). A voxel-based method for the statistical analysis of gray and white matter density applied to schizophrenia. Neuroimage, 2 (4 ), 244–252.9343609
+Younes L (2010). Shapes and Diffeomorphisms (2nd ed.). Springer.
+Younes L , Arrate F , &amp; Miller MI (2009). Evolutions equations in computational anatomy. Neuroimage, 45 (1 Suppl ), 40–50.
+Zhang W , Shi J , Yu J , Zhan L , Thompson PM , &amp; Wang Y (2017). Enhancing diffusion MRI measures by integrating grey and white matter morphometry with hyperbolic wasserstein distance. In Proceedings - International Symposium on Biomedical Imaging (Vol. 2017 , pp. 520–524). Accessed 3 June 2019
+Zhang X , Mormino EC , Sun N , Sperling RA , Sabuncu MR , Yeo BTT , &amp; Alzheimer’s Disease Neuroimaging Initiative. (2016). Bayesian model reveals latent atrophy factors with dissociable cognitive trajectories in Alzheimer’s disease. Proceedings of the National Academy of Sciences of the United States of America, 113 (42 ), E6535–E6544.27702899

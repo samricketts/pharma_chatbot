@@ -1,0 +1,151 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101249582
+32630
+Med Image Comput Comput Assist Interv
+Medical image computing and computer-assisted intervention : MICCAI ... International Conference on Medical Image Computing and Computer-Assisted Intervention
+
+30906935
+6426141
+10.1007/978-3-030-00928-1_95
+NIHMS1013990
+Article
+GlymphVIS: Visualizing Glymphatic Transport Pathways Using Regularized Optimal Transport
+Elkin Rena 1
+Nadeem Saad 2
+Haber Eldad 3
+Steklova Klara 3
+Lee Hedok 4
+Benveniste Helene 4
+Tannenbaum Allen 15
+1 Department of Applied Mathematics and Statistics, Stony Brook University, Stony Brook, NY, USA rena.elkin@stonybrook.edu
+2 Department of Medical Physics, Memorial Sloan Kettering Cancer Center, New York City, NY, USA
+3 Department of Mathematics, University British Columbia, Vancouver, Canada
+4 Department of Anesthesiology, Yale School of Medicine, New Haven, CT, USA
+5 Department of Computer Science, Stony Brook University, Stony Brook, NY, USA
+27 2 2019
+26 9 2018
+9 2018
+20 3 2019
+11070 844852
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+The glymphatic system (GS) is a transit passage that facil-itates brain metabolic waste removal and its dysfunction has been asso-ciated with neurodegenerative diseases such as Alzheimer’s disease. The GS has been studied by acquiring temporal contrast enhanced magnetic resonance imaging (MRI) sequences of a rodent brain, and tracking the cerebrospinal fluid injected contrast agent as it flows through the GS. We present here a novel visualization framework, GlymphVIS, which uses regularized optimal transport (OT) to study the flow behavior between time points at which the images are taken. Using this regularized OT app-roach, we can incorporate diffusion, handle noise, and accurately capture and visualize the time varying dynamics in GS transport. Moreover, we are able to reduce the registration mean-squared and infinity-norm error across time points by up to a factor of 5 as compared to the current state-of-the-art method. Our visualization pipeline yields flow patterns that align well with experts’ current findings of the glymphatic system.
+
+
+1 Introduction
+
+The glymphatic system (GS) is the structural entity whereby waste products are transported from the brain and into lymphatic vessels located outside, in the meninges and along the neck vasculature [8]. Importantly, the GS also flushes out of the brain soluble amyloid beta (Aβ) and tau proteins, the main culprits of Alzheimer’s disease (AD) in humans and animals [5]. Despite the potential implications of the GS for AD and other neurodegenerative conditions, there are significant gaps in our understanding of the waste clearance mechanisms and the physical forces controlling transport.
+
+Glymphatic transport behavior can be observed with a temporal series of contrast enhanced MR images of the rodent brain. Briefly, the small molecular weight gadolinium (Gd) contrast agent (tracer) is infused into the cerebrospinal fluid (CSF) reservoir of the cisterna magna and its spatial distribution into the brain is captured by the successive acquisition of 3D T1-weighted images (234 μm resolution) every ∼4 minutes, for a total of ∼3 hours [6]. However, these MRIs do not provide directional information on the tracer movement between time points. Therefore, there is an urgent need for a mathematical framework that can capture and help visualize the dynamic tracer behavior in a manner aligning well with the biological understanding.
+
+In this work, we present a novel visualization framework, GlymphVIS, for studying glymphatic transport pathways using regularized optimal transport (OT). The theory of OT seeks the most feasible way to redistribute mass from one given distribution to another while minimizing the associated cost of trans-portation ([9],[12]). OT has been used for registration and connectivity analysis of brain white matter [7], image morphing [4], and has recently been extended to the case of measures of different total mass [2].
+
+Ratner et al. [10] modeled the glymphatic flow using the traditional OT formulation. This approach yielded promising results, but at the expense of some unrealistic assumptions: (1) the movement of the contrast agent is not affected by diffusion, (2) the total mass of the tracer remains constant over time, and (3) the given MRIs represent the true density distribution at that time. From the implementation perspective, the mass conservation constraint requires normalizing the density distribution which can be drastically altered by the presence of noise in the data and additional noise interference is caused by taking the given images as fixed endpoints. Finally, the authors of [10] do not explicitly model time which means the resulting deformation field cannot reflect time-varying dynamics. In this work, we introduce a new and more physiologically relevant model inspired by the work of Benamou and Brenier [1] that relaxes the above-mentioned unrealistic constraints. Specifically, the contributions of this paper are enumerated as follows:
+
+We replace the continuity equation with the advection-diffusion equation to more accurately model the flow behavior and smoothen the deformation field;
+
+We no longer enforce total mass conservation, so normalization of the density distributions is not needed;
+
+We treat the final time condition as a free endpoint which prevents overfitting to noise;
+
+We explicitly model the time domain, which allows for a direct temporal analysis of the dynamic flow behavior.
+
+2 GlymphVIS
+
+Benamou and Brenier [1] recast the OT problem in the context of fluid mechanics that explicitly yields a time-interpolant between the two densities. This naturally motivates an ideal framework for studying the glymphatic pathways because it allows for more direct control and variation in modeling its dynamic flow behavior. Here, we introduce the following two terms to the original Benamou and Brenier OT formulation: (1) a regularization term to alleviate the effect of noise and (2) a diffusion term in the standard continuity equation to better model both advection and diffusion in the glymphatic system. We then clusters the streamlines from the resulting velocity field in order to elucidate and visualize the conduits of glymphatic flow and efflux; see Fig. 1.
+
+2.1 Regularized OT
+
+In order to motivate our model formulation, we begin with our assumptions about the data:
+
+Assumption 1.
+
+Image intensity is proportional to tracer mass, (and we there-fore refer to the intensity as mass).
+
+Assumption 2.
+
+Tracer is transported via glymphatic pathway, as supported by experimental findings [5].
+
+Assumption 3.
+
+Apparent motion of glymphatic transport is governed by the advection-diffusion equation (ADE), (1) ∂ρ∂t+∇·(ρv)=∇·σ2∇ρ,
+
+where 0≤ρ:[0,T]×𝒟→ℝ is a density with compact support, 𝒟⊂ℝd,v:[0,T]×𝒟→ℝd is velocity and 0≤σ∈ℝ is diffusivity.
+
+Assumption 4.
+
+The MR images we are given are noisy observations of the tracer’s conditions at time t = Ti, (2) ρ(Ti,x)+∈=ρT1obs(x),     i=0,...,N,
+
+where ϵ is a random Gaussian iid with covariance Σ.
+
+Given initial and final observations of tracer density ρ0obs and ρTobs at times t = 0 and t = T respectively, our goal is to find the velocity field v and the ‘believed true’ or ‘clean’ image ρT such that the constraint (1) is satisfied. To this end, we propose to minimize the objective function (3) J[ρ,v]=∫0T∫D12ρ‖v‖2dxdt+α‖ρ(T,x)−ρTobs(x)‖∑2,
+
+subject to the ADE constraint (1) with the initial condition ρ(0,x)=ρ0obs(x) Here, we have added the second term to the Benamou and Brenier energy func-tional [1] so that noise, which is inherent in all sensor-derived data, is explicitly taken into account. The parameter α weighs the balance between fitting the data and minimizing the energy associated with transporting the mass. We refer to (3) as the generalized regularized OT problem (GR-OT) and note that supplemental regularization can easily be implemented by adding intermediate densities to help guide the optimization procedure toward more accurate results.
+
+Remark:
+
+In the original Benamou-Brenier formulation of OT, σ = 0 and endpoint distri-bution is specified in Eq. (1), and α = 0 in Eq. (3).
+
+Proposed Minimization Method.
+
+While it is possible to solve the optimiza-tion problem (3) as a constrained one, it is straightforward to eliminate the ADE (1) and solve the problem for v alone. Accordingly, consider solving the PDE for a given v, obtaining the smooth, differentiable map (4) F(v)=ρ(t,x),        t∈[0,1].
+
+Discretization.
+
+Suppose the given images are (n1 × … × nd) in size, let s = n1 ∗ … ∗ nd denote the total number of voxels, and let m denote the number of time steps such that m ∗ δt = T . We will use bold font to denote linearized variables.
+
+We use mimetic methods, designed to keep their properties when consider-ing inner products, for the discretization of the problem. First, we use operator splitting to discretize the ADE (1) as an advection step and diffusion step, inde-pendently. In the first step, we consider the advection equation and solve the problem ∂ρ∂t+∇⋅(ρv)=0   ρ(tn,x)=ρn.
+
+Using a particle in cell (PIC) method, we obtain the discrete equivalent ρn+1*=S(vn)ρn where S is a linear interpolation matrix. The method is conservative which means that no mass is lost during this step. For the second step, we consider the diffusion equation and solve the problem ∂ρ∂t=∇⋅σ2∇ρ    ρ(tn,x)=ρn+1*.
+
+Using the backward Euler method, we obtain the discrete equivalent (5) (I−δtA)ρn+1=ρn+1*
+
+where I is the identity matrix and A is a discretization of the diffusion operator ∇· σ2∇ on a cell centered grid. Combining these two steps, we obtain the corresponding discrete forward problem (I−δtA)ρn+1 = S(vn)ρn, n = 0,…, m. Clearly, the density at any time step depends only on the initial density ρ0 and the velocity v, allowing us to define the discrete map F (v) (4) that maps the velocity to the density at all times. Next, defining ρ=[ρ1⊤,…,ρm+1⊤]⊤ and v=[v0⊤,…,vm⊤]⊤ a straightforward discretization of the energy yields (6) ∫0T∫𝒟ρ‖v‖2dxdt≈hdδtρ⊤(Im⊗Av)(v⊙v),
+
+where hd is the volume of each cell, Ik is the k × k identity matrix, Av is a 1 × d block matrix of Is, ⊗ denotes the Kronecker product and ⊙ denotes the Hadamard product. We then solve the discrete optimization problem which now reads (7)    min ϕ(v)=12hdδtρ⊤(Im⊗Av)(v⊙v)+α‖ρn−ρnobs‖2subject to {(I−δtA)ρn+1−S(vn)ρn=0ρ0=ρ0obs.
+
+Note that the objective function is quadratic with respect to v and the inter-polation matrix S is linear with respect to v as it contains the weights on the linear interpolation. Following [11], one can use a Gauss-Newton like method to solve the problem.
+
+2.2 Flow Pattern Analysis
+
+The time-interpolant of density images and corresponding time-varying velocity vector field v(t, x) directly output by the GR-OT procedure is then fed into our flow pattern analysis procedure (FPA). For each time step, we construct streamlines by integrating the velocity field v. By looking at the streamline density through each voxel, we get a global visualization of the GS ‘pathways’. In order to supplement this with local information, we cluster the streamlines using the QuickBundles algorithm [3]. Significant clusters provide more infor-mation regarding different flow trajectories within different pathways and fluid reservoirs. Both the pathways and clusters are converted to NIfTI files where they are analyzed by overlaying anatomical masks using Amira software specif-ically designed for visualization of data in 3D and 4D. We discuss these results in the following section.
+
+3 Results
+
+In order to quantitatively assess the performance of our model, we look at the registration error between the model returned ‘clean’ density and the target image density. Taking the mean square of the error and the infinity norm of the error, our model (with no diffusion, i.e. σ = 0) yields up to 5 times smaller errors than the traditional OT model proposed in [10] (Fig. 2). This large improvement was possible due to the aforementioned adjustments made to account for noise in the data. We then introduce a little diffusion (σ = 0.002) and look at the root mean square error between the returned ‘clean’ densities with the ‘clean’ densities obtained by increasing the diffusion parameter by factors of 10 (σ = 0.02, 0.2). The robustness of the diffusion parameter is shown by these errors, given in Fig. 3c, as well as by the consistent pathways found with multiple values of σ, see Figs. 3a and b.
+
+The utility of GlymphVIS is further validated by its success in reproduc-ing known aspects of glymphatic transport. This is illustrated by the pathways and clusters derived from the MRIs at 1.2hr after contrast infusion into the CSF, shown respectively in Figs. 4 and 5. In particular, Fig. 4 demonstrates that pathways found by our methodology have accurately captured glymphatic peri-arterial transport along the MCA and in other areas such as the CSF reservoirs. Even more promising, are the trajectories shown by the streamline clusters in Fig. 5. This is the first time that specific contrast relevant streamlines have been captured moving towards the inner ear, and illustrates the promise of Glym-phVIS and the new GR-OT flow analysis pipeline.
+
+4 Conclusions and Future Work
+
+In this paper, we considered a modification of the Benamou-Brenier formulation of OT in which both the continuity and energy cost functionals were modified. This was done to take into account noise as well as possible diffusion in the glym-phatic flows for “normal” rat brains. In the future, we also intend to consider cases in which there may be some pathologies, in particular, rat brain models in which there is evidence of AD and vascular dementias. The concept and hypoth-esis to be tested would be to see if using these mathematical techniques, one could quantitatively differentiate between normal and aberrant CSF flow inside as well as outside the brain, which specifically relate to evolving neuropathology. Finally, one can consider the technique we have proposed as one of deformable registration. In contrast to other deformable methods such as LDDMM, we are not constrained by only considering diffeomorphic transformations. Moreover, in our setting, we have explicitly taken into account the advection-diffusion nature of the flow, and thus the underlying physics.
+
+This project was supported by AFOSR grant FA9550–17-1–0435), ARO grant (W911NF-17–1-049), grants from National Institutes of Health (1U24CA1809240 1A1, R01-AG048769), MSK Cancer Center Support Grant/Core Grant (P30 CA008748), and a grant from Breast Cancer Research Foundation (grant BCRF-17–193).
+
+Fig. 1. GlymphVIS Pipeline: (a) The generalized regularized OT procedure (GR-OT) takes initial and final ‘observed’ density images as input and returns the ‘clean’ or ‘believed true’ final density image along with the corresponding velocity vector field describing the deformation. (b) The output density images and velocity are then sub-sequently passed to the flow pattern analysis procedure (FPA) which returns pathway and streamline clustering visualization for the whole time domain.
+
+Fig. 2. Registration error between model returned final density and target image den-sity for the traditional OT model [10] (shown in blue) and our GR-OT model (shown in red).
+
+Fig. 3. Robustness of diffusion parameter. (a) Pathways obtained with σ = 0.002 and (b) pathways obtained with σ = 0.2. (c) Root mean square error between ‘clean’ densities obtained with σ = 0.002 and σ=σ˜ Top row:σ˜=0.02. Bottom row:σ˜=0.2.
+
+Fig. 4. GlymphVIS pathways. (a) Original contrast enhanced MRI highlighting the MCA area. (b) 3D volume rendering of the GlymphVIS pathways in relation to the whole rat brain (grey scale, volume rendered) demonstrating that GlymphVIS path-ways track CSF transport along the MCA from the level of the Circle of Willis (CW) to where it crosses the olfactory tract (not shown) and proceeds dorsally onto the surface of the brain. (c) GlymphVIS pathways without the whole brain. Details of the path-ways in other areas are now visible including pathway reservoirs associated with the basal cistern, the interpenduncular cistern (IpC) and cleft between the hippocampus and other brain nuclei.
+
+Fig. 5. GlymphVIS clusters. (A,B) Clusters shown in different colors (Olf=olfactory bulb and Cb=cerebellum). (C) Anatomical MRI from the ventral surface, where the MCA and internal carotid artery (ICA) can be visualized as single, vascular structures running along the surface of the brain. In addition, the acoustic nerve and inner ear complex (cochlea) is included. (D) Selected streamline clusters related to the MCA and the cochlea overlaid on anatomical template. (E) Selected streamline clusters related to the MCA and the cochlea.
+
+
+References
+
+1. Benamou JD , Brenier Y : A computational fluid mechanics solution to the Monge-Kantorovich mass transfer problem. Numerische Mathematik 84 (3 ), 375–393 (2000)
+2. Feydy J , Charlier B , Vialard F-X , Peyr´e G : Optimal transport for diffeo-morphic registration. In: Descoteaux M , Maier-Hein L , Franz A , Jannin P , Collins DL , Duchesne S (eds.) MICCAI 2017. LNCS, vol. 10433 , pp. 291–299. Springer, Cham (2017). 10.1007/978-3-319-66182-734
+3. Garyfallidis E , Brett M , Correia MM , Williams GB , Nimmo-Smith I : Quickbundles, a method for tractography simplification. Front. Neurosci 6 , 175 (2012)23248578
+4. Haker S , Tannenbaum A , Kikinis R : Mass preserving mappings and image registration. In: Niessen WJ , Viergever MA (eds.) MICCAI 2001. LNCS, vol. 2208 , pp. 120–127. Springer, Heidelberg (2001). 10.1007/3-540-45468-315
+5. Iliff JJ , Wang M , Liao Y , Plogg BA , : A paravascular pathway facilitates CSF flow through the brain parenchyma and the clearance of interstitial solutes, including amyloid β. Sci. Transl. Med 4 (147 ), 147ra111–147ra111 (2012)
+6. Lee H , Mortensen K , Sanggaard S , Koch P : Quantitative gd-dota uptake from cerebrospinal fluid into rat brain using 3D vfa-spgr at 9.4 t. Magn. Reson. Med 79 (3 ), 1568–1578 (2018)28627037
+7. Marigonda A , Orlandi G : Optimal mass transportation-based models for neu-ronal fibers. In: Lirkov I , Margenov S , Wa´sniewski J (eds.) LSSC 2011. LNCS, vol. 7116 , pp. 131–138. Springer, Heidelberg (2012). 10.1007/978-3-642-29843-114
+8. Nedergaard M : Garbage truck of the brain. Science 340 (6140 ), 1529–1530 (2013)23812703
+9. Rachev ST , Ru¨schendorf L : Mass Transportation Problems, Vol. I and II. Springer, New York (1998)
+10. Ratner V , Gao Y , Lee H , Elkin R , : Cerebrospinal and interstitial fluid transport via the glymphatic pathway modeled by optimal mass transport. Neu-roImage 152 , 530–537 (2017)
+11. Steklova K , Haber E : Joint hydrogeophysical inversion: state estimation for sea-water intrusion models in 3D. Comput. Geosci 21 (1 ), 75–94 (2017)
+12. Villani C : Topics in Optimal Transportation. American Mathematical Society, Providence (2003)

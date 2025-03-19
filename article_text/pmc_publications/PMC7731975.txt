@@ -1,0 +1,421 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101618432
+41827
+Netw Sci (Camb Univ Press)
+Netw Sci (Camb Univ Press)
+Network science (Cambridge University Press)
+2050-1242
+2050-1250
+
+33312566
+7731975
+10.1017/nws.2019.9
+NIHMS1528789
+Article
+A Paradigm for Longitudinal Complex Network Analysis over Patient Cohorts in Neuroscience
+Shappell Heather *Department of Biostatistics, Johns Hopkins University Bloomberg School of Public Health, Baltimore, MD
+
+Tripodis Yorghos Department of Biostatistics, Boston University, Boston, MA
+
+Killiany Ronald J. Department of Anatomy and Neurobiology, Boston University, Boston, MA
+
+Kolaczyk Eric D. Department of Mathematics and Statistics, Boston University, Boston, MA
+
+for the Alzheimers Disease Neuroimaging Initiative
+*** Corresponding author. hshappe1@jh.edu
+27 5 2019
+5 8 2019
+6 2019
+11 12 2020
+7 2 196214
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+The study of complex brain networks, where structural or functional connections are evaluated to create an interconnected representation of the brain, has grown tremendously over the past decade. Much of the statistical network science tools for analyzing brain networks have been developed for cross-sectional studies and for the analysis of static networks. However, with both an increase in longitudinal study designs, as well as an increased interest in the neurological network changes that occur during the progression of a disease, sophisticated methods for longitudinal brain network analysis are needed. We propose a paradigm for longitudinal brain network analysis over patient cohorts, with the key challenge being the adaptation of Stochastic Actor-Oriented Models (SAOMs) to the neuroscience setting. SAOMs are designed to capture network dynamics representing a variety of influences on network change in a continuous-time Markov chain framework. Network dynamics are characterized through both endogenous (i.e., network related) and exogenous effects, where the latter include mechanisms conjectured in the literature. We outline an application to the resting-state fMRI setting with data from the Alzheimers Disease Neuroimaging Initiative (ADNI) study. We draw illustrative conclusions at the subject level and make a comparison between elderly controls and individuals with AD.
+
+Network analysis
+Longitudinal network analysis
+Complex brain networks
+Stochastic actor-oriented models
+Alzheimer’s Disease
+Resting-state fMRI
+functional connectivity
+
+1 Introduction
+
+The study of complex brain networks is an an active area of research, as evidenced by the launching of efforts such as the Human Connectome Project (Van Essen et al., 2012) and the 1000 Functional Connectomes Project (Biswal et al., 2010). Complex brain network analysis is a specific subfield of connectivity analysis. Structural connections (representing physical or anatomical links) or functional connections (where connections rely on the coupling between dynamic activity) are evaluated for all pairs of pre-specified brain regions of interest (ROIs). The resulting data structure is an interconnected representation of the brain (Simpson et al., 2013). Therefore, in contrast to other brain network analytic methods that are more widely used (e.g. seed-based functional connectivity and independent component analysis), graph-based network analyses allow one to visualize the overall connectivity pattern among all ROIs, quantitatively assess differences in global network structure, and investigate how different modules (i.e. interconnected clusters of ROIs) communicate with one another (Simpson et al., 2013). Understanding brain development and causes of neurological disorders, such as AD, as well as developing more effective treatments, require not just gaining knowledge about separate components in the brain, but also studying how these components interact (Telesford et al., 2011; Sporns, 2014; Mesulam et al., 1990; Bressler &amp; Menon, 2010). It is within this paradigm shift that scientists have begun investigating how structural and functional networks behave in healthy brains and are altered in neurological and psychiatric disorders (Stam, 2014).
+
+Despite the many advances that have been made in understanding how the brain functions, the underlying cause of most neurological disorders remains vastly unknown. However, with a number of modern noninvasive imaging techniques such as Diffusion Tensor Imaging (DTI), electroencephalography (EEG), magnetoencephalography (MEG), and functional magnetic resonance imaging (fMRI) lending themselves to the characterization of brain networks, coupled with several initiatives, such as the Alzheimers Disease Neuroimaging Initiative (ADNI) (Mueller et al., 2005), the Autism Brain Imaging Data Exchange (ABIDE) (Di Martino et al., 2014), the Attention Deficit Hyperactivity Disorder (ADHD) 200 (Milham et al., 2012), and the National Alzheimer Disease Coordinating Center (NACC) Database (Beekly et al., 2004) providing access to these neuroimaging databases, researchers have an enormous opportunity to delve deeper into brain network research.
+
+With this growth of data and interest, comes the need for novel statistical approaches to analyze brain network data. Much of the statistical network science tools for analyzing complex brain networks have been developed for cross-sectional studies and for the analysis of static networks, leaving the potential to conduct longitudinal complex network analysis largely untapped. The few longitudinal brain ‘network’ analyses that have been performed have been done on networks constructed via independent component analysis (instead of the graph theoretical approach that we are focused on here), and/or the analysis consists of only two time points (Bai et al., 2011; Damoiseaux et al., 2012). Often times brain network studies that contain a longitudinal component use methods such as a paired t-test or ANOVA to compare basic summary network metrics (e.g. local efficiency, global efficiency, degree, etc) across two time points and/or disease groups. With the growth of initiatives that are collecting and providing access to neuroimaging data over time on many subjects, a natural next step is to model and draw inference from fully constructed longitudinal whole-brain networks (e.g. at a series of time points) and to evaluate influences on network change both within a subject and across subjects and populations.
+
+In this paper, we propose a paradigm for longitudinal complex brain network analysis, with the heart of the framework being the adaption of Stochastic Actor-Oriented Models (SAOMs) to the neuroscience setting. SAOMs are designed to capture network dynamics representing a variety of influences on network change in a continuous-time Markov chain framework (Snijders et al., 2010a). To the best of our knowledge, these models have not yet been used in neuroscience. Originally developed in the social network setting, SAOMs revolve around the notion that the nodes in the network make changes to their local connections (or lack of connections) such that their personal “satisfaction” with the network configuration is maximized. This satisfaction is captured by an objective function, a linear combination of effects that can be either functions of the network itself (endogenous effects) or characteristics of the nodes themselves (exogenous effects). Importantly, this framework lends itself to the testing of hypotheses through the estimation of parameters expressing possible influences on network change (Snijders et al., 2010a). This SAOM framework allows researchers to delve in, disentangle, and identify which mechanisms are driving network change over time, as opposed to focusing on different network characteristics individually.
+
+Figure 1 outlines our proposed paradigm. We begin with rsfMRI data collection for i = 1, …, N subjects over each of their Ti time points. Next is network construction, using one of the many methods existing in the literature. After network construction, hypotheses are formalized and paired with effects that can be placed into the SAOMs. Models are then fit to each subject’s series of networks. Finally, a meta-analysis is performed on the model output, allowing one to draw conclusions at the group level. Each of these steps requires careful attention, and we outline each in the remaining sections of this paper. The best way to present our framework is to do so with a real-world application. Therefore, we will walk through an application of our paradigm to resting-state fMRI functional networks in a study of Alzheimer’s Disease (AD). In the next section, we provide some background information on AD and resting-state functional brain networks. From there, we delve into the six steps of our framework, as they apply to our AD study.
+
+2 AD and resting-state functional networks
+
+AD is the most common neurodegenerative disorder, accounting for 60–80% of dementia cases. Currently, there is no cure for the disease, but there is a worldwide effort under way to develop additional agents to reduce the rate of progression, and ultimately, to prevent it from developing.
+
+Resting-state functional magnetic resonance imaging (rsfMRI) is considered a promising biomarker for AD. In contrast to task-based fMRI, it is often used to evaluate regional interactions in the brain that occur when a subject is not performing a task (Lee et al., 2013). There are several reports in the literature on resting-state complex functional network changes in those with Mild Cognitive Impairment (MCI) and AD. For example, researchers have reported on changes in network characteristics such as path length, clustering, node centrality, hubs, and modularity (Greicius et al., 2004; Wang et al., 2010; Supekar et al., 2008) when comparing disease groups at one or two time points. We will expand on some of these findings in Section 3.3.2 during our formulation of hypotheses and corresponding SAOM effects. The goal of this proof-of-concept application is to leverage some of these previous findings and hypotheses, along with our newly proposed framework, to assess longitudinal brain network changes occurring during the progression of AD and to compare these disease-related changes to network changes in a cohort of healthy aging controls.
+
+3 Methods
+
+3.1 Subjects and fMRI
+
+3.1.1 Subjects
+
+Data used in the preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). The ADNI was launched in 2003 as a public-private partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to test whether serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of MCI and early AD. ADNI was originally slated as a 5 year endeavor, but was extended by a 2-year Grand Opportunities grant in 2009 and a renewal of ADNI (ADNI-2)(Mueller et al., 2005).
+
+All of our subjects are participants of ADNI-2. ADNI-2 has subjects who are classified as having normal cognitive status, MCI, or AD and had data collected over a series of visits that include screening/baseline, 3 months, 6 months, one year, and occasionally two years. Resting-state fMRI data are known to contain a substantial amount of noise, related to factors such as cardiac and respiratory signals (Lee et al., 2013). Additionally, the number of subjects with rsfMRI scans was somewhat limited due to the selection criteria employed. Accordingly, in order to maximize the ratio of signal to noise, we chose to focus on a comparison of two extremes, selecting patients who are of either normal cognitive status (controls) or who have been classified as having AD (cases). When selecting subjects, we only chose those that had at least two visits with rsfMRI scans, and additionally, we tried to limit the number of subjects who had non-monotone missingness (i.e. subjects who have missing observations and then return and have non-missing information at a later time point). With these inclusion criteria, we have a sample of 25 controls and 20 cases. Please refer to Table 3 in Section 4.2 for a description of how many subjects had 2, 3, 4, and 5 scans.
+
+3.1.2 Resting-State fMRI
+
+Functional communication between brain regions is highly important in complex cognitive mechanisms, and rsfMRI, a technique that focuses on spontaneous low frequency fluctuations (&lt; 0.1Hz) in the Blood-Oxygen-Level Dependent (BOLD) signal, has drawn much interest in recent years. In the past, functional communication was typically looked at in fMRI using task-based or stimulus-driven paradigms, while fMRI at rest was interpreted to have no meaning and was just ‘background noise’. However, it is now widely recognized that the brain is never silent (Sporns, 2013). Rather, it is always engaged in anatomically structured and meaningful neural activity, and is shown to not only be altered in neurological or psychiatric diseases, but also during healthy aging (Damoiseaux et al., 2008; Andrews-Hanna et al., 2007; Mathys et al., 2014). Resting-state fMRI also has its advantages in that it allows functional data to be acquired in patients with a wide range of cognitive abilities, it avoids performance related variability of activation fMRI studies, and it is less complicated to acquire and standardize (Fleisher et al., 2009).
+
+3.1.3 Data acquisition and pre-processing
+
+Structural scans were acquired on 3T Phillips System scanners using the 3D MPRAGE protocol and rsfMRI protocol developed by ADNI (http://adni.loni.usc.edu/methods/documents/mri-protocols/). The MPRAGE scans were acquired in the sagittal plane using the following parameters: TR/TE 3000/4 ms; flip angle 8◦ - 9◦; section thickness 1.2 mm; 170 sagittal slices. Functional data were acquired while subjects focused on a dot in the middle of the screen, per the ADNI protocol. The rsfMRI sequence consisted of a seven-minute functional run acquired in the axial plane using a T2*-sensitive gradient-recalled, single-shot echo-planar imaging pulse sequence (TR/TE 3000/30 ms, FoV = 212 mm, flip angle 80◦, matrix size 64 × 64, inplane resolution 3.3 mm × 3.3 mm). Each volume consisted of 48 slices parallel to the bicommissural plane (slice thickness 3.3 mm, no gap), and each functional run was comprised of 140 volumes.
+
+Freesurfer software (surfer.nmr.mgh.harvard.edu version 5.3) was used to parcel and label the structural MPRAGE scans of each of the subjects (Desikan et al., 2006). The software identified grey matter regions in the cortex and sub-cortex. Following the “standard” Freesurfer processing pathway, all of the scans were initially run through the “recon all” pipeline. Each individual scan was then viewed, and errors in the pial surface were edited to remove the inclusion of non-brain tissue (i.e. dura matter). Errors in the white matter surface were also corrected to include white matter that was excluded by Freesurfer. Edited images were then re-processed through Freesurfer and the resultant maps again viewed and edited as needed. The edited Freesurfer images from each subject were then run through the standard Freesurfer longitudinal processing stream (Reuter et al., 2012), where a template image was created and longitudinal runs made. After the completion of this final processing, all images were again visually inspected for gross errors in processing.
+
+Sixty-four grey matter regions of interest (ROIs) from the cortex and sub-cortex were chosen from these labels, excluding those highly susceptible to field distortions. A mean time series for each ROI was calculated by averaging all fMRI voxel values within each ROI over time, resulting in 140 time points calculated for each 7 minute resting state session. Please refer to the appendix for a full list of the ROIs used in our analysis, as well as additional details on data acquisition and pre-processing. An image of the cortical parcellation used in our study may be found in (Desikan et al., 2006).
+
+3.2 Construction of brain networks
+
+We define our functional connection matrix, or m × m adjacency matrix of edge status variables x jk, obtained for each subject at each of his/her scans to be an undirected binary graph G with m = 64 nodes. An edge between ROIs j and k is present if x jk = 1 and isn’t present if x jk = 0. The edges in the network represent binary undirected functional connections between regions. To estimate each connection matrix, we first calculated the Pearson correlation matrix using the time series (over the length of the scan) of BOLD signals at each of the 64 ROIs. We decided on Pearson correlation when defining edges given that there is some evidence that, via Test Re-test analyses, the reliability is highest for Pearson’s-correlation-based brain networks (Liang et al., 2012). Please see the discussion section for additional comments.
+
+Next, we took the top 20% of Pearson correlation values and defined their corresponding edge status variables to be 1 (i.e. a functionally connected node pair). As is standard in the literature, we chose to work with positive correlations only (Schwarz &amp; McGonigle, 2011; Rubinov &amp; Sporns, 2010). Such thresholding led to equal edge densities in all subjects and time points, which is important for comparisons of network topology. In addition, we chose a 20% edge density to be in line with what would be expected from the edge density of the underlying structural connectivity which ranges from 10 − 30% (Van Wijk et al., 2010). Out of the 184 total networks in our analysis, 162 of them are connected as a single connected component at the 20% threshold. Of the 22 networks that are not completely connected, 14 have only one ROI that is not included in the giant connected component, and the remaining 8 all have a very large connected component.
+
+3.3 Stochastic Actor Oriented Models
+
+3.3.1 Background
+
+For our purpose of longitudinal statistical analysis on functional fMRI networks, we employ a type of models called “Stochastic actor-oriented models for network dynamics” proposed by Snijders et al. These SAOMs are fit on a subject-by-subject basis. We are modeling a continuous time Markov process where the totality of possible networks is the state space and each individual’s observed networks are snapshots of his/her network state during this continuous period of time. In other words, unobserved changes are assumed to happen sequentially in between the observations of each subject. At a given moment, one probabilistically selected ROI may change an edge, where the decision is modeled according to a random utility model, requiring the specification of a utility function (i.e. objective function) depending on a set of explanatory variables and parameters (Snijders et al., 2010a).
+
+Therefore, we are reduced to modeling the change of one edge status variable (x jk) by one ROI at a time (a network micro step) and modeling the occurrence of all of these micro steps over time. The first observed network for each subject serves as the starting value of the evolution process for that subject. In other words, the first observed network is always conditioned upon. For each ROI j, the waiting time until ROI j takes a micro step is modeled by exponentially distributed variables with parameters λj (Snijders et al., 2010a). Therefore, the waiting time until occurrence of the next micro step by any ROI is exponentially distributed with parameter λtotal=∑λj.
+
+Since we are working with undirected networks, we will work under the assumption that one ROI takes the initiative and unilaterally imposes that a tie is created or dissolved. For example, let’s assume that G = g is the current network in the evolution process and ROI j has the opportunity to make a network change. The next network state g′ then must be either equal to g or deviate from g by one edge. Vertex j chooses the value of g′ for which fj(g,g′,β)+εj(g,g′)
+
+is maximal, where εj(g, g′) is a Gumbel-distributed random disturbance that captures the uncertainty stemming from unknown factors, and fj(g,g′,β)=∑rβrSr(j,g,g′),
+
+where βr represent parameters and Sr( j, g, g′) represent the corresponding effects.
+
+This is the so-called objective function, which is a function of the network perceived by the focal ROI. Probabilities are higher for moving towards states with a high value of the objective function. The objective function depends on the personal network position of the ROI, the ROI’s exogenous covariates, and the exogenous covariates of all of the ROIs in the ROI’s personal network. Due to distributional assumptions placed on ε j(g, g′), the probability of choosing g′ can be expressed in multinomial logit form as exp(fj(g,g′,β)∑exp(fj(g,g′′,β)),
+
+where the sum of the denominator extends over all possible next network states g′′ (Snijders et al., 2010a).
+
+For each set of model parameters, there exists a stationary distribution of probabilities over the state space of all possible network configurations. The complexity of the model does not allow for the equilibrium distribution nor the likelihood of the observed data set to be calculated in closed form. Therefore, parameter estimates are obtained either via an iterative stochastic approximation version of the Method of Moments approach (Snijders et al., 2010a) or a Maximum Likelihood approach based on data augmentation and stochastic approximation (Snijders et al., 2010b). The RSiena R package (Snijders, Steglich, and Schweinberger) is used to estimate and fit the model (Ripley et al., 2011).
+
+3.3.2 Hypotheses and Effects
+
+The specification of a SAOM is done by defining a rate function and an objective function. The rate function indicates the speed at which the ROIs obtain an opportunity to change a connection, while the objective function informs which changes are made when given the opportunity. Following the recommendation of SAOM documentation, we used a constant rate function without additional rate function effects, but it is possible to let the rate function depend on individual ROI covariates when there are important size or activity differences between them. The objective function we will use involves effects that we have matched to hypotheses we wish to test.
+
+We have outlined each hypothesis we wish to test below, along with its matching effect(s). It is important to keep in mind that for these models, hypotheses and effects can be made based on functions of the network topology itself (i.e. endogenous effects), attributes related to pairs of ROIs (dyadic exogenous effects), and attributes related to individual ROIs (monadic exogenous effects). It is also important to keep in that mind that because these models are fit on a subject level, each subject will have his/her own parameter estimates corresponding to each effect (the effects will be the same for all subjects). Therefore, each of the hypotheses we outline below can be tested on an individual level, and each individual’s own parameter estimates will allow us to draw insight as to the mechanisms that are driving each person’s own personal brain network change. It is during a later step, at the meta-analysis stage, that we gather the parameter estimates across all subjects and make comparisons across groups. This final stage is where we draw conclusions regarding how groups of subjects differ in the degree to which the various effects are influencing their network changes.
+
+Endogenous Hypotheses and Effects
+
+Clustering Hypothesis:
+
+Clustering is an indication of segregation in the network. The clustering coefficient of a vertex is calculated as the ratio of the number of existing edges between its neighbors and the total number of possible edges. The global clustering coefficient of a network is computed by averaging the clustering coefficient of all vertices of the graph, reflecting, on average, the prevalence of clustered connectivity around individual nodes (Kolaczyk, 2009).
+
+Network analysis of functional connectivity data for healthy individuals has been characterized by a high clustering coefficient, which is associated with high local efficiency of information transfer for specialized processing (Schulz et al., 2014). It is of interest to investigate whether this holds in people with AD. Sanz-Arigita et al. found no difference in the clustering coefficient in resting-state functional networks between AD patients and healthy age-matched controls (Sanz-Arigita et al., 2010). Whereas, in another rsfMRI experiment, Supekar et al. found that the clustering coefficient was significantly decreased in AD, specifically in bilateral hippocampus, and could be used to distinguish AD participants from controls with high specificity and sensitivity (Supekar et al., 2008).
+
+We look at differences in clustering between cases and controls by comparing their tendency to form triangles. Not only are triangles a good representation of clustering, but they are important from a motif standpoint. Network motifs are of interest because they represent different topological patterns of connections, or “building blocks” of the network as a whole (Sporns, 2011; Sporns, 2013).
+
+Three-cycles Effect-
+
+The tendency of ROIs to connect in a triangular pattern.
+
+∑k,hxjkxkhxhj
+
+Integration Hypothesis:
+
+Another structural characteristic that is often looked at hand-in-hand with clustering is average shortest path length, a measure of integration. The shortest path length between nodes j and k is defined as the minimum number of edges that must be traversed to go from node j to node k. Short path lengths promote functional integration and efficiency since they allow for communication with few intermediate steps, minimizing effects of noise or signal degradation (Sporns, 2013).
+
+Studies have shown that functional networks in AD have longer path lengths, indicating a less efficient organization of the connectivity. Sanz-Arigita found that, compared to controls, the average path length of AD resting-state functional networks is closer to the theoretical values of random networks (Sanz-Arigita et al., 2010). Moreover, Xiang et al. analyzed brain networks using ADNI rsfMRI data that was extracted from people with a range of cognitive function. They found that as cognitive deficits increased, the shortest paths in the resting-state functional network gradually increased as well (Xiang et al., 2013). Similarly, we would also like to investigate the notion of distance between ROIs and conduct a comparison between our cases and controls. We have two effects related to distance.
+
+Number of Distances 2 Effect-
+
+Defined by the number of ROIs to whom j is indirectly tied (through at least one intermediary). When this effect has a negative parameter, ROIs will have a preference for having few others at a geodesic distance of 2.
+
+#{k|xjk=0,maxh(xjhxhk)&gt;0}
+
+Between Effect-
+
+The tendency for ROIs to position themselves between other ROIs that are not directly connected to one another. ∑k,hxhjxjk(1−xhk)
+
+Lastly, the following endogenous effect is typically included in all SAOMs to account for the observed density of the networks. It represents the basic tendency of ROIs to make connections to other ROIs.
+
+Degree Effect-
+
+∑kxjk (where j, k are vertices and xjk = 1 if there is an edge connecting j and k and 0 otherwise).
+
+Exogenous Hypotheses and Effects
+
+Segregation Hypothesis:
+
+Functional segregation in the brain is the capability for specialized processing to occur within densely interconnected groups of regions, called modules (Rubinov &amp; Sporns, 2010). Modules permit quick and efficient sharing of information among brain regions that work together towards a common set of goals, while adhering to their functional specialization and limiting the spread of information across the entire brain network (Sporns, 2013). A network’s modular structure is identified (sometimes called community detection) by partitioning the network into groups of nodes, with a greater number of within-group links, and a lesser number of between-group links (Kolaczyk, 2009). Unlike most other network measures, the optimal partitioning for a given network is typically estimated with optimization algorithms, so results tend to vary depending on study designs and community detection procedures used (Danon et al., 2005).
+
+Salvador et al. constructed rsfMRI networks from average partial correlation matrices from healthy volunteers and found that significant connections were often local, involving regions in the same lobe and/or closely adjacent to each other anatomically (Salvador et al., 2005). They went on to perform a hierarchical clustering analysis of healthy controls, revealing that the basic hierarchy of brain functional organization tends to be designated as lobar/sublobar/symmetrical. In other words, ROIs in the same lobe tend to have more connections between each other, with symmetrical links between bilaterally homologous regions consistently expressed at the lowest level of the hierarchy (Salvador et al., 2005).
+
+We would like to control, at the very least, for the fact that ROIs tend to be connected to ROIs that are anatomically close to them, but we would also like to explore whether this modular, efficient network structure that is found in healthy individuals, tends to break down in people with AD. Given that there is not one standard set of partitions for the ROIs, and given the results of Salvador et al, we define groups according to cortical lobes, with the following effect:
+
+Same Lobe Effect-
+
+A dyadic effect to represent the tendency for ROIs in the same lobe to connect. This is our modularity effect.
+
+∑kxjkI{aj=ak} where aj and ak indicate the lobe for ROIs j and k, respectively.
+
+We would also like to account for the notion that symmetrical links between bilaterally homologous regions might be more likely to be connected. We do this through the following dyadic effect:
+
+Bilateral Effect-
+
+∑kxjk(bjk−b¯) where bjk = 1 if two ROIs are bilaterally homologous and bjk = 0 otherwise
+
+Default Mode Network Hypothesis:
+
+The Default Mode Network (DMN) is a network of interacting brain regions known to have activity highly correlated with one another in resting state functional networks and much less activity during any attention-demanding task. Although the exact role of the DMN remains unknown, it is thought to be involved in monitoring internal stimuli, as well as in maintaining consciousness (Greicius et al., 2003; Wicker et al., 2003).
+
+In AD, the DMN is believed to be affected by reduced functional connectivity and atrophy. Sorq et al. analyzed fMRI data from healthy individuals and patients with high risk for developing AD and found that select areas of the DMN showed reduced connectivity in the patient group (Sorg et al., 2007). Several other studies have also reported similar findings (Greicius et al., 2004; Wu et al., 2011). Often times the default mode network is identified via ICA. ICA separates time course data into a collection of independent signals, or components, where each component represents a ‘network’ following a similar temporal pattern (Moussa et al., 2012). Since our framework is hypothesis-driven, as opposed to data-driven, we must identify DMN ROIs prior to modeling and testing. Given that there is some evidence in the literature that resting state networks (RSNs) identified via graph-based network analyses are comparable to the corresponding RSNs identified by ICA, with the DMN being one of the most robust (Moussa et al., 2012), we elect to define DMN ROIs in this manner. Therefore, we choose to specifically define DMN ROIs to be each of the following in both the left and right hemispheres of the cerebrum: caudal and rostral anterior cingulate, inferior parietal, middle temporal, posterior cingulate, and precuneus, as these seemed to be the most consistently identified DMN ROIs in the literature (Buckner et al., 2008; Laird et al., 2009; van den Heuvel et al., 2009). We hypothesize that connections between these ROIs will be less likely to exist in cases, compared to controls. There is much debate on which ROIs make up the DMN, so while we have decided to use this specific set of ROIs for our primary analysis, other choices can be argued as well. In fact, we perform a secondary analysis where we slightly modify this set of DMN ROIs. The primary analysis results are reported in section 4.2, while the secondary analysis results are presented in the appendix.
+
+DMN Effect-
+
+A dyadic effect for the tendency of DMN ROIs to be densely connected to one another.
+
+∑kxjk(wjk−w¯), where wjk = 1 if two ROIs are in the DMN we have defined and wjk = 0 otherwise
+
+3.3.3 Model Specifications
+
+We fit a SAOM with all of our effects (objective function shown below) separately, for each pair of consecutive time points and for each of our 46 subjects. This is effectively performing a sliding window analysis due to the potential non-stationarity of our networks. Therefore, a subject will have Ti − 1 sets of parameter estimates where Ti is the number of visits he/she had rsfMRI scans.
+
+fj(g,g′,β)= β0∑kxjk+β1∑k,hxjkxkhxhj+β2#{k|xjk=0,maxh(xjhxhk)&gt;0}        +β3∑k,hxhjxjk(1−xhk)+β4∑kxjkI{aj=ak}+β5∑kxjk(wjk−w¯)                 +β6∑kxjk(bjk−b¯)
+
+Our model parameters were all estimated using Method of Moments, the default approach, under the standard options of RSiena (i.e. estimation of the parameters is based on 4 consecutive and increasingly accurate subphases of the Robbins-Monro moments estimation algorithm), and standard errors are calculated based on 1000 additional simulation runs. Lastly, all t-ratios for convergence associated with the individual parameters in our models are less than 0.1 in absolute value, indicating excellent convergence (Ripley et al., 2011).
+
+3.4 Meta-Analysis
+
+After applying the SAOMs on a subject-by-subject basis, in order to aggregate and contrast the findings from all our ADNI subjects and conduct a group level analysis, we perform a separate meta-analysis on each parameter. Standard meta-analysis approaches (DerSimonian &amp; Laird, 1986; Normand, 1999) are not sufficient since we have multiple estimates for each parameter (one for each pair of consecutive time points) for each subject. Therefore, we perform a ‘longitudinal’ meta-analysis by fitting a general linear mixed effects model with some slight modifications (Ishak et al., 2007).
+
+Suppose, for each parameter, Ti − 1 estimates (i.e. one for each time period) are collected on subjects i = 1, …, N. An example of how time periods are defined is shown in Figure 2. We denote by yi the (Ti − 1) × 1 vector of observed estimates (for one particular parameter) from the ith subject and by yip the pth observation from this subject. The simplest way to account for the correlation between estimates of the same individual is to allow a random-effect that is common to estimates of the same person. Therefore, the general linear mixed effects model is given by (1) yip=β0+β1xi+β2zip+β3xi×zip+δi+εip,
+
+where β0 is a fixed intercept, β1 is a fixed slope for case/control status, β2 is a fixed slope for time period number, and β3 is a fixed slope for the interaction between case/control status and time period. Let xi = 1 for cases, xi = 0 for controls, and zip indicate the time period number (i.e. zip = 1, 2, 3 or 4). For example, zip = 1 corresponds to the estimate obtained from fitting the SAOM model to a subject’s first and second networks. Lastly, δi is a random intercept. We make the assumption that δi follows a normal distribution with mean 0 and variance D, while εi follows a multivariate normal distribution with mean 0 and variance Si (where Si is a (Ti − 1) × (Ti − 1) diagonal matrix with values set to the variances of estimates obtained for each person). We denote Sip to be the pth diagonal element in Si. We also assume that cov(εi, δi) = 0 and that observations from different subjects are independent, so that cov(εip, εcl ) = 0 when i ≠ c and for any observations p, l. Therefore, the variance of the marginal distribution of yip is D + Sip, while the covariance between two estimates collected at times p and l from subject i is cov(yip, yil ) = D.
+
+For each subject, we collected the parameter estimates of the 6 effects and fit the meta-analysis above for each effect (separately). The models were estimated by maximum likelihood, using SAS 9.3 and the MIXED Procedure (Singer, 1998). If we found the interaction to be non-significant at a conservative α = 0.15 significance level, we removed it from the model and re-ran the analysis. If the parameter for time period was then also found to be non-significant at an α = 0.05 significance level, we went ahead and removed it and re-ran the analysis so that disease status was the only fixed effect in the model.
+
+4 Results
+
+4.1 Single Subject
+
+SAOMs must be fit on each individual. A model can be fit to an individual’s entire longitudinal sequence. However, due to potential heterogeneity of the influence of our effects, we chose to fit the models to each pair of consecutive networks in the series (Figure 2). For illustrative purposes, in Tables 1 and 2 we show the results for two subjects. Both are 74 year old females, but they differ in disease status.
+
+The parameter estimates allow for a caricature of the rules governing the dynamic change in the network (Steglich et al., 2006). Because the temporal progression is taken care of by the rate functions, the parameters in the objective function are static and are comparable across periods of different lengths of time. A common misunderstanding is that the parameter estimates express tendencies over time. Instead, they should be interpreted as satisfaction measures that are suitable for explaining the observed changes (Steglich et al., 2006).
+
+The parameter estimates for the appearance of three-cycles have relatively large t-ratios (ratio of estimate to standard error) across all time points for both subjects. We must interpret individual analyses cautiously based on relative magnitude of t-ratios, as formal grounds for comparison to the t distribution are not well established. The estimate for three-cycles is also positive in all cases, indicating that triangle formation is favored as these networks evolve, controlling for the other effects in the model. This suggests a preference for local clustering. Looking closely at the effect sizes, we see that the individual with AD has slightly smaller parameter estimates overall, compared to the healthy individual, leading us to wonder whether this is an indication of clustering breaking down in AD.
+
+The distance two effect expresses network closure inversely. In all cases, we see a negative parameter estimate (with a relatively large corresponding t-ratio), meaning that ROIs have a preference for forming connections to few other ROIs with a distance of 2, controlling for the other effects. Another related effect is the between effect, which represents brokerage, or the tendency for ROIs to form edges that bridge gaps. The negative parameter estimates for this effect for both individuals, suggest avoidance of bridging gaps. This, combined with clustering tendencies leads to insular network structures.
+
+As expected, our results consistently show a very strong tendency for ROIs to prefer forming connections to their symmetric counterpart in the opposite cortical hemisphere, and this doesn’t differ between our case and control. Moreover, the positive parameter estimate for our same lobe effect tells us that ROIs in the same lobe are more likely to have a functional connection than ROIs that are not in the same lobe, after adjusting for the other effects in the model.
+
+Lastly, we see a fairly strong positive parameter estimate for our DMN effect for our healthy subject, but the individual with AD either has less strong positive estimates or negative estimates. This suggests that the subject with normal cognitive status has a higher probability of forming a functional connection between two DMN ROIs than between two ROIs that are not both apart of the DMN, controlling for the other effects in the model. However, we cannot say the same for the individual with AD.
+
+4.2 Meta-Analysis
+
+Baseline descriptive statistics are reported in Table 3. Our control subjects show no signs of depression, MCI or dementia, with an average Boston Naming Test (BNT) score of 29 and an average Mini-Mental State Examination (MMSE) score of 29. AD participants have been evaluated and meet the NINCDS/ADRDA criteria for probable AD and have an average BNT test score of 24 and an average MMSE score of 22. Our cases and controls did not significantly differ in age (p-value= 0.8698) or gender (p-value= 0.5683).
+
+The primary meta-analysis results are shown in Table 4. Both the DMN effect and the same lobe effect substantially differ between cases and controls. Controls have a positive DMN parameter estimate, indicating a tendency of DMN ROIs to form connections with one another (p-value&lt;.0001). However, cases show a significant decrease at the α = .01 level in the estimate (p-value= 0.010). Controls also have a positive parameter estimate for the same lobe effect, indicating that ROIs in the same lobe have a higher probability of forming a connection (p-value&lt;.0001). Meanwhile, cases show a significant decrease in the estimate (p-value= 0.021) at the α = .05 significance level. Both cases and controls also show a decrease in the same lobe effect estimate over time (p-value= 0.001).
+
+The negative distance 2 parameter suggests that ROIs tend to shy away from forming connections where they have a geodesic distance of at least 2 with other ROIs. The three-cycles effct, between effect, and the bilateral effect have a significant interaction at the α = .15 level between disease status and time period, which makes it difficult to interpret the main effects of disease status and time period. Figures D1, D2, and D3 in the appendix show the mean value of each effect over time, and we can see that there does appear to be a qualitative interaction. For the three-cycles and between effects, the AD subjects have larger effects than the controls at their earlier time points but smaller effects than the controls at the later time points. Both groups appear to decline over time with respect to the three-cycles effect (although, less so for the control group), but for the between effect, the controls have an increased effect over time, while the cases have a decreased effect. Again, it is difficult to interpret these results because of the strong interaction. For the bilateral effect, there does not appear to be any real pattern with regard to disease pattern and time period. At some time points, the control group has higher parameter estimates, while at other times the AD group has higher estimates.
+
+As noted in section 3.3.2, there is some disagreement in the literature on which ROIs constitute the DMN. Therefore, we have performed a secondary analysis where we have modified which ROIs we have assigned as DMN ROIs. Results are similar to the primary analysis. Please see the appendix for additional details and results.
+
+If we adjust for multiple comparisons using, for example, a Bonferroni adjustment, we do not observe any significant differences between our AD and control groups in either sets of analyses. We attribute this lack of significant difference after adjustment to the relatively small sample size in our study, as well as the high level of noise that is typically present in resting-state fMRI data. Please see the appendix for an approximate sample size calculation.
+
+We also performed a goodness-of-fit test to determine if our SAOM is fitting the data well, overall. Given that we have fit our SAOM on each period, for each subject separately, we assessed the goodness-of-fit in the same manner (i.e. on each period, for all subjects separately). We utilized three different Mahalanobis distance tests available in the RSiena R package; tests for degree, geodesic distance, and triadic structures. These tests, proposed by (Lospinoso, 2012), compare the observed values for these auxiliary statistics, at the ends of the periods, with the simulated values for the ends of the periods. The differences are then analyzed by combining the auxiliary statistics using the Mahalanobis distance.
+
+Out of the 139 models fit for the primary analysis, 31 rejected the null hypothesis of a good fit with regards to degree (p-value &lt; 0.05), 7 rejected the null hypothesis for a good fit with regards to triadic structures, and 0 rejected the null with regards to geodesic distance. All but 3 of the 139 models were a good fit on at least 2 of the 3 auxiliary statistics. We combined the p-values by the sum of logs method, also known as Fisher’s method (Won et al., 2009), and obtained the p-values of &lt; 0.0001, 1, and 1 for degree, geodesic distance, and triadic structures, respectively.
+
+It is not surprising to us that the model was not always a great fit on these statistics for every subject at every period. Our model was hypothesis driven, and effects were chosen based on what prior literature indicated may be important in terms of driving connections in resting-state networks. It was important to us to fit the exact same model across all subjects to ensure a fair comparison when it came time for the meta-analysis. While it appears that our chosen model is able to adequately represent important network features in a majority of the cases (which is the hope), there will always be some individuals that stray from the norm and have unexplained variability.
+
+5 Discussion
+
+In this paper, we propose a framework for the analysis of complex networks in neuro-science. At the heart of the paradigm we suggest is the adaptation of SAOMs, a type of model developed for the analysis of social networks, and to our knowledge, not yet used in neuroscience. Given the increased interest in, and clinical implications of, analyzing brain networks over time, a modeling framework that has the ability to test hypotheses and draw inference from a series of structural and/or functional networks is quite useful to the neuroscience community.
+
+To illustrate our framework, we conduct a longitudinal brain network analysis on rsfMRI complex functional networks obtained from participants in ADNI. We take several existing hypotheses conjectured in the literature and map them to effects in the SAOM framework, with the goal of testing these hypotheses and estimating parameters expressing their strength, while controlling for the other factors in the model. After fitting the model on each participant and obtaining individual results, we conduct a meta-analysis comparing AD patients with healthy controls. Both the DMN effect and the same lobe effect substantially differ between the two groups. Controls have a positive DMN parameter estimate, indicating a tendency of DMN ROIs to form connections with one another, while cases show a decrease in the estimate, leading us to conclude that DMN ROIs aren’t as likely to activate and connect to one another in those with AD. Controls also have a positive parameter estimate for the same lobe effect, indicating that ROIs in the same lobe have a higher probability of forming a functional connection. Meanwhile, again, individuals with AD have a decreased tendency of ROIs to form functional connections with other ROIs in the same lobe. Both cases and controls also show a decrease in the same lobe effect estimate over time.
+
+Our paradigm can be used in many applications other than on resting-state data in our AD study. These initial analyses are meant to be a proof-of-concept that pave the way forward for testing, in other contexts, various hypotheses related to functions of the nodes (e.g. ROIs) and the connections they have formed. Given existing literature that indicates brain regions often change functional connections as a compensatory mechanism (Gardini et al., 2015; Etkin et al., 2009; Simpson &amp; Laurienti, 2016) or that ‘hub’ regions shift which regions they communicate with based on instructions for the task at hand (Cole et al., 2013), an ‘actor-oriented’ or ‘node-oriented’ approach is well-motivated and appealing. With that being said, model interpretation with regards to ‘actor’ preferences and decision-making should not be interpreted too literally. The key is that the model expresses tendencies for connections to form based on each ROI’s current connections/network, its own properties, and the properties of all other ROIs The SAOMs that we propose adapting are extremely flexible in that they are able to represent network dynamics as being driven by many factors/influences. Furthermore, the models allow for the accounting of several different explanations of network change, which may be competing and even complementary. This allows for the testing of effects driving the changes, while controlling for other factors, which better enables researchers to delve in, disentangle, and identify which mechanisms are playing a role.
+
+Temporal Exponential Random Graph Models (TERGMs) (Hanneke et al., 2010) are the other popular choice of models for longitudinal network analysis, and to the best of our knowledge, they have not been used in neuroscience. Both types of models have their pros and cons and can be argued to be useful and appropriate in the context of networks in neuroscience. However, given that SAOMs (a) take an “actor-oriented” approach where the vertices are driving the network changes and (b) model network changes (and we expect network changes given that AD is a progressively degenerative disease), SAOMs are a natural choice for a first attempt at a more sophisticated method for longitudinal network analysis in neuroscience. A more detailed theoretical and empirical comparison between the two types of models can be found in (Leifeld &amp; Cranmer, 2015).
+
+The SAOM framework scales well to network sizes of hundreds of vertices, so we expect it to perform in a reasonable amount of time (e.g. no more than an hour with a single processor on a home computer) at the ROI level where one has up to a couple hundred ROIs. For our analysis, each pair of consecutive time points took 90 seconds to run on a machine with a 2.5 GHz processor and 8.00 GB RAM. Therefore, the average time it takes (in minutes) to fit separate models to a subject’s 64 ROI networks for T − 1 time periods is 90 ∗ (T − 1)/60, where T is the number of time points. The SAOM framework can also handle thousands of vertices, but will take substantially longer to run (i.e. may take several days, but if one can parallelize with multiple processors it may run in a day), while network sizes of over a few thousand vertices will be a challenge.
+
+The paradigm we propose can be modified at several stages of the analysis regime. For example, in addition to Pearson Correlation, one can use other methods of network construction. Methods for estimating functional connectivity between nodes fall into one of two categories: association measures and modeling approaches. Correlation and coherence are two examples of linear association measures, while nonlinear measures include mutual information and generalized synchronization. The literature on modeling approaches is less developed (but quickly evolving), though (Varoquaux et al., 2010) and others have made contributions. See (Simpson et al., 2013) for a survey. There is currently no gold standard, but the choice of method is largely driven by the type of neuroimaging data being analyzed and the hypotheses one is interested in testing. The method used clearly may affect results. However, we necessarily leave a large-scale assessment of this issue, in the context of our proposed method, to future work.
+
+The specifications of the random effects model used to conduct the meta-analysis can also be adjusted. We have included two fixed effects in our models (for case/control status and visit number). However, one could easily incorporate various individual attributes, such as age and gender into the models. Since we did not find a significant difference in cases and controls on these variables, we chose not to adjust for them.
+
+Another way that the meta-analysis can be modified is through correlation structure. Our current formulation assumes that between-subject heterogeneity affects the parameters at each time period in a given subject the same way. One could extend the model by allowing a random slope for time. In fact, for our DMN effect, we ran a random intercept model and a random intercept and slope model separately. We compared the goodness of fit of these two models using a likelihood ratio test and did not find a significant difference (χ2 = 2.8, df=1, p-value = 0.0943), indicating that it may not improve the model much, at least with this particular outcome. One could also attempt a multivariate meta-analysis which would take into account the correlation between the different parameters of the same subject. We ultimately chose to perform a series of univariate meta-analyses instead, given that some literature suggests multivariate meta-analysis can cause estimation difficulties. The normality assumption is also stronger and difficult to verify (Jackson et al., 2011).
+
+While this paper has demonstrated the potential of adapting SAOMs to networks in neuroscience, several opportunities for extending the scope of this manuscript remain. For example, the assumption of a Gumbel-distributed random disturbance term is built into the SAOM framework and is not something we have set ourselves. During the SAOM evolution process, each vertex, when given the opportunity to make a change, chooses its next move based off of a discrete set of choices with probabilities that can be calculated from variables in the model (i.e. a utility function). Therefore, these types of models are discrete choice models. Early developments of discrete choice models were based on the assumption that the errors terms were independently and identically Type I extreme value (Gumbel) distributed, which leads to a multinomial logit model. The creators of SAOMs chose this assumption to be in line with the discrete choice model theory, but there are currently no diagnostics within the SAOM framework, to our knowledge, that can be used to check this assumption. It would be useful to have such diagnostics in place.
+
+Given that that the field has recently been moving towards the use of weighted networks, another future direction is adapting the approach mentioned in this paper to weighted networks. The current SAOM framework currently only allows for binary networks. However, it does allow for the defining and modeling of multiple networks representing discrete levels of relationships. Therefore, future work might involve adapting our approach to weighted networks where one defines several categories representing edge weights. For example, positive correlations of ≤ 0.20, 0.21 − 0.40, 0.41 − 0.60, 0.61 − 0.80, and 0.81 − 1 may each be a different category, and one can create a model for the co-evolution of these networks.
+
+To conclude, the flexibility our proposed framework affords and the vast array of hypotheses it allows one to test open the door for additional research and the possibility to delve deeper into what is driving brain network changes. We were able to demonstrate our framework on a subset of participants in ADNI and corroborate the findings of several existing studies. Not only that, but we were able to test these effects that may be driving network changes, while also controlling for other effects. In a world where neurological and mental health disorders are a huge concern, the clinical and research implications of this type of analysis reach far and wide.
+
+Supplementary Material
+
+Supp info
+
+6 Acknowledgments
+
+The authors thank Danielle Farrar for all her work pre-processing the resting-state fMRI data needed for the analyses.
+
+This work was supported by NIH award 1R01NS095369–01 and by the National Institute of General Medical (NIGMS) Interdisciplinary Training Grant for Biostatisticians (T32 GM74905).
+
+Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12–2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bio-engineering, and through generous contributions from the following: AbbVie, Alzheimers Association; Alzheimers Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; MesoScale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Disease Cooperative Study at the University of California, San Diego. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Fig. 1 Flow Chart of proposed framework for longitudinal complex brain network analysis.
+
+Fig. 2 An example of how the periods are defined for an individual.
+
+Table 1: Results for 74 year old female of normal cognitive function.
+
+	Period 1	Period 2	Period 3	Period 4	
+	
+Effect	Esta	SEb	 Tc	Est	SE	 T	 Est	 SE	T	 Est	 SE	T	
+Degree	−0.11	0.15	 −0.76	0.31	0.27	 1.13	 −0.24	 0.21	−1.16	 −0.46	 0.18	−2.53	
+Three-Cycles	0.12	0.02	 6.76	0.13	0.02	 5.86	 0.15	 0.02	7.50	 0.10	 0.02	5.78	
+Distance 2	−0.20	0.04	 −5.00	−0.11	0.04	 −3.11	 −0.13	 0.03	−4.16	 −0.22	 0.04	−5.68	
+Betweenness	−0.11	0.02	 −6.65	−0.18	0.03	 −5.74	 −0.12	 0.02	−6.16	 −0.05	 0.02	−2.55	
+Bilateral	1.85	0.45	 4.13	1.47	0.45	 3.25	 1.33	 0.43	2.91	 1.11	 0.39	2.88	
+Same Lobe	0.39	0.08	 4.85	0.29	0.10	 2.92	 0.33	 0.09	3.60	 0.16	 0.11	1.49	
+DMN	0.34	0.22	 1.53	0.52	0.26	 1.97	 0.99	 0.21	4.68	 0.25	 0.25	1.02	
+a Parameter Estimate.
+
+b Standard Error.
+
+c T-Ratio. Calculated by dividing the parameter estimate by the standard error prior to rounding.
+
+Table 2: Results for 74 year old female with AD.
+
+	Period 1	Period 2	Period 3	Period 4	
+	
+Effect	Esta	SEb	 Tc	Est	SE	 T	Est	SE	 T	Est	SE	 T	
+Degree	−0.10	0.20	 −0.52	−0.73	0.19	 −3.84	−0.05	0.25	 −0.19	0.33	0.21	 1.57	
+Three-Cycles	0.10	0.01	 6.86	0.10	0.02	 4.55	0.08	0.01	 5.47	0.07	0.02	 3.04	
+Distance 2	−0.18	0.04	 −4.81	−0.30	0.06	 −4.82	−0.18	0.03	 −5.93	−0.23	0.05	 −4.66	
+Betweenness	−0.11	0.02	 −5.55	−0.05	0.02	 −2.29	−0.11	0.02	 −4.44	−0.17	0.02	 −6.72	
+Bilateral	2.02	0.45	 4.51	1.43	0.40	 3.63	0.40	0.24	 1.67	3.49	0.70	 5.01	
+Same Lobe	0.17	0.08	 2.05	0.46	0.08	 5.78	0.17	0.09	 1.78	0.32	0.10	 3.26	
+DMN	0.03	0.24	 0.11	−0.23	0.27	 −0.84	0.13	0.22	 0.61	−0.35	0.29	 −1.19	
+a Parameter Estimate.
+
+b Standard Error.
+
+c T-Ratio. Calculated by dividing the parameter estimate by the standard error prior to rounding.
+
+Table 3: Baseline Characteristics of Alzheimer’s Disease Patients and Controls. Data are mean ± SD or number (%).
+
+	Controls (n=25)	AD (n=20)	P-value	
+Age	73.40 ± 5.2	73.65 ± 7.9	0.8987	
+Gender, n (%) of males	12 (48.0)	11 (55.0)	0.5683	
+Boston Naming Test (BNT)	28.56 ± 1.6	23.40 ± 4.3	&lt;.0001	
+Mini-Mental State Examination (MMSE)	28.56 ± 1.4	22.15 ± 2.2	&lt;.0001	
+Participants with only 2 scans	1 (0.04)	0 (0.00)		
+Participants with only 3 scans	6 (0.24)	4 (0.20)		
+Participants with only 4 scans	5 (0.20)	13 (0.65)		
+Participants with 5 scans	13 (0.65)	3 (0.15)		
+
+Table 4: Meta-Analysis Results for the Primary Analysis.
+
+Effect	Intercept	Casea	SEb	Tc	Pd	Period Este	Period Pf	Interact Estg	Interact Ph	
+Three-Cycles	0.111	−0.002	0.005	−0.46	0.645					
+Distance 2	−0.146	&lt; 0.001	0.007	0.00	0.999					
+Between	−0.133	0.039	0.011	3.55	0.0006	0.008	0.002	−0.021	&lt;.001	
+Bilateral	1.101	0.333	0.189	1.76	0.082	−0.028	0.513	−0.128	0.074	
+Same Lobe	0.395	−0.060	0.025	−2.35	0.021	−0.027	0.001			
+DMN	0.308	−0.150	0.057	−2.64	0.010					
+a Controls are the reference group.
+
+b Standard error corresponding to the case/control parameter estimate. Calculated prior to rounding.
+
+c T-ratio corresponding to the case/control parameter estimate.
+
+d P-value corresponding to the case/control parameter estimate.
+
+e Parameter estimate associated with the period number.
+
+f P-value corresponding to period number parameter estimate.
+
+g Case×Period interaction parameter estimate.
+
+h Case×Period interaction p-value.
+
+** Data used in preparation of this article were obtained from the Alzheimers Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp–content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+Heather Shappell has nothing to disclose.
+
+
+References
+
+Andrews-Hanna Jessica R , Snyder Abraham Z , Vincent Justin L , Lustig Cindy , Head Denise , Raichle Marcus E , &amp; Buckner Randy L. (2007). Disruption of large-scale brain systems in advanced aging. Neuron, 56 (5 ), 924–935.18054866
+Bai Feng , Watson David R , Shi Yongmei , Wang Yi , Chunxian Yue , Wu Di , Yuan Yonggui , Zhang Zhijun , (2011). Specifically progressive deficits of brain functional marker in amnestic type mild cognitive impairment. Plos one, 6 (9 ), e24271.21935394
+Beekly Duane L , Ramos Erin M , van Belle Gerald , Deitrich Woodrow , Clark Amber D , Jacka Mary E , Kukull Walter A , (2004). The national alzheimer’s coordinating center (nacc) database: an alzheimer disease database. Alzheimer disease &amp; associated disorders, 18 (4 ), 270– 277.15592144
+Biswal Bharat B , Mennes Maarten , Zuo Xi-Nian , Gohel Suril , Kelly Clare , Smith Steve M , Beckmann Christian F , Adelstein Jonathan S , Buckner Randy L , Colcombe Stan , (2010). Toward discovery science of human brain function. Proceedings of the national academy of sciences, 107 (10 ), 4734–4739.
+Bressler Steven L , &amp; Menon Vinod. (2010). Large-scale brain networks in cognition: emerging methods and principles. Trends in cognitive sciences, 14 (6 ), 277–290.20493761
+Buckner Randy L , Andrews-Hanna Jessica R , &amp; Schacter Daniel L. (2008). The brain’s default network. Annals of the new york academy of sciences, 1124 (1 ), 1–38.18400922
+Cole Michael W , Reynolds Jeremy R , Power Jonathan D , Repovs Grega , Anticevic Alan , &amp; Braver Todd S. (2013). Multi-task connectivity reveals flexible hubs for adaptive task control. Nature neuroscience, 16 (9 ), 1348–1355.23892552
+Damoiseaux Jessica S , Prater Katherine E , Miller Bruce L , &amp; Greicius Michael D. (2012). Functional connectivity tracks clinical deterioration in alzheimer’s disease. Neurobiology of aging, 33 (4 ), 828–e19.
+Damoiseaux JS , Beckmann CF , Arigita EJ Sanz , Barkhof F , Scheltens Ph , Stam CJ , Smith SM , &amp; Rombouts SARB . (2008). Reduced resting-state brain activity in the default network in normal aging. Cerebral cortex, 18 (8 ), 1856–1864.18063564
+Danon Leon , Diaz-Guilera Albert , Duch Jordi , &amp; Arenas Alex . (2005). Comparing community structure identification. Journal of statistical mechanics: Theory and experiment, 2005 (09 ), P09008.
+DerSimonian Rebecca , &amp; Laird Nan . (1986). Meta-analysis in clinical trials. Controlled clinical trials, 7 (3 ), 177–188.3802833
+Desikan Rahul S , Ségonne Florent , Fischl Bruce , Quinn Brian T , Dickerson Bradford C , Blacker Deborah , Buckner Randy L , Dale Anders M , Maguire R Paul , Hyman Bradley T , (2006). An automated labeling system for subdividing the human cerebral cortex on mri scans into gyral based regions of interest. Neuroimage, 31 (3 ), 968–980.16530430
+Di Martino Adriana , Yan Chao-Gan , Li Qingyang , Denio Erin , Castellanos Francisco X , Alaerts Kaat , Anderson Jeffrey S , Assaf Michal , Bookheimer Susan Y , Dapretto Mirella , (2014). The autism brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain architecture in autism. Molecular psychiatry, 19 (6 ), 659–667.23774715
+Etkin Amit , Prater Katherine E , Schatzberg Alan F , Menon Vinod , &amp; Greicius Michael D. (2009). Disrupted amygdalar subregion functional connectivity and evidence of a compensatory network in generalized anxiety disorder. Archives of general psychiatry, 66 (12 ), 1361–1372.19996041
+Fleisher Adam S , Sherzai Ayesha , Taylor Curtis , Langbaum Jessica BS , Chen Kewei , &amp; Buxton Richard B. (2009). Resting-state bold networks versus task-associated functional mri for distinguishing alzheimer’s disease risk groups. Neuroimage, 47 (4 ), 1678–1690.19539034
+Gardini Simona , Venneri Annalena , Sambataro Fabio , Cuetos Fernando , Fasano Fabrizio , Marchi Massimo , Crisi Girolamo , &amp; Caffarra Paolo . (2015). Increased functional connectivity in the default mode network in mild cognitive impairment: a maladaptive compensatory mechanism associated with poor semantic memory performance. Journal of alzheimer’s disease, 45 (2 ), 457–470.
+Greicius Michael D , Krasnow Ben , Reiss Allan L , &amp; Menon Vinod. (2003). Functional connectivity in the resting brain: a network analysis of the default mode hypothesis. Proceedings of the national academy of sciences, 100 (1 ), 253–258.
+Greicius Michael D , Srivastava Gaurav , Reiss Allan L , &amp; Menon Vinod . (2004). Default-mode network activity distinguishes alzheimer’s disease from healthy aging: evidence from functional mri. Proceedings of the national academy of sciences of the united states of america, 101 (13 ), 4637–4642.15070770
+Hanneke Steve , Fu Wenjie , Xing Eric P , (2010). Discrete temporal models of social networks. Electronic journal of statistics, 4 , 585–605.
+Ishak K Jack , Robert W Platt , Joseph Lawrence , Hanley James A , &amp; Caro J Jaime. (2007). Meta-analysis of longitudinal studies. Clinical trials, 4 (5 ), 525–539.17942468
+Jackson Dan , Riley Richard , &amp; White Ian R. (2011). Multivariate meta-analysis: Potential and promise. Statistics in medicine, 30 (20 ), 2481–2498.21268052
+Kolaczyk Eric D. (2009). Statistical analysis of network data Springer.
+Laird Angela R , Eickhoff Simon B , Karl Li , Robin Donald A , Glahn David C , &amp; Fox Peter T. (2009). Investigating the functional heterogeneity of the default mode network using coordinate-based meta-analytic modeling. The journal of neuroscience, 29 (46 ), 14496–14505.19923283
+Lee Megan H , Smyser Christopher D , &amp; Shimony Joshua S. (2013). Resting-state fmri: a review of methods and clinical applications. American journal of neuroradiology, 34 (10 ), 1866–1872.22936095
+Leifeld Philip , &amp; Cranmer Skyler J. (2015). A theoretical and empirical comparison of the temporal exponential random graph model and the stochastic actor-oriented model. arxiv preprint arxiv:1506.06696
+Liang Xia , Wang Jinhui , Yan Chaogan , Shu Ni , Xu Ke , Gong Gaolang , &amp; He Yong . (2012). Effects of different correlation metrics and preprocessing factors on small-world brain functional networks: a resting-state functional mri study. Plos one, 7 (3 ), e32766.22412922
+Lospinoso Joshua Alfred . (2012). Statistical models for social network dynamics Ph.D. thesis, University of Oxford.
+Mathys Christian , Hoffstaedter Felix , Caspers Julian , Caspers Svenja , Sudmeyer Martin , Grefkes Christian , Eickhoff Simon B , &amp; Langner Robert. (2014). An age-related shift of resting-state functional connectivity of the subthalamic nucleus: a potential mechanism for compensating motor performance decline in older adults. Frontiers in aging neuroscience, 6 .
+Mesulam Marsel , (1990). Large-scale neurocognitive networks and distributed processing for attention, language, and memory. Annals of neurology, 28 (5 ), 597–613.2260847
+Milham Michael P , Fair Damien , Mennes Maarten , Mostofsky Stewart HMD , (2012). The adhd-200 consortium: a model to advance the translational potential of neuroimaging in clinical neuroscience. Frontiers in systems neuroscience, 6 , 62.22973200
+Moussa Malaak N , Steen Matthew R , Laurienti Paul J , &amp; Hayasaka Satoru. (2012). Consistency of network modules in resting-state fmri connectome data. Plos one, 7 (8 ), e44428.22952978
+Mueller Susanne G , Weiner Michael W , Thal Leon J , Petersen Ronald C , Jack Clifford R , Jagust William , Trojanowski John Q , Toga Arthur W , &amp; Beckett Laurel. (2005). Ways toward an early diagnosis in alzheimers disease: the alzheimers disease neuroimaging initiative (adni). Alzheimer’s &amp; dementia, 1 (1 ), 55–66.
+Normand SLT . (1999). Meta-analysis: formulating, evaluating, combining and reporting stat med 18 : 321–359. Find this article online.10070677
+Reuter Martin , Schmansky Nicholas J , Rosas H Diana , &amp; Fischl Bruce. (2012). Within-subject template estimation for unbiased longitudinal image analysis. Neuroimage, 61 (4 ), 1402–1418.22430496
+Ripley Ruth M , Snijders Tom AB , Preciado Paulina , (2011). Manual for rsiena University of oxford, department of statistics, nuffield college, 1 .
+Rubinov Mikail , &amp; Sporns Olaf . (2010). Complex network measures of brain connectivity: uses and interpretations. Neuroimage, 52 (3 ), 1059–1069.19819337
+Salvador Raymond , Suckling John , Coleman Martin R , Pickard John D , Menon David , &amp; Bullmore ED (2005). Neurophysiological architecture of functional magnetic resonance images of human brain. Cerebral cortex, 15 (9 ), 1332–1342.15635061
+Sanz-Arigita Ernesto J , Schoonheim Menno M , Damoiseaux Jessica S , Rombouts Serge ARB , Maris Erik , Barkhof Frederik , Philip Scheltens , &amp; Stam Cornelis J. (2010). Loss of small-worldnetworks in alzheimer’s disease: graph analysis of fmri resting-state functional connectivity. Plos one, 5 (11 ), e13788.21072180
+Schulz Kurt P , Bédard Anne-Claude V , Fan Jin , Clerkin Suzanne M , Dima Danai , Newcorn Jeffrey H , &amp; Halperin Jeffrey M. (2014). Emotional bias of cognitive control in adults with childhood attention-deficit/hyperactivity disorder. Neuroimage: Clinical, 5 , 1–9.24918067
+Schwarz Adam J , &amp; McGonigle John. (2011). Negative edges and soft thresholding in complex network analysis of resting state functional connectivity data. Neuroimage, 55 (3 ), 1132–1146.21194570
+Simpson Sean L , &amp; Laurienti Paul J. (2016). Disentangling brain graphs: a note on the conflation of network and connectivity analyses. Brain connectivity, 6 (2 ), 95–98.26414952
+Simpson Sean L , Bowman F DuBois , &amp; Laurienti Paul J. (2013). Analyzing complex functional brain networks: fusing statistics and network science to understand the brain. Statistics surveys, 7 , 1.25309643
+Singer Judith D. (1998). Using sas proc mixed to fit multilevel models, hierarchical models, and individual growth models. Journal of educational and behavioral statistics, 23 (4 ), 323–355.
+Snijders Tom AB , Van de Bunt Gerhard G , &amp; Steglich Christian EG. (2010a). Introduction to stochastic actor-based models for network dynamics. Social networks, 32 (1 ), 44–60.
+Snijders Tom AB , Koskinen Johan , &amp; Schweinberger Michael . (2010b). Maximum likelihood estimation for social network dynamics. The annals of applied statistics, 4 (2 ), 567.25419259
+Sorg Christian , Riedl Valentin , Mühlau Mark , Calhoun Vince D , Eichele Tom , Läer Leonhard , Drzezga Alexander , Förstl Hans , Kurz Alexander , Zimmer Claus , (2007). Selective changes of resting-state networks in individuals at risk for alzheimer’s disease. Proceedings of the national academy of sciences, 104 (47 ), 18760–18765.
+Sporns Olaf . (2011). Networks of the brain MIT press.
+Sporns Olaf . (2013). Structure and function of complex brain networks. Dialogues clin neurosci, 15 (3 ), 247–262.24174898
+Sporns Olaf . (2014). Contributions and challenges for network models in cognitive neuroscience. Nature neuroscience, 17 (5 ), 652–660.24686784
+Stam Cornelis J. (2014). Modern network science of neurological disorders. Nature reviews neuroscience, 15 (10 ), 683–695.25186238
+Steglich Christian , Snijders Tom AB , &amp; West Patrick . (2006). Applying siena. Methodology, 2 (1 ), 48–56.
+Supekar Kaustubh , Menon Vinod , Rubin Daniel , Musen Mark , &amp; Greicius Michael D. (2008). Network analysis of intrinsic functional brain connectivity in alzheimer’s disease. Plos comput biol, 4 (6 ), e1000100.18584043
+Telesford Qawi K , Simpson Sean L , Burdette Jonathan H , Hayasaka Satoru , &amp; Laurienti Paul J. (2011). The brain as a complex system: using network science as a tool for understanding the brain. Brain connectivity, 1 (4 ), 295–308.22432419
+van den Heuvel Martijn P , Mandl Rene CW , Kahn Rene S , Pol Hulshoff , &amp; Hilleke E (2009). Functionally linked resting-state networks reflect the underlying structural connectivity architecture of the human brain. Human brain mapping, 30 (10 ), 3127–3141.19235882
+Van Essen David C , Ugurbil Kamil , Auerbach E , Barch D , Behrens TEJ , Bucholz R , Chang A , Chen Liyong , Corbetta Maurizio , Curtiss Sandra W , (2012). The human connectome project: a data acquisition perspective. Neuroimage, 62 (4 ), 2222–2231.22366334
+Van Wijk Bernadette CM , Stam Cornelis J , &amp; Daffertshofer Andreas. (2010). Comparing brain networks of different size and connectivity density using graph theory. Plos one, 5 (10 ), e13701.21060892
+Varoquaux Gaël , Gramfort Alexandre , Poline Jean-Baptiste , &amp; Thirion Bertrand . (2010). Brain covariance selection: better individual functional connectivity models using population prior. Pages 2334–2342 of: Advances in neural information processing systems
+Wang Jinhui , Zuo Xinian , &amp; He Yong . (2010). Graph-based network analysis of resting-state functional mri. Frontiers in systems neuroscience, 4 , 16.20589099
+Wicker Bruno , Ruby Perrine , Royet Jean-Pierre , &amp; Fonlupt Pierre . (2003). A relation between rest and the self in the brain? Brain research reviews, 43 (2 ), 224–230.14572916
+Won Sungho , Morris Nathan , Lu Qing , &amp; Elston Robert C. (2009). Choosing an optimal method to combine p-values. Statistics in medicine, 28 (11 ), 1537–1553.19266501
+Wu Xia , Li Rui , Fleisher Adam S , Reiman Eric M , Guan Xiaoting , Zhang Yumei , Chen Kewei , &amp; Yao Li. (2011). Altered default mode network connectivity in alzheimer’s diseasea resting functional mri and bayesian network study. Human brain mapping, 32 (11 ), 1868–1881.21259382
+Xiang Jie , Guo Hao , Cao Rui , Liang Hong , &amp; Chen Junjie . (2013). An abnormal resting-state functional brain network indicates progression towards alzheimer’s disease. Neural regeneration research, 8 (30 ), 2789.25206600

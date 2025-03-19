@@ -1,0 +1,289 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+101523961
+37458
+IJCAI (U S)
+IJCAI (U S)
+IJCAI : proceedings of the conference
+1045-0823
+
+29681724
+5909849
+10.24963/ijcai.2017/542
+NIHMS939431
+Article
+Predicting Alzheimer’s Disease Cognitive Assessment via Robust Low-Rank Structured Sparse Model
+Xu Jie 13
+Deng Cheng 1
+Gao Xinbo 1
+Shen Dinggang 2
+Huang Heng 31
+1 Xidian University, Xi’an 710071, China
+2 Department of Radiology and BRIC, UNC-Chapel Hill, USA
+3 University of Texas at Arlington, USA
+2 2 2018
+8 2017
+20 4 2018
+2017 38803886
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Alzheimer’s disease (AD) is a neurodegenerative disorder with slow onset, which could result in the deterioration of the duration of persistent neurological dysfunction. How to identify the informative longitudinal phenotypic neuroimaging markers and predict cognitive measures are crucial to recognize AD at early stage. Many existing models related imaging measures to cognitive status using regression models, but they did not take full consideration of the interaction between cognitive scores. In this paper, we propose a robust low-rank structured sparse regression method (RLSR) to address this issue. The proposed model simultaneously selects effective features and learns the underlying structure between cognitive scores by utilizing novel mixed structured sparsity inducing norms and low-rank approximation. In addition, an efficient algorithm is derived to solve the proposed non-smooth objective function with proved convergence. Empirical studies on cognitive data of the ADNI cohort demonstrate the superior performance of the proposed method.
+
+
+1 Introduction
+
+Alzheimer’s disease (AD), a common form of dementia, affects nerve cells in areas of the brain responsible for memory, cognition, language, and motor activity [Dailey, 2017]. By linear extrapolation of estimates from 2006, the population worldwide who have AD will increase to over 100 million by 2050 [Thompson et al., 2003; Moradi et al., 2015]. In fact, researchers believe that early detection will be key to preventing, slowing and stopping Alzheimer’s disease. Neuroimaging as a powerful tool for accurate identification and understanding informative feature is necessary for early Alzheimer’s disease prognosis and diagnosis [Liu et al., 2015; Nie et al., 2016]. Therefore, many machine learning methods have been proposed to study neuroimaging measures to detect pathology associated with AD and to predict cognitive scores [Wang et al., 2011b; Huo et al., 2016; Wang et al., 2016]. Among them, structural magnetic resonance imaging (MRI) scans are one of the most extensively used imaging modality in tracking AD progression.
+
+In the association study of selecting effective longitudinal phenotypic markers to predict cognitive scores from imaging features, the input usually consists of two matrices: the imaging feature matrix X = [x1, …, xn] ∈ ℝd×n and the corresponding cognitive score matrix Y = [y1, …, yn]T ∈ ℝn×m, where n is the number of samples, d is the number of features and m is the number of different measures of a certain cognitive performance.
+
+A forthright method to identify informative imaging markers is to perform feature selection [Chang and Yang, 2016], which has been demonstrated as a useful way to reflect the correlation between cognitive measures after removing the indistinctive neuroimaging markers. More recently, sparse regularization model has been extensively utilized to learn the structure of data and obtain effective feature in different applications. The sparsity-inducing norm based feature selection methods solve the convex optimization problems of the form: (1) minBL(B;X)+λΩ(B)
+
+where ℒ is a convex function and Ω can include one or more non-smooth sparsity-inducing norms.
+
+When Ω is the l1-norm, the l1 shrinkage methods such as LASSO identify informative longitudinal phenotypic markers in the brain that are related to pathological changes of AD by imposing flat sparsity [Liu et al., 2014]. However, the selected features distribute randomly among the whole brain that can not be well explained. In predicting cognitive scores task, we expect to select the most informative markers, which are important to all participants including AD, mild cognitive impairment (MCI) and heathy control (HC). To address this issue, group LASSO with a l2,1-norm is used to impose the structured sparsity on parameter matrix for feature selection [Obozinski et al., 2010; Jie et al., 2015; Yang et al., 2017; Chang et al., 2017]. It enforces the important features to have non-zero weights cross all participants, however many important features often are only discriminant to partial classes, i.e. having large weights on these participants. Thus, such important features may be ignored by the above methods.
+
+On this account, Lee et al. and Wang et al. proposed to add one more l1,1-norm regularization term to achieve both structured and flat sparsity [Lee et al., 2010; Wang et al., 2011a]. However, because the l1,1-norm regularization term enforces the flat sparsity and is prone to shrink the non-large values to zeros, the non-zero weights of some important features may also be forced to be zeros, i.e. some features selected by the l2,1-norm regularization term can be totally suppressed by the l1,1-norm regularization term. As a result, many informative longitudinal phenotypic markers are neglected during the feature selection procedure. Thus, more properly designed structured sparsity-inducing norms are desired in feature selection research.
+
+In this paper, we propose a robust low-rank structured sparse regression method (RLSR) to simultaneously select the important neuroimaging markers and learn the underlying structure between cognitive measures. Our main contributions are three-fold: (1) The new mixed structured sparsity-inducing norms are introduced to overcome the above over-shrinkage drawback in the existing sparse learning based feature selection models. (2) The explicit rank-k low-rank matrix fitting approach is used to extract the underlying interrelation structures between cognitive measures. (3) Because our method leads to a highly non-smooth objective, we derive an efficient algorithm to solve the new objective with proved convergence. We validate our method on cognitive data of the ADNI cohort and obtain promising results.
+
+Notations
+
+We summarize the notations used in this paper. Matrices are written as uppercase letters and vectors are written as bold lowercase letters. For matrix W = {wij}, its i-th row, j-th column are denoted as wi, wj respectively. The lp-norm of the vector v ∈ ℝn is defined as ‖v‖p=(∑i=1n∣vi∣p)1p for p &gt; 0. The l2,1-norm of matrix W is defined as ‖W‖2,1=∑i=1d‖wi‖2 (in some related papers, people also used the notation l1/l2-norm). l1,2-norm of matrix W is defined as ‖W‖1,2=∑i=1d‖wi‖12 and l1,1-norm of matrix W is defined as ‖W‖1,1=∑i=1d∑j=1m∣wij∣.
+
+2 Robust Low-Rank Structured Sparse Learning
+
+The l2,1-norm based objectives select the informative imaging markers across all the cognitive scores with joint sparsity, i.e. each imaging marker has either small score or large score for all the cognitive measures. However, for accurate identification of effective imaging markers, we utilize participants including AD, MCI and HC during deferent period. Consequently, many features may be irrelevant to each other, which could deteriorate the feature selection performance if we consider all the imaging markers as one group to do feature selection. On the other hand, as we discussed in the introduction section, an extra l1,1-norm regularizer will suppress too many non-zero values and lead unstable feature selection results. For example, when we target to select top 20 features and adjust the trade-off parameter to let l2,1-norm makes about 20 features with relatively large weights, the added l1,1-norm will dramatically shrink the weights such that only few important features (much less than 20) can be selected. To tackle this over-shrinkage problem, we add a convex squared l1,2-norm regularizer instead of l1,1-norm and solve: (2) minB‖Y-XTB‖F2+λ1‖B‖2,1+λ2‖B‖1,22.
+
+The typical loss functions are the least square loss and logistic loss. To improve the computational efficiency, we utilize the least square loss in this paper to select informative markers for ADNI data. Thus, our method can be applied to both classification tasks (e.g. AD/MCI versus Normal Controls (NC)) and regression tasks (e.g., estimation of clinical cognitive scores). We perform the latter in this paper.
+
+In Eq. (2), we proposed the novel mixed structured sparsity norms. The standard l2,1-norm enforces the joint sparsity across all cognitive measures to select imaging markers. The new l1,2-norm uses l2-norm between markers, such that at least one non-zero element in the rows of B selected by l2,1-norm regularizer will be kept. Thus, we won’t lose the discriminative imaging markers selected by the l2,1-norm regularization. At the same time, the l1,2-norm imposes the l1-norm between cognitive score weights of each marker to shrink the weight values of uncorrelated or irrelevant cognitive measures. For illustration purpose, in Fig. 1, we plot the sparse shrinkage patterns of the matrix B using: (a) l2,1-norm regularizer only, (b) l2,1- norm and l1,1-norm regularizers, (c) l2,1-norm and l1,2-norm regularizers. The l1,1-norm over-shrinks the weights and removes the first feature selected by l2,1-norm. The l1,2-norm suppress some weights with supporting the results of l2,1-norm, e.g. the first feature is still kept in the list.
+
+More important, with regard to this specific task that predicting AD progression, we hope to extract and utilize the underlying interrelations between cognitive measures to enhance the accuracy of feature selection. In recent research [Ji and Ye, 2009; Deng et al., 2015], the trace norm regularization has been used to seek the low-rank structured shared common representations: (3) minB‖Y-XTB‖F2+λ‖B‖∗.
+
+However, there are two deficiencies: 1) the optimal low-rank approximation is resulted by tediously tuning the parameter λ, which has no direct connection to the rank value; 2) the feature selection isn’t enforced in this model.
+
+To address the above problems, we consider the following low-rank regression: (4) minB‖Y-XTB‖F2s.t.rank(B)=s≤min(m,d),
+
+where m is the number of classes and d is the dimension of features. Compared to the parameter λ in Eq. (3), the parameter s is more feasible to be decided by users. Moreover, in order to select features and simultaneously keep the low-rank matrix fitting, we propose the following model,
+
+(5) minW,P‖Y-XTWP‖F2+λ1‖W‖2,1+λ2‖W‖1,22s.t.PPT=I
+
+where W ∈ ℝd×s, P ∈ ℝs×m and s ≤ min(m, d). The product B = WP is a low-rank matrix with rank(B) ≤ s. Our new objective simultaneously learns the underlying interrelation between cognitive measures by low-rank matrix fitting and selects the informative neuroimaging markers by mixed structured sparsity-inducing norms. We also consider the real world data often have outliers and hence replace the least square loss by the l2,1-norm based loss function, which imposes the l1-norm between data points to reduce the effect of outliers. Our final objective is to solve: (6) minW,P‖Y-XTWP‖2,1+λ1‖W‖2,1+λ2‖W‖1,22s.t.PPT=I
+
+The resulted objective has three non-smooth terms, such that the optimization becomes difficult. To solve our new objective, we will derive an efficient algorithm in next section with proved convergence.
+
+3 Optimization
+
+In this section, an efficient algorithm is proposed to tackle Eq. (6), followed by the proof of its convergence.
+
+3.1 Algorithm Derivation
+
+We will alternatively and iteratively solve Eq. (6). To begin with, we rewrite Eq. (6) as: (7) minW,P,H,D∼,DkTr((Y-XTWP)TH(Y-XTWP))+λ1Tr(WTD^W)+λ2∑k=1swkTDkwk,s.t.PPT=I
+
+where W = [w1, w2, …, ws] ∈ ℝd×s. Denote
+
+(8) E=Y-XTWP,
+
+then H ∈ ℝn×n is a diagonal matrix and defined as: (9) H(i,i)=12‖ei‖2,
+
+where ei(∀i = 1, 2, …, n) is the i-th row of matrix E in Eq. (8). D̂ ∈ ℝd×d is a diagonal matrix and defined as
+
+(10) D^(j,j)=12‖wj‖2,∀j=1,2,…,d
+
+and Dk ∈ ℝd×d is also a diagonal matrix and defined as: (11) Dk(j,j)=‖wj‖1∣wjk∣,∀k=1,2,…,s,∀j=1,2,…,d.
+
+The first step is to fix P, H, D̂, Dk, and to solve W. Thus, we need solve the following subproblem: (12) minwk∑k=1s-2zkTwk+wkT(XHXT)wk+λ1wkTD^wk+λ2wkTDkwk,
+
+where zk is the k-th column of the matrix XHY PT, ∀k = 1, 2, …, s. Then taking derivative of Eq. (12) w.r.t. wk and setting it to zero, we get,
+
+(13) -2zk+2(XHXT)wk+2λ1D∼wk+2λ2Dkwk=0
+
+(14) wk=(XHXT+λ1D^+λ2Dk)-1zk
+
+The second step is to fix W, H, D̂, Dk, and to solve P. Because
+
+(15) ‖Y-XTWP‖2,1=Tr((Y-XTWP)TH(Y-XTWP))=Tr(YTHY)-2Tr(YTHXTWP)+Tr(WTXHXTW).
+
+Then the subproblem becomes: (16) maxPTr(PYTHXTW)s.t.PPT=I
+
+The solution to Eq. (16) can be obtained by the Theorem 1.
+
+The third step is to fix W, P, and to solve H by Eq. (8) and Eq. (9), solve D̂ by Eq. (10), and solve Dk by Eq. (11).
+
+We repeat the above three steps iteratively, until the predefined stopping criterion is satisfied. We summarize the whole algorithm in Alg. 1.
+
+The Step 2 in the iteration of Alg. 1 can be calculated by linear equation system, which can be efficiently solved. Thus, our algorithm can be applied in large-scale datasets.
+
+Algorithm 1 The algorithm to solve Eq. (6)
+
+Input:	
+1. The training data X ∈ ℝd×n with label matrix Y ∈ ℝn×m	
+2. The regularization parameters λ1 and λ2, and the rank s.	
+Output:	
+1. The matrices W ∈ ℝd×s and P ∈ ℝs×m.	
+Initialization:	
+1. Set t = 0, initialize H(t) = In×n, D̂(t) = Id×d, Dk(t)=Id×d, ∀k = 1, …, s, randomly initialize P(t) ∈ ℝs×m with P(t)P(t)T = I ∈ ℝs×s.	
+Repeat:	
+1. Calculate zk(t), which is the k-th column of the matrix XH(t)Y P(t)T.	
+2. Calculate W(t) column by column by wk(t)=(XH(t)XT+λ1D^(t)+λ2Dk(t))-1zk(t).	
+3. Calculate M(t) = YTH(t)XTW(t).	
+4. Do SVD of M(t), M(t) = U(t)Σ(t)V(t)T.	
+5. Update P(t+1) = V(t)[I, 0]U(t)T.	
+6. Update E(t+1) = Y − XTW(t)P(t+1).	
+7. Update H(t+1)(i,i)=12‖e(t+1)i‖2, ∀i = 1, 2, …, n.	
+8. Update D^(t+1)(j,j)=12‖w(t)j‖, ∀j = 1, 2, …, d.	
+9. Update Dk(j,j)=‖w(t)j‖1∣wjk(t)∣, ∀j = 1, 2, …, d.	
+10. Update t = t + 1.	
+Until Convrge	
+
+3.2 Convergence Analysis
+
+Theorem 1
+
+The solution to the optimization problem maxP Tr(PM) s.t. PPT = I, where p ∈ ℝs×m, M ∈ ℝm×s and s &lt; m is
+
+(17) P∗=V[I,0]UT
+
+where U and V are the SVD of M, M = UΛVT and I is the identify matrix, I ∈ ℝs×s. 0 ∈ ℝs×(m−s) is the matrix with all zeros entries. And [Φ, Ψ] is the matrix operation to horizontally concatenate two matrices Φ and Ψ who have the same number of rows.
+
+Proof
+
+We do SVD of M, M = UΛVT, where U ∈ ℝm×m, Λ ∈ ℝm×s, V ∈ ℝs×s. Then, we have
+
+(18) Tr(PM)=Tr(PUΛVT)=Tr(ΛVTPU)=Tr(ΛQ)=∑k=1sλkkqkk
+
+where Q = VTPU, Q ∈ ℝs×m. Note that s &lt; m. λkk and qkk are the k-th element in the diagonal of matrix Λ and Q respectively. Moreover,
+
+(19) QQT=VTPUUTPTV=I,
+
+where I ∈ ℝs×s is the identity matrix. Thus, qkk ≤ 1, ∀k, k = 1, 2, …, s. Therefore,
+
+(20) Tr(PM)=∑k=1sλkkqkk≤∑ksλkk,
+
+and when qkk = 1, ∀k, k = 1, 2, …, s, the equality holds. In other words, Tr(PM) reaches the maximum when Q = [I, 0]. Recall that Q = VTPU, thus the optimal solution to Eq. (16) is Eq. (17).
+
+The convergence of the Alg. 1 is summarized in the following theorem:
+
+Theorem 2
+
+The Alg. 1 will monotonically decrease the objective of the problem in Eq. (6) in each iteration and converge to the local optimum solution to the problem.
+
+Proof
+
+On one hand, denote the updated P by P̃. Because of Theorem 1, when we fix W, H, D̂ and Dk, we get: (21) Tr((Y-XTWP∼)TH(Y-XTWP∼))+λ1Tr(WTD^W)+λ2∑k=1swkTDkwk≤Tr((Y-XTWP)TH(Y-XTWP))+λ1Tr(WTD^W)+λ2∑k=1swkTDkwk
+
+After plugging the definition of H by Eq. (9), we can obtain,
+
+(22) ∑i=1n‖e∼i‖222‖ei‖2+λ1∑k=1swkTD^wk+λ2∑k=1swkTDkwk≤∑i=1n‖ei‖222‖ei‖2+λ1∑k=1swkTD^wk+λ2∑k=1swkTDkwk
+
+At the same time, beginning with (||ẽi||2 − ||ei||2)2 ≥ 0, we can get
+
+(23) ∑i=1n(‖e∼i‖2-‖e∼i‖222‖ei‖2)≤∑i=1n(‖ei‖2-‖ei‖222‖ei‖2)
+
+Therefore, adding Eq. (22) and Eq. (23) together, we get
+
+(24) ‖Y-XTWP∼‖2,1+λ1∑k=1swkTD^wk+λ2∑k=1swkTDkwk≤‖Y-XTWP‖2,1+λ1∑k=1swkTD^wk+λ2∑k=1swkTDkwk
+
+On the other hand, denote the updated W by W̃, when we fix P, H. According to the step 2 in the Repeat part in Alg. 1, we have: (25) Tr(YTHY)+∑k=1s(-2zkTw∼k+w∼kT(XHXT)w∼k+λ1w∼kTD^w∼k+λ2w∼kTDkw∼k)≤Tr(YTHY)+∑k=1s(-2zkTwk+wkT(XHXT)wk+λ1wkTD^wk+λ2wkTDkwk)
+
+where zk is the k-th column of XHY PT.
+
+We plug in the definition of D̂ and Dk by Eq. (10) and Eq. (11) respectively into Eq. (25), and have: (26) Tr(YTHY)+∑k=1s(-2zkTw∼k+w∼kT(XHXT)w∼k)+λ1∑k=1s∑j=1dw∼jk22‖wj‖2+λ2∑k=1s∑j=1d‖wj‖1∣wjk∣w∼jk2≤Tr(YTHY)+∑k=1s(-2zkTwk+wkT(XHXT)wk+λ1∑k=1s∑j=1dwjk22‖wj‖2+λ2∑k=1s∑j=1d‖wj‖1∣wjk∣wjk2
+
+Similarly, beginning with (||w̃i||2 − ||w̃i||2)2 ≥ 0, we get
+
+(27) ‖w∼j‖2-‖w∼j‖222‖wj‖2≤‖wj‖2-‖wj‖222‖wj‖2
+
+Therefore,
+
+(28) ∑j=1d‖w∼j‖2-∑j=1d∑k=1sw∼jk22‖wj‖2≤∑j=1d‖wj‖2-∑j=1d∑k=1swjk22‖wj‖2.
+
+Meanwhile, according to am-gm inequality, we have
+
+(29) ∑k=1s‖wj‖1∣wjk∣w∼jk2≥(‖w∼j‖1)2
+
+Thus,
+
+(30) (‖w∼j‖1)2-∑k=1s‖wj‖1∣wjk∣w∼jk2≤0=(‖w∼j‖1)2-∑k=1s‖wj‖1∣wjk∣wjk2⇒∑j=1d(‖w∼j‖1)2-∑k=1s∑j=1d‖wj‖1∣wjk∣w∼jk2≤0=∑j=1d(‖w∼j‖1)2-∑k=1s∑j=1d‖wj‖1∣wjk∣wjk2
+
+Sum up Eq. (26), λ1×Eq. (28), λ2×Eq. (30), we can arrive at the following conclusion: (31) Tr((Y-XTW∼P)TH(Y-XTW∼P))+λ1‖W∼‖2,1+λ2‖W∼‖1,22≤Tr((Y-XTWP)TH(Y-XTWP))+λ1‖W‖2,1+λ2‖W‖1,22
+
+We update W and P alternatively, then we arrive at our goal: (32) ‖Y-XTW∼P∼‖2,1+λ1‖W∼‖2,1+λ2‖W∼‖1,22≤‖Y-XTWP‖2,1+λ1‖W‖2,1+λ2‖W‖1,22s.t.P∼P∼T=I,PPT=I
+
+In other words, using Alg. 1, we can monotonically decrease the objective function Eq. (6) in each iteration and finally it will converge.
+
+4 Experimental Results
+
+In this section, we evaluate prediction performance of the proposed method by applying it to Alzheimer’s Disease Neuroimaging Initiative (ADNI) cohort (adni.loni.usc.edu), where a wide range of imaging markers measured over a period of 2 years are examined and associated to cognitive scores that are relevant to AD.
+
+4.1 Data Descriptions
+
+We apply the proposed method to the ADNI cohort to predict the cognitive scores of the participants from each of their two types of imaging phenotypes, i.e. FreeSurfer markers and voxel-based morphometry (VBM) markers. The detailed information are shown in Table 1. Mean modulated gray matter measures obtained from 90 target regions of interest, normalized by the total intracranial volume, were extracted as features.
+
+4.2 Performance Comparison on the ADNI Cohort
+
+First, we intend to identify a certain set of informative markers that are closely relate to pathological change due to AD. We compared our method against three most related algorithms including multivariate ridge regression (RR), joint l2,1-norm minimization (l2,1) on both loss function and regularization [Nie et al., 2010], linear regression with trace norm. These comparing methods are all widely used in statistical learning and brain image analysis.
+
+In all experiments, we automatically tune the regularization parameters by selecting among the values {10r: r ∈ {−5, …, 5}} with standard 5-fold cross-validation strategy. After the algorithm converges, we sort the row index of matrix W by the summation of the absolute values in each row, and features are selected by the top ranked indices. To measure prediction performance, we compute the root mean square error (RMSE) between the predicted score and the ground truth.
+
+The prediction experiment evaluated by ridge regression is repeated for 100 times and average results are reported in Fig. 2. As shown in Fig. 2, we can clearly see that the prediction results of our method consistently outperforms other competing methods in nearly all the test cases for all the cognitive tasks except some outlier part in Fig. 2f. But it doesn’t really matter since the proposed method catches up soon. The reasons why the proposed method performs best go as follows: RR assumed the cognitive measures to be independent at different time point which neglects the correlations along the time. And for l2,1, since the pathological change of brain structures due to AD usually do not occur in the pre-identified regions with certain shapes, thus it is difficult to define meaningful feature groups. This makes l2,1 perform worse. Trace norm is a good way to seek the underlying interrelations between cognitive scores, but it ignores the fact that the informative markers relate to AD among all the imaging measures only occupy a small part. As for the proposed method, we not only detect group structure within longitudinal phenotypic neuroimaging markers, but also capture the correlations among cognitive measures. In addition, for ease of comparison, we also list the RMSE using top 10 and top 20 selected features evaluated by ridge regression in Table 2.
+
+4.3 Identification of Informative Markers
+
+The primary goal of the proposed method is to identify the informative markers which is important for AD diagnosis and prediction. Therefore, we examine the imaging markers selected by our method and show it in Fig. 3. Due to the limit size of display, we only provide one tenth of feature names for both FreeSurfer and VBM markers. As shown in Fig. 3, we observe that hippocampal measures (LHippocampus, RHippocampus, LHippVol and RHippVol) are among the top selected features. These findings are in accordance with the known knowledge that in the pathological pathway of AD, hippocampal is one of sections that can recognize Alzheimer-related changes [Braak and Braak, 1991; Delacourte et al., 1999].
+
+In summary, the identified neuroimaging markers are highly suggestive and effective for tracking the progression of AD, since it strongly agrees with the existing research findings. It also illustrates the necessity and correctness of the selected imaging cognitive associations to reveal the relationships between MRI measures and cognitive scores.
+
+5 Conclusion
+
+To reveal the relationship between cognitive measures and neuroimaging markers, we proposed a novel robust low-rank structured sparse regression model, which selects the most informative imaging markers to predict the cognitive scores for complex brain disorders. Using the new mixed structured sparsity inducing norms and the low-rank approximation function, the proposed method can efficiently identify the effective neuroimaging markers with utilizing the underlying interrelation structures between different cognitive measures. In addition, we provide an efficient algorithm with proved convergence. Validation experiments conducted on multiple data demonstrate the promise of the proposed method.
+
+This work was partially supported by the National Natural Science Foundation of China 61572388, and U.S. NIH R01 AG049371, NSF IIS 1302675, IIS 1344152, DBI 1356628, IIS 1619308, IIS 1633753.
+
+Figure 1 The sparse shrinkage patterns of matrix B imposed different structured sparsity-inducing norms: (a) l2,1-norm, (b) l2,1-norm + l1,1-norm, (c) l2,1-norm + l1,2-norm. Blue points represent the non-zero weights and white points represent the zero weights. In (b), the l1,1-norm suppresses the first feature selected by l2,1-norm. In (c), l1,2-norm will keep at least one non-zero weight for this feature, leading to the stable feature selection results.
+
+Figure 2 RMSE of four feature selection algorithms on different cognitive assessment scores.
+
+Figure 3 Heat maps of our learned weight matrices on different cognitive assessment scores.
+
+Table 1 Numbers of participants in the experiments using two different types of imaging markers
+
+Imaging phenotypes	#Total	#AD	#MCI	#HC	
+FreeSurfer	496	99	225	172	
+VBM	440	85	203	152	
+
+Table 2 Prediction performance measured by RMSE
+
+		RMSE of top 10 features	RMSE of top 30 features	
+	
+RR	l 2,1	Trace	Proposed	RR	l 2,1	Trace	Proposed	
+FreeSurfer	FLUENCY	0.8777	0.8849	0.8982	0.8328	0.9411	0.9145	0.9560	0.8710	
+RAVLT	0.8202	0.8073	0.8066	0.7685	0.8245	0.8132	0.8150	0.7726	
+TRAILS	0.8467	0.8471	0.8441	0.8110	0.8970	0.8820	0.8923	0.8302	
+	
+VBM	FLUENCY	0.8937	0.8937	0.8906	0.8639	0.9601	0.9501	0.9555	0.8891	
+RAVLT	0.8420	0.8682	0.8215	0.8610	0.8834	0.8779	0.8781	0.8459	
+TRAILS	0.8758	0.8899	0.8754	0.8667	0.9273	0.9297	0.9241	0.8719	
+
+
+Braak Heiko Braak Eva Neuropathological stageing of alzheimer-related changes Acta neuropathologica 82 4 239 259 1991 1759558
+Chang Xiaojun Yang Yi Semi-supervised feature analysis by mining correlations among multiple tasks IEEE transactions on neural networks and learning systems 2016
+Chang Xiaojun Ma Zhigang Yang Yi Zeng Zhiqiang Hauptmann Alexander G Bi-level semantic representation analysis for multimedia event detection IEEE transactions on cybernetics 47 5 1180 1197 2017 28113831
+Dailey Christina The impact of alzheimer’s disease-the silent killer JCCC Honors Journal 7 2 1 2017
+Delacourte A David JP Sergeant N Buee L Wattez A Vermersch P Ghozali F Fallet-Bianco C Pasquier F Lebert F The biochemical pathway of neurofibrillary degeneration in aging and alzheimer’s disease Neurology 52 6 1158 1158 1999 10214737
+Deng Cheng Lv Zongting Liu Wei Huang Junzhou Tao Dacheng Gao Xinbo Multi-view matrix decomposition: A new scheme for exploring discriminative information IJCAI 3438 3444 2015
+Huo Zhouyuan Shen Dinggang Huang Heng New multi-task learning model to predict alzheimer’s disease cognitive assessment International Conference on Medical Image Computing and Computer-Assisted Intervention 317 325 Springer 2016
+Ji Shuiwang Ye Jieping An accelerated gradient method for trace norm minimization Proceedings of the 26th annual international conference on machine learning 457 464 ACM 2009
+Jie Biao Zhang Daoqiang Cheng Bo Shen Dinggang Manifold regularized multitask feature learning for multimodality disease classification Human brain mapping 36 2 489 507 2015 25277605
+Lee Seunghak Zhu Jun Xing Eric P Adaptive multi-task lasso: with application to eQTL detection Advances in neural information processing systems 1306 1314 2010
+Liu Manhua Zhang Daoqiang Shen Dinggang Alzheimer’s Disease Neuroimaging Initiative Identifying informative imaging biomarkers via tree structured sparse learning for ad diagnosis Neuroinformatics 12 3 381 394 2014 24338729
+Liu Mingxia Zhang Daoqiang Shen Dinggang View-centralized multi-atlas classification for alzheimer’s disease diagnosis Human brain mapping 36 5 1847 1865 2015 25624081
+Moradi Elaheh Pepe Antonietta Gaser Christian Huttunen Heikki Tohka Jussi Alzheimer’s Disease Neuroimaging Initiative Machine learning framework for early mri-based alzheimer’s conversion prediction in mci subjects Neuroimage 104 398 412 2015 25312773
+Nie Feiping Huang Heng Cai Xiao Ding Chris H Efficient and robust feature selection via joint l2,1-norms minimization Advances in neural information processing systems 1813 1821 2010
+Nie Liqiang Zhang Luming Meng Lei Song Xuemeng Chang Xiaojun Li Xuelong Modeling disease progression via multisource multitask learners: A case study with alzheimer’s disease IEEE transactions on neural networks and learning systems 2016
+Obozinski Guillaume Taskar Ben Jordan Michael I Joint covariate selection and joint subspace selection for multiple classification problems Statistics and Computing 20 2 231 252 2010
+Thompson Paul M Hayashi Kiralee M De Zubicaray Greig Janke Andrew L Rose Stephen E Semple James Herman David Hong Michael S Dittmer Stephanie S Doddrell David M Dynamics of gray matter loss in alzheimer’s disease Journal of neuroscience 23 3 994 1005 2003 12574429
+Wang Hua Nie Feiping Huang Heng Risacher Shannon Ding Chris Saykin Andrew J Shen Li Sparse multi-task regression and feature selection to identify brain imaging predictors for memory performance International Conference on Computer Vision (ICCV) 557 562 IEEE 2011
+Wang Hua Nie Feiping Huang Heng Risacher Shannon Saykin Andrew J Shen Li Identifying ad-sensitive and cognition-relevant imaging biomarkers via joint classification and regression International Conference on Medical Image Computing and Computer-Assisted Intervention 115 123 Springer 2011
+Wang Xiaoqian Shen Dinggang Huang Heng Prediction of memory impairment with mri data: A longitudinal study of alzheimer’s disease International Conference on Medical Image Computing and Computer-Assisted Intervention 273 281 Springer 2016
+Yang Yanhua Deng Cheng Gao Shangqian Liu Wei Tao Dapeng Gao Xinbo Discriminative multi-instance multitask learning for 3d action recognition IEEE Transactions on Multimedia 19 3 519 529 2017

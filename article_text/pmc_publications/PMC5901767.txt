@@ -1,0 +1,452 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9713490
+21159
+Med Image Anal
+Med Image Anal
+Medical image analysis
+1361-8415
+1361-8423
+
+28551556
+5901767
+10.1016/j.media.2017.05.003
+NIHMS956795
+Article
+Multi-modal classification of neurodegenerative disease by progressive graph-based transductive learning
+Wang Zhengxia abf
+Zhu Xiaofeng be
+Adeli Ehsan b
+Zhu Yingying b
+Nie Feiping c
+Munsell Brent d
+Wu Guorong b
+for the ADNI and PPMI
+a Department of Information Science and Engineering, Chongqing Jiaotong University, Chongqing, 400074, PR China
+b Department of Radiology and BRIC, University of North Carolina at Chapel Hill, NC 27599, USA
+c School of Computer Science and Center for OPTical IMagery Analysis and Learning (OPTIMAL), Northwestern Polytechnical University, Xi’an 710072, Shaanxi, PR China
+d Department of Computer Science, College of Charleston, Charleston, SC 29424, USA
+e Department Computer Science and Information Engineering, Guangxi Normal University, Guilin, 541004, PR China
+f Department of Automation, Chongqing University, Chongqing, 400044, PR China
+4 4 2018
+13 5 2017
+7 2017
+16 4 2018
+39 218230
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Graph-based transductive learning (GTL) is a powerful machine learning technique that is used when sufficient training data is not available. In particular, conventional GTL approaches first construct a fixed inter-subject relation graph that is based on similarities in voxel intensity values in the feature domain, which can then be used to propagate the known phenotype data (i.e., clinical scores and labels) from the training data to the testing data in the label domain. However, this type of graph is exclusively learned in the feature domain, and primarily due to outliers in the observed features, may not be optimal for label propagation in the label domain. To address this limitation, a progressive GTL (pGTL) method is proposed that gradually finds an intrinsic data representation that more accurately aligns imaging features with the phenotype data. In general, optimal feature-to-phenotype alignment is achieved using an iterative approach that: (1) refines inter-subject relationships observed in the feature domain by using the learned intrinsic data representation in the label domain, (2) updates the intrinsic data representation from the refined inter-subject relationships, and (3) verifies the intrinsic data representation on the training data to guarantee an optimal classification when applied to testing data. Additionally, the iterative approach is extended to multi-modal imaging data to further improve pGTL classification accuracy. Using Alzheimer’s disease and Parkinson’s disease study data, the classification accuracy of the proposed pGTL method is compared to several state-of-the-art classification methods, and the results show pGTL can more accurately identify subjects, even at different progression stages, in these two study data sets.
+
+Graph-based transductive learning (GTL)
+Multi-modality
+Intrinsic representation
+Computer-assisted diagnosis
+
+1. Introduction
+
+In the elderly population, neurodegenerative diseases, such as Alzheimer’s diseases (AD) and Parkinson’s disease (PD), are the most common types of neurological disorders. Because of the progressive nature of these disorders, memory and other mental functions gradually worsen over time, which eventually affects the patients’ quality of life (Group, 2004; Reisberg et al., 2008; Thompson et al., 2007). Unfortunately, there is no cure for these neurodegenerative diseases, although treatments include medications and management strategies may improve the quality of life. Therefore, timely and accurate diagnosis of neurodegenerative diseases and its prodromal stage, i.e., mild cognitive impairment (MCI) for AD, is highly desired in practice. MCI stage can be further categorized into progressive MCI (pMCI) and stable MCI (sMCI). Since an overwhelming amount of literature exits (Mueller et al., 2005; Ohtsuka et al., 2013) that relate neurodegenerative impairments to morphological abnormalities in the brain, MRI studies that reveal the structural abnormalities of the brain, or PET and SPECT studies that reveal the functional abnormalities of the brain have been widely used. Furthermore, methods that combine structural and functional neuroimaging data have been used to guide computer aided diagnosis techniques (Long et al., 2012; Ohtsuka et al., 2013; Prashanth et al., 2014; Rana et al., 2014; Salvatore et al., 2014; Weiner et al., 2013). More specifically, a technique called OPLS (orthogonal partial least squares to latent structures) is used to distinguish subjects with AD and MCI from healthy controls by combing MRI and CSF data (Westman et al., 2012). Joint feature and sample selection methods based on SVM classification model for classification of AD and PD related diseases are also proposed in (Adeli et al., 2016; An et al., 2016). Other machine learning methods, such as kernel learning methods (Liu et al., 2014; Peng et al., 2016), subspace learning methods (Hu et al., 2016; Zhu et al., 2016), random forest (Gray et al., 2013b), deep learning (Liu et al., 2015a) and graph fusion (Tong et al., 2015; Wang et al., 2014a), have also been used to guide the classification of neurodegenerative diseases. However, morphological abnormalities are often subtle when compared to the high inter-subject variations (Zhu et al., 2013). Hence, sophisticated pattern recognition methods are of high demand to accurately identify individuals at different stages of neurodegenerative disease.
+
+On the other hand, medical imaging applications also have various challenges that are related to high feature dimensionality, large data heterogeneity, and the small number of samples with ground-truth labels (e.g., diagnosis scores). Furthermore, even if a large number of labeled samples exist, it is very difficult to identify a computational model that will work well with the entire set of data due to large inter-subject variations across individuals. Transductive learning is a semi-supervised learning (SSL) method, which is recently emerged in the machine learning domain, introducing a strategy halfway between supervised and unsupervised learning schemes to improve classification performance by exploring the relationship between both labeled and unlabeled samples (Adeli-Mosabbeb and Fathy, 2015; Joachims, 2003; Zhou and Burges, 2007; Zhu et al., 2005). Here, the labeled samples are used to guide the transductive learning, while the unlabeled samples are used to maintain the intrinsic geometric structure of the observed samples. In particular, the graph-based SSL takes advantage of computational efficiency and representational ease for the medical imaging data. Because of the graph structures, it is more efficient to integrate different types of data for better explanations of the clinical outcomes (Kim et al., 2013). Since graph is usually used to describe the data manifold, most of the proposed transductive learning methods fall to the category of graph-based transductive learning (Blum and Chawla, 2001; Zhou et al., 2004; Zhu et al., 2005).
+
+Graph-based transductive learning is widely used in image retrieval, image segmentation, data clustering and classification (Huang et al., 2014; Liu and Chang, 2009; Wang et al., 2014a; Zhang et al., 2015). For example, a fast and robust graph-based transductive learning method was proposed in (Zhang et al., 2015) by using a minimum tree cut, which was designed for large-scale web-spam detection and interactive image segmentation. Also, graph-based transductive learning methods have been investigated with great success in medical imaging area (Gao et al., 2015; Kim et al., 2013; Tong et al., 2015), since it can overcome the above difficulties by taking advantage of the data representation on unlabeled testing subjects. In the current state-of-the-art methods, each subject, regardless of being labeled or unlabeled, is often treated as a graph node. Then two subjects are connected by an edge in the graph if they both show similar morphological patterns. Using these connections, the labels can be propagated throughout the graph until all latent labels are determined. Typically, there are two separate steps in graph-based transductive learning methods: (1) construct the graph, where the vertices represent the labeled and unlabeled samples and the edges reflect the similarity degree between two connected samples (Zhu et al., 2005); and (2) propagate labels from labeled samples to unlabeled samples. Many current label propagation strategies have been proposed to determine the latent labels of testing subjects based on the inter-subject relationships encoded in the graph (Wang and Tsotsos, 2016; Zhang et al., 2015).
+
+The basic assumption of current methods is that the graph constructed in the observed feature domain represents the real data distribution and can be transferred to guide label propagation. However, this assumption usually does not hold, since the distribution of examples in the feature space does not necessarily cluster into groups as defined by the clinical scores and labels (Braak and Braak, 1995). Although the clinical scores and labels are different, they are highly correlated since the diagnosis is drawn upon the clinical score. Meanwhile, we believe the intrinsic data representation should be close or reflect the characteristic of the clinical score. Due to lack of ground truth, the underlying clinical score distribution used to validate the learned intrinsic data representation. As an example, Fig. 1(a) shows the affinity matrix of 51 AD and 52 NC subjects using the ROI-based features extracted from each MR image, where red dots and blue dots denote the high and low inter-subject similarities, respectively. Since the clinical data (e.g., MMSE and CDR scores (Thompson et al., 2007)) are more relevant with clinical labels, we use these clinical scores to construct another affinity matrix, as shown in Fig. 1(c). It is apparent that the data representations using imaging features and clinical scores are completely different. Thus, it is not guaranteed that the learned graph from the affinity matrix in Fig. 1(a) can effectively guide the classification of AD and NC subjects. More critically, the affinity matrix using observed image features is not even necessarily optimal in the feature domain, due to possible imaging noises and outlier subjects. In the literature, many studies have taken advantage of multi-modal information to improve discrimination power of transductive learning. However, the graphs from different modalities might also be different, as shown in the affinity matrices using structural image features from MR images (Fig. 1(a)) and functional image features from PET images (Fig. 1(b)). Although recent graph diffusion technique (Wang et al., 2014a) is effective in finding a common graph from multiple graphs, as shown in Fig. 1, it is hard to find a combination for the graphs in Figs. 1(a) and (b) that can be similar to the graph in Fig. 1(c), which is more related with the final classification task.
+
+To solve these issues, we propose a progressive graph-based transductive learning method to learn the intrinsic data representation for optimal label propagation. Specifically, the intrinsic data representation should be (a) in consensus with inter-subject relationships constructed by imaging features extracted from different modalities, (b) aligned with the clinical labels or scores, and (c) verified on the training data for label propagation. To that end, we simultaneously (1) refine the data representation (inter-subject graph) in the feature domain, (2) find the intrinsic data representation based on the constructed graphs on both multi-modal imaging data and the clinical labels of entire subject set (including known labels on training subjects and the tentatively-determined labels on testing subjects), and (3) propagate the clinical labels from training subjects to testing subjects, following the latest learned intrinsic data representation. Promising results have been achieved in identify subjects with neurodegenerative disease on two neurodegenerative databases (i.e., Alzheimer’s disease (AD) and Parkinson’s disease (PD)), each with two modality images (such as MR and PET/SPECT).
+
+The rest of this paper is organized as follows. Section 2 presents our proposed progressive graph-based transductive learning method. After that, we apply the method to the two real brain neurodegenerative imaging databases (ADNI and PPMI datasets1), and present the comparison results to validate the advantages of our method in Section 3. Finally, we conclude our method in Section 4.
+
+2. Method
+
+Suppose we have N subjects {I1, …, IP, IP+1, …, IN}, which sequentially consist of P training subjects and Q (Q = N − P) testing subjects. For P training subjects, the clinical labels FP = [fp]p=1, …,P are known, where each fp ∈ [0, 1]C is a binary coding vector indicating the clinical label from C classes. Our goal is to jointly determine the latent labels for Q testing subjects based on a set of their continuous likelihood vectors FQ = [fq]q=P+1, …,N, where each element in the vector fq indicates the likelihood of the q-th subject belonging to one of C classes. For convenience, we concatenate FP and FQ into a single label matrix F = [FPFQ].
+
+2.1. Graph-based transductive learning on single-modal imaging data
+
+Graph-based transductive learning learns over both labeled and unlabeled samples, aiming to harness the structure of entire data representation to improve the prediction of the latent labels. For clarity, we first extract single-modality image features from each subject Ii (i = 1, …, N), denoted as xi. Using measurement from each modality, a graph G = (V, E) can be constructed to model the relations among the N subjects, where the nodes V correspond to N subjects and the edges E are weighted by the similarities between linked subjects. In the conventional graph-based transductive learning methods, the inter-subject relationships are computed based on feature similarity, which is encoded in an N × N feature affinity matrix A. Each element aij (aij ≥ 0, i, j = 1, …, N) in A represents the feature affinity degree between xi and xj. Therefore, the graph construction can be divided into two steps: graph topology definition and edge weight computation.
+
+For the graph topology definition, current methods can be classified into two categories (de Sousa et al., 2013; Zhu et al., 2005): 1) Using the fully-connected graph. A fully-connected graph is created with edges between all pairs of nodes. Similar nodes have larger edge weights between them. In these methods, usually the weights of a fully-connected graph can be simply learned, but the computational cost is relatively high. 2) Using sparse graph. The k-nearest neighbor (kNN) graph and ε-neighborhood (εNN) graph are both the sparse graphs, in which each node connects to only a few nodes. Sparse graphs are computationally fast and can often provide good empirical performance. However, the neighborhood relationship changes with the change of hyperparameters. Hence, for the sake of generalizability, the kNN graphs are constructed for each modality in this paper.
+
+The most direct way to compute the weight matrix A (by defining the edge weight between each pair of nodes) is based on a given similarity measure; in practice, it generally redefines the weight matrix A by using different measures for better interpretability. Binary weighting is the simplest method for assigning edge weights, which is to set A = E directly (where E is a binary matrix, indicating if there is an edge between each pair of the nodes). Obviously, such a scheme cannot provide any extra information beyond the graph topology. RBF (Gaussian) kernel is one of the most common methods to assign edge weights for a graph. RBF kernel computes the similarity between xi and xj by aij = exp (−d(xi, xj)2/2σ2), where d(xi, xj) is a pair-wise similarity measure. For instance, pair-wise Euclidean distance can be used here. In addition, σ is a scale parameter (de Sousa et al., 2013; Zhu et al., 2005). In practice, one can employ any meaningful measure for defining edge weights, such as mutual information that has been successfully applied to brain and gene network modeling or detecting non-linear relationships (Plis et al., 2014). Additionally, some post-processing and optimization processes can also be used to efficiently weight the edges. These processes are often referred to as graph learning methods (Nie et al., 2014; Wang et al., 2014a). Without loss of generality, we select RBF kernel as the similarity measure to define the pair-wise affinity degree aij as: (1) aij=exp(-‖xi-xj‖222σ2)
+
+where σ is the scale controlling the exponential penalty strength of Euclidian distance between xi and xj. Based on the affinity matrix A, conventional methods determine the latent label for each testing subject Iq by solving a classic graph learning problem (Golub and Van Loan, 2012; Nocedal and Wright, 2006): (2) F^q=argminFq∑i,j=1N‖fi-fj‖22aij.
+
+As shown in Fig. 1, the affinity matrix A might not be closely related with the intrinsic data representation in the label domain. Therefore, it is necessary to find a hidden data representation which aligns with the clinical labels, rather than solely using the affinity matrix constructed based on imaging features. However, initially, labels on the testing subjects are not determined yet. In order to solve this chicken-and-egg dilemma, we propose to iteratively optimize the data representation of each observed imaging data and align the refined imaging data representations to a common space for reflecting the intrinsic data representation of phenotype data.
+
+2.2. Progressive graph-based transductive learning
+
+Instead of relying on the affinity matrix A, we propose to find an intrinsic data representation T = [tij]i,j= 1, …,N which is more relevant than using affinity matrix A to guide the label propagation in Eq. (2). Therefore, the problem of determining the latent label for each testing subject Iq becomes: (3) argminFq,T∑i,j=1N(‖fi-fj‖22tij)s.t.tij≥0,t′i1=1.
+
+where tij (tij ≥ 0, i, j = 1, …, N) denotes the latent intrinsic inter-subject relationship between subject Ii and Ij. Since the clinical labels on the testing subjects are unknown, joint optimization of latent clinical label Fq and hidden intrinsic data representation T in Eq. 3 is an ill-posed problem. In order to turn the energy function to a well-posed problem, we require that the latent intrinsic data representation T should respect the affinity matrix A as follows: (4) argminFq,T∑i,j=1N(‖fi-fj‖22tij+λ‖aij-tij‖22)s.t.tij≥0,t′i1=1.
+
+where aij is computed by Eq. 1. λ is the parameter controlling the influence of affinity matrix A on the estimation of T (intrinsic data representation). Since the affinity degree aij is computed based on the observed imaging data xi and xj, possible noisy/outlier features could bring a series of unrealistic feature similarities. In order to suppress the influence of noisy/outlier imaging features, we propose to estimate the optimal imaging data representation S = [sij]N×N based on the observed imaging features, where the regularization term is enforced on sij: (5) argminS∑i,j=1N{‖xi-xj‖22sij+ηsij2}s.t.sij≥0,s′i1=1.
+
+where η is the scalar controlling the strength of regularization term. Although the optimization of inter-subject relationship sij (in Eq. 5) and the calculation of affinity value aij (in Eq. 1) are both driven by the imaging features, the optimized inter-subject relationship sij is more robust than aij to the deteriorated imaging features. Hence, the edge weights are learned in the optimization process.
+
+By replacing the affinity degree aij with the optimal intersubject relationship sij, we jointly optimize the intrinsic data representation T, imaging data representation S, and the latent clinical label FQ in the following energy function: (6) argminS,T,F∑i,j=1N{μ‖fi-fj‖22tij+‖xi-xj‖22sij+ηsij2+λ‖sij-tij‖22}s.t.sij≥0,s′i1=1,tij≥0,t′i1=1,F=[FPFQ]
+
+where μ is the scalar balancing the data fitting terms from two different domains (i.e., the first and second terms in Eq. (6)). Note, sii and tii are required to be 0. The sum of inter-subject similarity degree of subject Ii to all other subjects equals to 1, i.e., si′1=1 and ti′1=1, where si and ti denote for the i-th column vectors of matrices S and T, respectively.
+
+2.3. Progressive graph-based transductive learning on multi-modal imaging data
+
+Recently, multi-modal neuroimaging data become more and more popular. For example, ADNI dataset provides a wide spectrum of neuroimaging data, which includes MR images and PET images. In order to improve the classification accuracy, we go one step further to extend our progressive graph-based transductive learning by fully using the complementary information in multimodal data.
+
+Suppose we have M modalities. For each subject Ii, we can extract multi-modal image features xim, m = 1, …, M. For the m-th modality, we can optimize the imaging data representation Sm of imaging data {xim}i=1,…,N. As shown in Figs. 1(a) and (b), the data representations across different modalities could be different. Thus, we require the intrinsic data representation T to be close to all Sm. To that end, we extend our above pGTL method from the single-modal to the multi-modal scenario: (7) argminSm,T,F∑i,j=1N{μ‖fi-fj‖22tij+∑m=1M[‖xim-xjm‖22sijm+η(sijm)2+λ‖sijm-tij‖22]}s.t.sijm≥0,(sim)′1=1,tij≥0,ti′1=1,F=[FPFQ].
+
+The intuition behind Eq. 7 is that the label propagation is steered by the hidden intrinsic data representation T. The criteria for obtaining reasonable estimation of T are: (1) T should be close to all imaging data representations Sm estimated from the observed imaging features { xim} (as shown in the last term in Eq. (7)), which eventually makes T act as a common space for S1, …, SM; and (2) the label propagation results should be in consensus with the labels on the known subjects (the first term in Eq. (7)) such that the intrinsic data representation is essentially aligned with the phenotype data. It is apparent that our energy function describes a highly dynamic system since the variables are all correlated to each other. In the following, we give the optimization solution to Eq. 7, which falls into a divide-and-conquer scenario.
+
+2.4. Optimization
+
+Fortunately, our proposed energy function in Eq. (7) is convex with respect to each of the variables Sm, T, and F. Thus, we can alternatively optimize one set of variables at a time by fixing other sets of variables. The optimization for each sub-problem is detailed below.
+
+2.4.1. Estimation of imaging data representation Sm for each modality
+
+Removing the unrelated terms w.r.t. Sm in Eq. (7), the optimization of Sm falls to the following objective function: (8) argminSm∑i,j=1N‖xim-xjm‖22sijm+η(sijm)2+λ∑i,j=1N‖sijm-tij‖22,s.t.sij≥0,(sim)′1=1,tij≥0,t′i1=1.
+
+Since Eq. (8) is independent of variables i and j, we further reformulate Eq. (8) in the vector form as below: (9) minsim‖sim+di2r1‖22s.t.sij≥0,s′i1=1.
+
+where di = [dij]j= 1, …,N is a column vector with each dij=‖xim-xjm‖2-2λtij, and r1 = η + λ. As shown in the Appendix, Eq. (9) has a closed-form solution. After we solve each sim, we can obtain the imaging data representation matrix Sm.
+
+2.4.2. Estimation of intrinsic data representation T
+
+Fixing Sm and F, the objective function w.r.t. T reduces to: (10) argminT∑i,j=1Nμ‖fi-fj‖22tij+λ∑m=1M∑i,j=1N(‖sijm-tij‖22),s.t.sij≥0,(sim)′1=1,tij≥0,t′i1=1.
+
+Similarly, we can reformulate Eq. (10) by solving each ti at a time: (11) argminti‖ti+hi2r2‖22s.t.tij≥0,t′i1=1.
+
+where hi = [hij]j= 1, …,N is a vector with each element hij=μ‖fi-fj‖22-2λ∑m=1Msim, and r2 = Mλ is a scalar. Similar to the solution for Eq. (9), the problem in Eq. (11) can also be solved using a closed-form solution. After solving each ti, we can obtain the affinity matrix T.
+
+2.4.3. Updating of latent labels FQ on testing subjects
+
+Given both Sw and T, the objective function for the latent label FQ can be derived from Eq. (3) as below: (12) minF∑i,j=1N‖fi-fj‖22tij,
+
+Eq. (12) is equal to the following problem: (13) minFtrace(FL′F′)=minFQtrace(FL′F′)
+
+where trace (.) denotes the matrix trace operator. L = diag(T) − (T′ + T)/2 is the Laplacian matrix of T (diag (T) denotes for the diagnial matrix of T). FP is with known clinical labels. By differentiating Eq. (13) w.r.t. F and letting the gradient equal to zero such as LF = 0, we can obtain the following equation: (14) [LPPLPQLQPLQQ][FPFQ]=0,
+
+where LPP, LPQ, LQP, and LQQ denote the top-left, top-right, bottom-left, and bottom-right blocks of L. The solution for FQ can be obtained by F̂Q = −(LQQ)−1LQPFP.
+
+The solution to the optimization problem in Eq. (7) is briefly summarized as follows.
+
+Algorithm 1 Progressive transductive learning on multi-modal imaging data.
+
+Input: Imaging data xim∣m=1,…,M, i = 1, …, N}, labels of labeled data FP ∈ RP×C, parameters η, λ and μ.	
+Output: Predicted labels of unlabeled data FQ ∈ RQ×C.	
+ Compute the Euclidean distance between samples in each modality;	
+ Initialize Sm using the affinity matrix Am, and initialize T by letting T=∑m=1MSm;	
+ Initialize FQ = {0}Q×C.	
+ while not converged do Update FQ, which is obtained by FQ = −(LQQ)−1 LQPFP and L is the Laplacian matrix of T.
+
+Update each imaging data representation Sm in a column by column manner, where the optimization of each column vector sim in the matrix Sm is shown in Eq. (9) and Appendix.
+
+Update affinity matrix T in a column by column manner, where the optimization of each column vector tim in the matrix Tm is shown in Eq. (11) and Appendix.
+
+	
+ end while	
+
+Discussion
+
+Taking MRI and PET modalities as example, Fig. 2 illustrates the optimization of Eq. (7) by alternating the following three steps. (1) Estimate each imaging data representation Sm, which depends on the observed imaging features { xim} and the currently estimated intrinsic data representation T (red arrows); (2) Estimate the intrinsic data representation T, which requires the estimations of both S1 and S2 and also the known clinical labels in the label domain (purple arrows); (3) Update the latent labels FQ on the testing subjects which needs guidance from the learned intrinsic data representation T (blue arrows). It is apparent that the intrinsic data representation T links the feature domain and label domain, which eventually leads to the dynamic graph learning model.
+
+3. Experiments
+
+In this study, we use two popular brain neurodegenerative databases i.e., the Alzheimer’s disease neuroimaging initiative(ADNI) database (http://adni.loni.ucla.edu) (Mueller et al., 2005) and the Parkinson’s progression marker initiative (PPMI) database (http://www.ppmi-info.org/data) (Marek et al., 2011), to compare our proposed method with some state-of-the-art methods, i.e., Support Vector Machine (SVM) (Suykens and Vandewalle, 1999), Safe Semi-Supervised Support Vector Machine(S4VM) (Li and Zhou, 2015), wellSVM (Li et al., 2013), supervised Joint Classification and Regression (JCR) (Wang et al., 2011), Canonical Correlation Analysis (CCA) based SVM (Thompson, 2005), Multi-Kernel SVM (MK-SVM) (Gōnen and Alpaydın, 2011), and Graph-based Transductive learning (GTL) (Zhu et al., 2003). Specifically, the brief introduction of each of these comparison methods is given as follows:
+
+SVM: Support Vector Machine is a parametrically kernel-based supervised learning method, which maps the data into a higher dimensional input space and constructs an optimal separating hyperplane in this space. In our experiment, we use linear kernel.
+
+S4VM: Safe Semi-Supervised Support Vector Machine is a semi-supervised learning approach that does not significantly reduce learning performance when unlabeled data are used. This method uses multiple low-density separators to approximate the ground-truth decision boundary and maximizes the improvement in performance of inductive SVMs for any candidate separator. S4VM is semi-supervised learning method that guarantees the performance improvement using unlabeled data will be maximized (Li and Zhou, 2015).
+
+wellSVM: wellSVM is a semi-supervised method via a novel label generation strategy (Li et al., 2013). It is focused on the problem of learning from weakly labeled data, where labels of the training examples are incomplete. This method assumes different weakly labeled scenarios; including (i) semi-supervised learning, where labels are partially known; (ii) multi-instance learning, where labels are implicitly known; and (iii) clustering, in which labels are completely unknown. In this paper we use the first case, i.e. semi-supervised learning, to compare with our proposed method.
+
+JCR: This sparse joint classification and regression method utilizes the sparse regularization to perform imaging biomarker selection and learn a sparse matrix under a unified framework that integrates both heterogeneous and homogenous tasks (Wang et al., 2011). In this paper we obtain the classification results using this unified framework that integrate both label and clinical score information.
+
+CCA-SVM: Canonical correlation analysis is used to find the mappings for aligning two distributions of sets of multivariate variables (vectors), which makes the correlation between the projected variables to be mutually maximized (Thompson, 2005) after mapping. Then, we train the SVM classifier based on the projected features.
+
+MK-SVM: Multi-Kernel SVM method adequately utilizes the particular characteristic of each source and provides more possibility to choose suitable kernels or their weighted combination especially for the data from multiple heterogeneous sources (Gōnen and Alpaydın, 2011). Each input has a kernel, and in this work a combination kernel (i.e., weighted sum of all kernels) is used to classify.
+
+GTL: Graph-based transductive learning method is a semi-supervised learning method. The affinity matrix is constructed only in the feature domain but fixed in label propagation. In this experiment, we use the code of classic graph-based learning method in (Zhu et al., 2003).
+
+For single-modality case, we only compare our proposed pGTL method with SVM method and GTL methods. For multiple-modality case, SVM, S4VM, wellSVM, JCR, CCA-SVM, MK-SVM, and GTL methods are used to compare with our pGTL method. Specifically, we apply SVM, S4VM, wellSVM, JCR, GTL methods to multimodal imaging data by concatenating the feature vectors from all modalities into a single feature vector.
+
+3.1. Experiments setting
+
+Evaluation measurements
+
+We evaluate the classification performance on four binary classification tasks:1) AD vs NC, 2) MCI (Mild Cognitive Impairment) vs NC, 3) pMCI (progressive MCI) vs sMCI (stable MCI), and 4) PD vs NC. A set of quantitative measurements, such as Accuracy (ACC), Sensitivity (SEN), Specificity (SPE), Positive Predictive Value (PPV), Negative Predictive Value (NPV) and Mean Predictive Value (MPV) are used to compare the classification performance of the competing methods in the experiments. Validation strategy. Specifically, we follow a 10-fold cross-validation strategy, in which for each testing fold, the nine other folds are used to train the models. This is repeated for all ten existing folds and the performance score are averaged over these ten runs to illustrate reliable non-over-fitted results. In order to narrow down the factors affecting the classification performance, no feature selection step is included. Parameter settings. For all competing methods, the best parameters are selected through an inner 5-fold cross-validation on the training data using a grid-search strategy. The important parameters (along with their explanations and the respective ranges) used in each classification method are summarized in Table 1.
+
+3.2. Experimental results on Alzheimer’s disease
+
+3.2.1. Subjects and image preprocessing
+
+In this study, we consider subjects with both MRI and PET modalities available in the ANDI database. As a result, we have 93 AD subjects, 202 MCI subjects, and 101 NC subjects. Specially, 55 pMCI subjects (who converted from MCI to AD in last 36 months) and63 sMCI subjects (who didn’t not convert to AD in both 24 months and 36 months) are included in pMCI vs sMCI classification. Each subject has both MR and 18-Fluoro-DeoxyGlucose PET (FDG-PET) images. The demographics of the subjects are detailed in Table 2.
+
+For each subject, we first align the PET image to the MR image space. Then we remove both the skull and cerebellum from MR image, and segment MR image into white matter, gray matter and cerebrospinal fluid (Wang et al., 2014b; Zhang et al., 2011). Next, we parcellate each subject image into 93 ROIs (Regions of Interest) by registering the template (with manual annotation of 93 ROIs) to the subject image domain. Of note, these 93 ROIs cover important cortical and sub-cortical regions in human brain. Finally, the gray matter volume and the mean PET intensity in each ROI are used and form a 186-dimensional feature vector.
+
+3.2.2. Experimental results of classification performance
+
+The classification performance by SVM, S4VM, wellSVM, JCR, CCA-SVM, MK-SVM, GTL and our proposed method are evaluated in three classification tasks (AD vs NC, MCI vs NC, and pMCI vs sMCI), respectively. Each task is conducted in both single-modal (MRI or PET) and multi-modal (MRI and PET) scenarios separately. Our proposed pGTL method achieves better classification performance compared to the other counterpart methods. Specifically, Table 3 shows the classification performance of the competing methods in the classification AD and NC. Our proposed pGTL method shows the best classification accuracies of 88.6%, 87.3% and 92.6% by using MRI, PET and (MRI + PET), respectively. Moreover, the performance improvements of classification accuracy over the second best counterpart method are 1.8% when using MRI only, 0.3% when using PET only, and 2.1% when using MRI + PET, respectively. Similarly, our proposed method achieves the best classification accuracy in MCI vs NC and pMCI vs sMCI tasks, as shown in Table 4 and Table 5, respectively.
+
+The comparisons with recently published state-of-the-art methods are reported in Table 6. It summarizes the subject information, imaging modality, and average classification accuracy by using state-of-the-art methods. These comparison methods represent various machine learning techniques. Since the classification are not reported between pMCI and sMCI groups in (Gray et al., 2013b; Liu et al., 2015c; Peng et al., 2016; Tong et al., 2015), between MCI and NC groups in (Trzepacz et al., 2014), we do not include the classification results and use ‘—-’ instead. Our method achieves higher classification accuracy than both random forest and graph fusion methods, even though those two methods use additional CSF and genetic information.
+
+Deep learning approach in (Liu et al., 2015b) learns feature representation in a layer-by-layer manner. Thus, it is time consuming to re-train the deep neural-network from scratch. Instead, our proposed method only uses handcrafted features for classification. It is noteworthy that we can complete the classification on a new dataset (including grid-search for parameter tuning) within three hours on a regular PC (8 CPU cores and 16GB memory), which is much more economic than massive training cost in (Liu et al., 2015b). Complementary information in multi-modal data can help improve the classification performance; therefore, in order to find the intrinsic data representation, we combine our proposed pGTL with multi-modal information.
+
+Besides, we also evaluate the classification performance w.r.t. the number of training samples using AD vs. NC classification as example, as shown in Fig. 3. It is clear that (1) our proposed method always has higher classification accuracy than MK-SVM methods; and (2) all methods can improve the classification accuracy as the number of training samples increases. It is worth noting that our proposed method achieves large improvement against MK-SVM, when only 33% of data is used as training samples. The reason is that the supervised methods require a sufficiently large number of samples (with labels) for training a robust classifier. Otherwise, the classification performance decreases rapidly. On the contrary, our proposed p GTL method can alleviate this issue by leveraging the data distribution of both labeled and unlabeled data. Since the training samples with known labels are expensive to collect in medical imaging area, this experiment indicates the potential of our method in current neuroimaging studies.
+
+To illustrate the representation of our method, confusion matrix is also introduced. Confusion matrix, also known as error matrix, is a specific table layout that allows visualization of the performance of an algorithm (Hay, 1988). In confusion matrix, each column of the matrix represents the instances in a predicted class while each row represents the instances in an actual class. The use of confusion matrix makes it easy to see if the system is confusing two classes.
+
+3.3. Experimental results on Parkinson’s disease
+
+3.3.1. Subject information and image preprocessing
+
+Recently, a major initiative, the Parkinson Progression Marker Initiative (PPMI) (PPMI, 2011), was developed to identify and validate PD progression markers. Abundant imaging data from the enrolled PD subjects at the earliest detectable stage of disease significantly enhances the potential to both identify PD imaging markers and develop computer-assisted diagnosis system for neuroprotective interventions (Beitz, 2014; Jankovic, 2008; Stern and Siderowf, 2010). PD subjects in the PPMI study are just diagnosed and unmediated. The healthy/normal control subjects are both age- and gender-matched with the PD patients. In this research, we use 369 PD and 165 NC subjects, each with both MRI and SPECT modalities.
+
+For MR images, a T1-weighted, 3D sequence (e.g., MPRAGE or SPGR) is acquired for each subject using 3T SIEMENS MAGNETON Trio Tim syngo scanners. The T1-weighted images were acquired for 176 sagittal slices with the following parameters: repetition time = 2300 ms, echo time = 2.98 ms, flip angle = 9°, and voxel size = 1 ×1 ×1 mm3. All the MR images were preprocessed by skull stripping (Wang et al., 2014b), cerebellum removal, and then segmented into white matter (WM), gray matter (GM), and cerebrospinal fluid (CSF) tissues (Lim and Pfefferbaum, 1989). The AAL atlas (Tzourio-Mazoyer et al., 2002), parcellated with 90 predefined regions of interest (ROI), was registered using HAMMER (Shen and Davatzikos, 2002) to each subject’s native space. We further added 8 more ROIs to the atlas in the basal ganglia and brainstem regions, which are clinically important ROIs for PD. These 8 ROIs are ‘superior cerebellar peduncle’, ‘midbrain’, ‘pons’ and ‘medulla oblongata’ in the brainstem, along with ‘substantia nigra’ (left and right) and ‘red nucleus’ (left and right). We then computed WM, GM and CSF tissue volumes in each of these 98 ROIs as features.
+
+To acquire SPECT images, the 123I-ilflupane neuroimaging radiopharmaceutical biomarker was injected, which binds to the dopamine transporters in the striatum. Brain images were then acquired. To process these images, the PPMI study has performed attenuation correction on the SPECT images, along with a standard 3D 6.0 mm Gaussian filter. Then, the images were normalized to standard Montreal Neurological Institute (MNI) space. Next, the transaxial slice with the highest striatal uptake was identified and the 8 hottest striatal slices around this slice were averaged, to generate a single slice image. On the averaged slice, the four caudate and putamen (left and right) ROIs, which are in the striatum brain region, were labeled and considered as target ROIs. The occipital cortex region was also segmented and used as a reference ROI. Count densities for the regions were used to calculate the striatal blinding ratios (SBRs), which were used as morphological signatures for SPECT images.
+
+3.3.2. Experimental results of classification performance
+
+We randomly select 165 subjects out of 369 PD subjects to evaluate the classification performance with another 165 NC subjects. This is used to make the data balanced. Moreover, to prevent any unintended bias in the results, the process of random selection is repeated 5 times, and the average value of the 5 times of reputation is used as the final result as shown in Fig. 5.
+
+In the single-modal MR image based classification of PD and NC subjects, the proposed method achieves the accuracy of 68.0%. Compared to other competing methods (S4VM, JCR, wellSVM, SVM and GTL) that achieve the accuracies of 58.0%, 58.8%, 58.4%, 58.5% and 62.2%, respectively, our proposed method improved by 10% over S4VM. For the case of using only SPECT images, the improvements of classification accuracy achieved by our pGTL method are less significant over other two methods (such as 95.4% by S4VM,94.2% by JCR, 95.3% by wellSVM, 94.9% by SVM, 95.9% by GTL, and 96.6% by our pGTL), due to the high sensitivity of features from SPECT images. In multi-modal (MRI + SPECT) classification scenario, the overall classification accuracies are 92.9% by S4VM, 82.2% by JCR, 87.2% by wellSVM, 88.5% by SVM, 90.3% by CCA-SVM, 94.2% by MK-SVM, 85.1% by GTL, and 97.4% by our proposed p GTL method. It is apparent that our proposed p GTL method has achieved the highest classification performance in both single-and multi-modal classification scenarios. Confusion matrix about classification performance for PD vs NC is showed in Fig. 4(d). Since the SPECT image provides only four features, high-sensitivity morphological patterns are nominated by the overwhelming less-discriminative imaging features from MRI. Thus, the overall classification accuracy of the competing methods (except pGTL) using both MRI and SPECT data are lower than only using SPECT data, indicating high importance of using the state-of-the-art multi-modal classification method to combine the powers of different modalities. It is noteworthy that, although our proposed method does not learn the weights for different modalities, the learning process of finding the intrinsic data representation can adaptively adjust the effect of different modalities. On the other hand, CCASVM and MK-SVM methods can find either maximum correlation or suitable weighted kernel between different imaging modalities, thus improving the classification accuracies up to 90.3% by CCASVM and 94.2% by MK-SVM, respectively. Compared to CCA-SVM and MK-SVM, our proposed pGTL method uses data representation of unlabeled samples to guide the classification in a semi-supervised manner, which is very effective in alleviating the issue of small sample size. Thus, our proposed pGTL method can achieve the highest classification accuracy in classifying PD and NC by using both MRI and SPECT data.
+
+3.4. Discussion
+
+Feature extraction and data representation are always the very important steps in many classification tasks. Specifically, in medical imaging applications, deficiency in the imaging devices will be reflected as noisy or redundant features for the latter processes, which will reduce the overall learning performance of the classification system. Feature selection aims to choose a small subset of the relevant features from the original ones according to certain relevance evaluation criteria. This usually leads to better performance, lower computational cost and better model interpretability (Tang et al., 2014). One possible strategy is to integrate the classic feature selection and our graph-based transductive classification, where the input to our method will be the optimized features, instead of features extracted from the whole brain. To verify the effectiveness of our proposed method, we use the selected features from MRI reported in (Adeli et al., 2016), and then combine them with the features from SPECT for obtaining even better performance (ACC: 97.5%). Furthermore, we can simultaneously select the best features and also learn the data representation by introducing an additional variable for measuring the importance of each observed feature. However, in this paper, we focused mainly on the graph-learning strategy, since feature selection schemes have been widely explored in the literature. It is important to note that our proposed method can learn the importance of each feature, through looking into the graph weights and regularizing the optimization objective to enforce the selection of a compact set of features. This is a direction for our future work.
+
+Lastly, biomarkers from different modalities provide complementary information, which is very useful for neurodegenerative disease diagnosis. However, it is clear that different modalities should be weighted differently. For example, the imaging features from SPECT in Section 3.3 have high-sensitivity morphological patterns; when SPECT features are weighted equally with less-discriminative imaging features from MRI, the classification performance of multi-modalities will be reduced, which can be seen in Fig. 4. In our method, we can adaptively learn a weight for each graph during the optimization. However, this will lead to some additional parameters to optimize in our proposed method. Hence, in the current implementation, we treat each imaging modality equally. In the future, we will try to adopt a strategy similar to Auto-weighted Multiple Graph Learning (AMGL) framework in our method to learn a set of weights automatically for all the graphs. This process will not need any additional parameters (Nie et al., 2016).
+
+4. Conclusion
+
+Here we presented a novel pGTL method that can accurately identify the different neurodegenerative stages for wide range of subjects, when applied to multi-modal imaging data. Compared to the conventional methods, the proposed method seeks to identify an intrinsic data representation that is simultaneously learned from the observed imaging features while also being validated on the training data with known phenotype labels. Since the learned intrinsic data presentation is more relevant to phenotype label propagation, the pGTL approach has shown promising results when performing AD vs NC, MCI vs NC, pMCI vs sMCI, and PD vs NC classification tasks when compared to several the state-of-the-art supervised and semi-supervised machine learning methods.
+
+Parts of the data used in preparation of this article were obtained from the Alzheimer’s disease Neuroimaging Initiative (ADNI) database (http://adni.loni.ucla.edu) and Parkinson’s Progressive Markers initiative (PPMI) database (http://www.ppmi-info.org). The investigators within the ADNI and PPMI contributed to the design and implementation of ADNI and PPMI and/or provided data but did not participate in analysis or writing this paper. A complete listing of ADNI investigators can be found at: http://adni.loni.ucla.edu/wp-content/uploads/howtoapply/ADNIAcknowledgementList.pdf.
+
+This work was supported in part by National Institutes of Health (NIH) grants (HD081467, EB006733, EB008374, EB009634, MH100217, AG041721, AG049371, AG042599, CA140413). Zhengxia Wang was supported in part by the National Natural Science Foundation of China (61273021), Scientific and Technological Research Program of Chongqing Municipal Education Commission (KJ1500501).
+
+Appendix A
+
+Lemma 1
+
+Eq. (9) has a closed form solution.
+
+For each i, the objective function in problem (8) is equal to the one in problem (9). The Lagrangian function of problem (9) is as follows (Duchi et al., 2008): (15) 12‖si+di2r1‖22-η(s′i1-1)-βi′si
+
+where η and βi ≥ 0 are the Lagrange multipliers to be determined. Differentiating with respect to sij and comparing to zero gives the optimality condition. And, according to KKT conditions (Boyd and Vandenberghe, 2004), we have the following equations: (16) {∀j,sij+dij2r1-η-βij=0∀j,sij≥0∀j,sijβij=0∀j,βij≥0
+
+The complementary slackness KKT condition implies that, whenever sij &gt; 0, we must have βij = 0, so sij=-dij2r1+η. If sij ≥ 0, it can be verified that the optimal solution sij should be
+
+(17) sij=(-dij2r1+η)+
+
+where (a)+ = max (0, a) is the positive part of the variable a.
+
+Therefore, the remaining problem is the estimation of η in Eq. 18. From Lemma 1 in (Duchi et al., 2008), suppose that di1, di2, …, diN are ordered from small to large. If the optimal si has only k nonzero elements, then according to Eq. (17), we know sik &gt; 0 and si,k +1 = 0. Therefore, we have
+
+(18) {-dik2r1+η&gt;0-di,k+12r1+η≤0
+
+According to Eq. (18) and the constraint si′1=1, we have
+
+(19) ∑j=1k(-dik2r1+η)=1=&gt;η=1k+12kr1∑j=1kdij
+
+After we solve each sim, we can obtain the affinity matrix Sm. The convergence of our algorithm is O (nlog n) (Duchi et al., 2008).
+
+Appendix B
+
+Table 7 IDs of the ADNI subjects.
+
+Categories	ID of subjects	
+AD(93)	1257, 221, 929, 1341, 547, 653, 316, 1339, 1354, 786, 3, 10, 53, 183, 712, 720, 699, 1161, 1205, 991, 1263, 286, 682, 213, 343, 642, 1109, 219, 543, 1171, 1307, 850, 1254, 836, 1056, 321, 554, 147, 400, 1037, 889, 1281, 1283, 1285, 341, 577, 760, 1001, 627, 1368, 1391, 1044, 474, 1371, 1373, 1379, 535, 690, 730, 565, 1090, 1164, 1397, 1402, 149, 470, 492, 1144, 743, 747, 1062, 777, 1157, 374, 979, 370, 891, 1221, 431, 754, 1382, 167, 216, 266, 740, 1409, 1430, 1201, 1290, 497, 438, 841, 1041	
+NC(101)	610, 484, 498, 731, 751, 842, 862, 67, 419, 420, 2, 5, 8, 16, 21, 23, 637, 1133, 502, 575, 359, 43, 55, 97, 883, 647, 14, 96, 130, 985, 1063, 74, 120, 843, 845, 866, 618, 95, 734, 741, 48, 555, 576, 672, 813, 1023, 327, 454, 467, 262, 898, 1002, 779, 818, 934, 768, 1099, 315, 311, 312, 386, 363, 489, 526, 171, 90, 352, 533, 534, 47, 967, 1013, 173, 416, 360, 648, 657, 506, 680, 259, 230, 245, 272, 500, 522, 863, 778, 232, 1200, 123, 319, 283, 301, 459, 686, 972, 1194, 1195, 1197, 1202, 1203	
+MCI(202)	1074, 1122, 222, 546, 1224, 675, 1130, 101, 128, 293, 344, 414, 698, 1030, 1199, 161, 422, 904, 326, 362, 861, 1282, 634, 917, 932, 1033, 1165, 1175, 240, 325, 860, 1120, 1186, 1275, 354, 590, 1028, 1092, 57, 80, 142, 155, 141, 178, 424, 626, 544, 924, 961, 1351, 1394, 1393, 1400, 256, 408, 461, 485, 914, 1038, 1073, 1215, 1218, 1318, 1384, 294, 214, 718, 978, 511, 513, 567, 723, 906, 33, 204, 292, 997, 656, 673, 748, 945, 976, 1135, 1240, 150, 377, 552, 566, 1078, 1421, 282, 314, 407, 446, 549, 598, 679, 721, 1010, 1260, 1411, 1412, 1418, 1420, 1423, 1425, 1346, 389, 621, 919, 464, 941, 957, 1007, 1217, 1265, 1294, 1299, 1211, 1380, 746, 909, 1357, 641, 531, 1188, 1314, 1398, 1417, 160, 51, 54, 291, 551, 880, 958, 1034, 892, 930, 995, 1154, 950, 1114, 1343, 378, 410, 1103, 1106, 1118, 361, 1243, 1315, 1322, 708, 709, 865, 1077, 112, 394, 925, 1032, 1210, 1419, 1427, 135, 138, 188, 200, 205, 225, 227, 258, 608, 715, 770, 947, 1043, 1406, 1407, 1408, 1204, 1246, 285, 289, 783, 409, 987, 695, 158, 443, 481, 669, 722, 800, 825, 994, 1414, 1426, 1245, 1378, 1295, 1311	
+pMCI(56)	54, 57, 101, 128, 141, 161, 204, 214, 222, 240, 256, 258, 289, 294, 325, 344, 394, 461, 511, 549, 567, 675, 695, 708, 723, 860, 861, 892, 904, 906, 930, 941, 947, 978, 987, 997, 1007, 1010, 1033, 1077, 1130, 1135, 1217, 1240, 1243, 1282, 1295, 1299, 1311, 1393, 1394, 1398, 1412, 1423, 1427	
+sMCI(63)	33, 142, 150, 158, 178, 188, 200, 225, 285, 291, 414, 464, 481, 544, 546, 598, 608, 621, 626, 634, 656, 673, 679, 698, 709, 715, 718, 746, 748, 770, 783, 800, 914, 919, 925, 932, 950, 961, 1028, 1032, 1034, 1103, 1114, 1118, 1120, 1122, 1165, 1175, 1186, 1211, 1215, 1218, 1246, 1260, 1314, 1378, 1380, 1384, 1414, 1417, 1418, 1419, 1421	
+
+Table 8 IDs of the PPMI subjects.
+
+Categories	ID of subjects	
+PD(369)	3001, 3002, 3006, 3010, 3012, 3014, 3018, 3020, 3021, 3023, 3024, 3026, 3027, 3028, 3051, 3052, 3054, 3056, 3059, 3060, 3061, 3062, 3066, 3067, 3068, 3076, 3077, 3078, 3080, 3081, 3083, 3086, 3088, 3089, 3102, 3105, 3107, 3108, 3111, 3113, 3116, 3118, 3119, 3120, 3122, 3123, 3124, 3125, 3126, 3127, 3128, 3129, 3130, 3131, 3132, 3134, 3150, 3154, 3166, 3167, 3168, 3173, 3174, 3175, 3176, 3178, 3179, 3181, 3182, 3184, 3185, 3190, 3251, 3252, 3253, 3254, 3267, 3268, 3269, 3272, 3275, 3278, 3279, 3280, 3281, 3282, 3284, 3285, 3288, 3290, 3305, 3307, 3308, 3309, 3311, 3314, 3321, 3322, 3323, 3325, 3327, 3328, 3332, 3352, 3354, 3359, 3360, 3364, 3365, 3366, 3367, 3371, 3372, 3373, 3374, 3375, 3376, 3377, 3378, 3380, 3383, 3385, 3386, 3387, 3392, 3406, 3407, 3409, 3413, 3415, 3417, 3418, 3419, 3420, 3421, 3422, 3423, 3429, 3430, 3432, 3433, 3434, 3435, 3436, 3440, 3443, 3444, 3445, 3446, 3448, 3451, 3454, 3455, 3459, 3461, 3462, 3467, 3469, 3470, 3471, 3472, 3473, 3475, 3476, 3482, 3500, 3501, 3502, 3504, 3505, 3506, 3507, 3514, 3516, 3522, 3528, 3530, 3532, 3536, 3540, 3542, 3552, 3556, 3557, 3558, 3559, 3564, 3567, 3574, 3575, 3577, 3584, 3585, 3586, 3587, 3588, 3589, 3591, 3592, 3593, 3601, 3603, 3604, 3605, 3606, 3607, 3608, 3609, 3612, 3616, 3617, 3621, 3622, 3625, 3628, 3629, 3630, 3631, 3632, 3633, 3634, 3638, 3650, 3653, 3654, 3657, 3659, 3660, 3661, 3664, 3665, 3666, 3700, 3702, 3710, 3752, 3753, 3757, 3758, 3760, 3762, 3763, 3764, 3770, 3771, 3775, 3776, 3777, 3778, 3780, 3781, 3787, 3788, 3789, 3800, 3802, 3808, 3814, 3815, 3818, 3819, 3822, 3823, 3824, 3825, 3826, 3827, 3828, 3829, 3830, 3831, 3832, 3833, 3834, 3835, 3837, 3838, 3863, 3866, 3868, 3869, 3870, 3900, 3903, 3904, 3905, 3910, 3911, 3914, 3916, 3951, 3953, 3954, 3957, 3958, 3960, 3961, 3962, 3963, 3964, 3970, 3972, 4001, 4005, 4006, 4012, 4013, 4019, 4020, 4021, 4022, 4024, 4025, 4026, 4027, 4029, 4030, 4033, 4034, 4035, 4037, 4038, 4051, 4052, 4054, 4055, 4056, 4057, 4058, 4059, 4061, 4065, 4069, 4070, 4071, 4072, 4073, 4074, 4075, 4076, 4077, 4078, 4091, 4092, 4093, 4094, 4096, 4098, 4099, 4101, 4102, 4103, 4106, 4107, 4108, 4109, 4110, 4111, 4112, 4113, 4114, 4115, 4117, 4121, 4122, 4123, 4126, 4135, 4136	
+NC(165)	3000, 3004, 3008, 3011, 3013, 3016, 3029, 3053, 3055, 3057, 3064, 3069, 3071, 3072, 3073, 3074, 3075, 3104, 3106, 3112, 3114, 3115, 3151, 3156, 3157, 3160, 3161, 3165, 3169, 3171, 3172, 3188, 3191, 3257, 3260, 3264, 3270, 3271, 3274, 3276, 3277, 3300, 3301, 3310, 3316, 3318, 3320, 3350, 3353, 3355, 3357, 3358, 3361, 3362, 3368, 3369, 3370, 3389, 3390, 3405, 3410, 3411, 3414, 3424, 3428, 3450, 3452, 3453, 3457, 3464, 3466, 3468, 3478, 3479, 3480, 3481, 3503, 3515, 3517, 3518, 3519, 3521, 3523, 3525, 3526, 3527, 3541, 3544, 3551, 3554, 3555, 3563, 3565, 3569, 3570, 3571, 3572, 3600, 3611, 3614, 3615, 3619, 3620, 3624, 3627, 3635, 3636, 3637, 3651, 3656, 3658, 3662, 3668, 3750, 3756, 3759, 3765, 3767, 3768, 3769, 3779, 3803, 3804, 3805, 3806, 3807, 3811, 3812, 3813, 3816, 3817, 3850, 3851, 3852, 3853, 3854, 3855, 3857, 3859, 3901, 3907, 3908, 3917, 3950, 3952, 3955, 3959, 3965, 3966, 3967, 3968, 3969, 4004, 4010, 4018, 4032, 4067, 4079, 4090, 4100, 4104, 4105, 4116, 4118, 4139	
+
+Fig. 1 Affinity matrices using structural image features (a), functional image features (b), and clinical scores (c). Bright dots and dark dots indicate the high and low inter-subject similarities, respectively.
+
+Fig. 2 The dynamic procedure of the proposed pGTL method. See text for details.
+
+Fig. 3 Classification accuracy as a function of the number of training samples used.
+
+Fig 4 Confusion matrix of classification results for proposed pGTL method.
+
+Fig. 5 Comparison of PD/NC classification performance of the competing methods.
+
+Table 1 Parameters and their explanations and respective ranges in competing methods.
+
+Method	Parameters	Range	
+SVM	Regularization parameter controlling the margin	[10−3,10−3]	
+S4VM	Weight for the hinge loss of labeled and unlabeled instance	[10−2, 102]	
+wellSVM	Regularization parameter for labeled and unlabeled data	[10−2, 102]	
+JCR	Regularization parameter	[10−5, 105]	
+MK-SVM	Weight to blend two kernels	[0.1,0.9]	
+GTL	Exponential decay factor σ in computing affinity degree (Eq. 1)	[2−5,25]	
+pGTL	μ, η, λ, regularizing and balancing parameters in Eq. 7	[103,10−3]	
+
+Table 2 Demographic information of the subjects from the ADNI dataset. (SD: standard deviation).
+
+	Female/male	Age (mean ± SD)[min-max]	Education (mean ± SD)[min-max]	
+AD (93)	36/57	75.38 ±7.4 [55–88]	14.66 ±3.2 [4–20]	
+MCI (202)	66/136	75.06 ±7.1 [55–88]	15.71 ±2.9 [7–20]	
+NC (101)	39/62	75.82 ±4.8 [62–86]	15.82 ±3.2 [7–20]	
+pMCI (55)	20/35	75.04 ±6.7 [57–88]	16.00 ±2.6 [12–20]	
+sMCI (63)	18/45	76.48 ±6.7 [61–86]	15.46 ±3.0 [7–20]	
+
+Table 3 Comparison of AD/NC classification performance of the competing methods.
+
+Modal	Method	ACC (%)	SEN (%)	SPE (%)	PPV (%)	NPV (%)	MPV (%)	
+MRI	S4VM	86.1 ±0.91	81.3 ±1.55	90.4 ±0.96	89.3 ±0.88	84.9 ±1.01	85.9 ±0.92	
+JCR	80.5 ±1.57	78.4 ±1.57	82.4 ±3.02	81.6 ±2.82	81.5 ±1.25	80.4 ±1.44	
+wellSVM	86.5 ±6.25	80.0 ±12.6	91.8 ±5.16	88.9 ±6.12	85.6 ±8.20	85.9 ±6.73	
+SVM	86.5 ±1.38	82.2 ±1.52	90.4 ±1.55	89.6 ±1.49	85.7 ±1.32	85.7 ±1.37	
+GTL	86.8 ±0.22	83.6 ±1.25	89.8 ±0.93	89.2 ±0.90	86.6 ±0.99	86.6 ±0.26	
+pGTL	88.6 ±1.69	86.6 ±2.14	90.5 ±1.50	90.3 ±1.66	88.8 ±1.74	88.5 ±1.68	
+PET	S4VM	86.1 ±1.26	85.3 ±1.61	86.9 ±1.89	86.8 ±2.01	87.7 ±1.39	86.1 ±1.28	
+JCR	83.5 ±2.12	80.3 ±3.15	86.4 ±2.49	85.6 ±2.81	83.9 ±2.23	83.4 ±2.13	
+wellSVM	87.0 ±4.83	84.4 ±7.77	89.1 ±5.75	86.7 ±6.36	87.8 ±5.76	86.8 ±4.95	
+SVM	86.0 ±1.70	84.3 ±2.69	87.6 ±1.57	87.4 ±1.53	86.9 ±2.05	85.9 ±1.73	
+GTL	85.0 ±1.20	83.6 ±2.21	86.3 ±0.65	86.3 ±0.67	86.2 ±1.77	85.0 ±1.23	
+pGTL	87.3 ±1.47	86.9 ±2.20	87.6 ±1.93	87.5 ±1.82	88.9 ±1.72	87.3 ±1.45	
+MRI + PET	S4VM	88.8 ±1.30	87.2 ±2.16	90.3 ±1.08	90.0 ±1.41	89.3 ±2.00	88.7 ±1.27	
+JCR	87.7 ±1.73	86.7 ±3.18	88.7 ±1.67	88.9 ±1.63	88.9 ±2.08	87.7 ±1.79	
+wellSVM	90.5 ±5.50	87.8 ±8.19	92.7 ±7.17	91.4 ±8.13	90.6 ±5.97	90.3 ±5.55	
+SVM	86.7 ±1.42	85.5 ±2.05	87.9 ±1.54	87.7 ±1.61	87.9 ±1.78	86.7 ±1.44	
+CCA-SVM	89.1 ±1.57	87.6 ±2.02	90.5 ±1.25	90.4 ±1.38	89.5 ±1.81	89.1 ±1.57	
+MK-SVM	90.0 ±1.03	89.1 ±1.53	90.7 ±1.28	90.7 ±1.13	90.8 ±1.24	89.9 ±1.01	
+GTL	88.2 ±1.08	86.7 ±1.84	89.6 ±1.23	89.3 ±1.29	89.1 ±1.37	88.2 ±1.07	
+pGTL	92.6 ±0.65	92.2 ±1.34	92.9 ±1.37	92.9 ±1.36	93.3 ±1.20	92.5 ±0.71	
+
+Table 4 Comparison of MCI/NC classification performance of the competing methods.
+
+Modal	Method	ACC (%)	SEN (%)	SPE (%)	PPV (%)	NPV (%)	MPV (%)	
+MRI	S4VM	66.3 ± 1.28	80.1 ± 2.13	38.7 ± 5.85	72.5 ± 1.59	49.9 ± 2.10	59.4 ± 2.23	
+	JCR	65.4 ± 2.17	81.4 ± 3.86	33.4 ± 8.00	71.5 ± 2.10	46.9 ± 6.39	57.4 ± 3.07	
+	wellSVM	68.8 ± 4.53	73.2 ± 4.52	60.0 ± 7.66	78.6 ± 3.65	52.9 ± 6.13	66.6 ± 5.03	
+	SVM	68.7 ± 1.39	85.2 ± 1.16	35.9 ± 4.91	72.9 ± 1.35	59.6 ± 3.18	59.6 ± 2.19	
+	GTL	69.4 ± 1.14	79.8 ± 3.89	48.7 ± 9.10	77.0 ± 2.66	56.2 ± 4.47	56.3 ± 2.82	
+	pGTL	70.7 ± 0.81	86.3 ± 2.40	39.6 ± 6.08	75.0 ± 1.42	58.7 ± 4.08	62.9 ± 1.99	
+PET	S4VM	68.2 ± 1.27	83.9 ± 1.65	36.9 ± 2.17	73.0 ± 0.88	51.9 ± 4.70	60.4 ± 1.33	
+	JCR	66.6 ± 1.39	78.7 ± 1.46	42.3 ± 3.16	73.3 ± 1.16	50.8 ± 3.19	60.5 ± 1.69	
+	wellSVM	68.2 ± 5.76	80.5 ± 14.2	43.6 ± 23.3	75.1 ± 6.25	56.5 ± 18.3	62.0 ± 7.43	
+	SVM	66.5 ± 1.14	83.1 ± 2.84	33.5 ± 6.27	71.9 ± 1.29	50.2 ± 3.69	58.3 ± 3.69	
+	GTL	69.9 ± 0.83	80.1 ± 1.63	49.8 ± 4.07	77.0 ± 1.44	57.0 ± 2.73	64.9 ± 1.48	
+	pGTL	72.5 ± 0.76	85.7 ± 1.52	46.1 ± 3.93	76.7 ± 0.96	63.3 ± 3.59	65.9 ± 1.44	
+MRI+ PET	S4VM	69.5 ± 2.17	83.9 ± 2.46	40.6 ± 4.37	74.2 ± 1.63	57.8 ± 3.57	62.3 ± 2.53	
+	JCR	67.8 ± 1.62	78.5 ± 3.02	46.5 ± 3.96	74.8 ± 1.30	52.7 ± 2.49	62.5 ± 1.64	
+	wellSVM	70.6 ± 4.05	86.8 ± 3.98	38.2 ± 10.3	73.9 ± 3.21	58.9 ± 10.3	62.5 ± 5.27	
+	SVM	69.2 ± 1.40	84.2 ± 1.19	39.1 ± 5.04	73.6 ± 1.37	57.6 ± 3.12	61.6 ± 2.22	
+	CCA-SVM	70.0 ± 2.15	81.7 ± 2.08	46.8 ± 4.97	75.4 ± 1.76	56.1 ± 4.21	64.2 ± 2.69	
+	MK-SVM	72.6 ± 1.98	72.2 ± 2.26	72.9 ± 2.07	74.0 ± 1.76	72.7 ± 2.40	72.6 ± 1.98	
+	GTL	71.9 ± 0.94	92.8 ± 0.93	29.9 ± 2.31	72.8 ± 0.68	67.9 ± 3.00	61.3 ± 1.19	
+	pGTL	78.9 ± 1.80	85.5 ± 2.19	66.3 ± 3.39	83.8 ± 1.34	71.6 ± 4.16	75.9 ± 2.02	
+
+Table 5 Comparison of pMCI/sMCI classification performance of the competing methods.
+
+Modal	Method	ACC (%)	SEN (%)	SPE (%)	PPV (%)	NPV (%)	MPV (%)	
+MRI	S4VM	54.4 ± 2.28	47.2 ± 6.43	60.9 ± 4.87	51.8 ± 4.41	57.5 ± 2.91	54.4 ± 2.53	
+JCR	56.8 ± 1.75	51.9 ± 4.20	61.0 ± 2.80	54.5 ± 3.71	59.9 ± 1.89	56.5 ± 1.95	
+wellSVM	60.9 ± 7.48	46.0 ± 13.5	73.3 ± 8.61	58.7 ± 10.4	62.3 ± 6.29	59.7 ± 7.77	
+SVM	57.1 ± 2.62	47.9 ± 6.34	65.1 ± 4.70	55.4 ± 3.40	59.6 ± 3.20	56.5 ± 2.66	
+GTL	63.2 ± 3.31	53.1 ± 5.48	72.1 ± 2.69	62.1 ± 5.11	64.7 ± 3.17	63.2 ± 3.52	
+pGTL	65.8 ± 2.06	61.6 ± 5.88	69.8 ± 5.42	67.4 ± 3.36	70.4 ± 3.78	65.7 ± 2.03	
+PET	S4VM	60.1 ± 2.66	49.3 ± 5.80	69.5 ± 3.00	59.5 ± 5.59	62.1 ± 2.62	59.4 ± 2.95	
+JCR	66.3 ± 3.04	61.9 ± 4.58	70.0 ± 5.52	65.1 ± 4.77	69.5 ± 2.79	65.9 ± 2.94	
+wellSVM	68.2 ± 12.3	68.0 ± 13.9	68.3 ± 18.3	66.8 ± 16.8	72.1 ± 13.2	68.2 ± 12.0	
+SVM	64.8 ± 2.43	52.7 ± 4.26	75.6 ± 4.10	68.2 ± 4.61	65.3 ± 1.63	64.1 ± 2.37	
+GTL	67.7 ± 1.27	57.8 ± 2.85	76.5 ± 2.33	68.7 ± 2.86	67.8 ± 1.37	67.7 ± 1.31	
+pGTL	69.7 ± 2.06	52.6 ± 4.41	84.4 ± 3.61	79.3 ± 3.89	68.4 ± 2.00	68.5 ± 2.21	
+MRI+ PET	S4VM	63.1 ± 2.35	49.9 ± 1.10	74.4 ± 3.43	63.4 ± 2.39	63.3 ± 1.81	62.1 ± 2.12	
+JCR	66.6 ± 4.15	61.8 ± 5.06	70.8 ± 4.38	67.0 ± 5.30	68.4 ± 4.28	66.3 ± 4.19	
+wellSVM	69.1 ± 9.77	72.0 ± 13.9	66.7 ± 13.6	65.2 ± 12.9	74.9 ± 11.1	69.3 ± 9.76	
+SVM	68.6 ± 2.14	59.8 ± 13.7	76.8 ± 11.7	74.1 ± 11.3	69.3 ± 5.15	68.3 ± 2.64	
+CCA-SVM	67.4 ± 1.20	42.6 ± 3.97	88.7 ± 3.42	77.5 ± 5.08	64.3 ± 0.79	65.7 ± 1.36	
+MK-SVM	68.0 ± 1.63	43.0 ± 3.18	89.8 ± 1.36	81.2 ± 2.48	65.1 ± 1.46	66.4 ± 1.95	
+GTL	69.7 ± 1.70	60.6 ± 3.28	77.9 ± 3.28	71.9 ± 3.30	69.4 ± 1.54	69.7 ± 1.80	
+pGTL	76.7 ± 1.76	66.8 ± 3.09	85.0 ± 3.26	80.8 ± 3.37	76.9 ± 1.77	75.9 ± 1.88	
+
+Table 6 Comparison with the classification accuracies reported in the literatures (%), ‘—-’ represents the results are not reported in these papers.
+
+Method	Subject information	Modality	AD/NC	MCI/NC	p/sMCI	
+Modal-fusion1 (Westman et al., 2012)	96AD+ 162MCI + 111NC	MRI+ CSF	91.8	77.6	68.5	
+Modal-fusion2 (Trzepacz et al., 2014)	20pMCI+ 30sMCI	MRI+ PET	—-	—-	76	
+HMFSS (An et al., 2016)	165AD+ 342MCI + 195NC	MRI+ SNP	90.8	77.6	78.3	
+Kernel learning (Peng et al., 2016)	49AD+ 93MCI + 47NC	MRI+ PET	92.3	76.4	—-	
+Feature-trans (Zhu et al., 2015)	198AD+ 403MCI + 229NC	MRI-HOG+ MRI-ROI	89.9	75.2	72.1	
+Random forest (Gray et al., 2013a)	37AD+ 75MCI + 35NC	MRI+ PET + CSF + Genetic	89.0	74.6	—-	
+Graph fusion (Tong et al., 2015)	35AD+ 75MCI + 77NC	MRI+ PET + CSF + Genetic	91.8	79.5	—-	
+Deep learning (Liu et al., 2015b)	85AD+ 169MCI + 77NC	MRI+ PET	91.4	82.1	—-	
+Our method	99AD+ 202MCI + 101NC	MRI+ PET	92.6	78.6	76.7	
+
+1 Alzheimer’s disease Neuroimaging Initiative (ADNI), and Parkinson’s Progressive Markers initiative (PPMI)
+
+
+Adeli-Mosabbeb E Fathy M 2015 Non-negative matrix completion for action detection Image Vision Comput 39 38 51
+Adeli E Shi F An L Wee C-Y Wu G Wang T Shen D 2016 Joint feature-sample selection and robust diagnosis of Parkinson’s disease from MRI data NeuroImage
+An L Adeli E Liu M Zhang J Shen D 2016 Semi-supervised hierarchical multimodal feature and sample selection for Alzheimer’s disease diagnosis International Conference on Medical Image Computing and Computer-Assisted Intervention Springer 79 87
+Beitz J 2014 Parkinson’s disease: a review Front Biosci 6 65 74
+Blum A Chawla S 2001 Learning from labeled and unlabeled data using graph mincuts
+Boyd S Vandenberghe L 2004 Convex Optimization Cambridge University Press
+Braak H Braak E 1995 Staging of Alzheimer’s disease-related neurofibrillary changes Neurobiol Aging 16 271 278 7566337
+de Sousa CAR Rezende SO Batista GE 2013 Influence of graph construction on semi-supervised learning Machine Learning and Knowledge Discovery in Databases Springer 160 175
+Duchi J Shalev-Shwartz S Singer Y Chandra T 2008 Efficient projections onto the l 1-ball for learning in high dimensions Proceedings of the 25th International Conference on Machine learning ACM 272 279
+Gao Y Adeli-M E Kim M Giannakopoulos P Haller S Shen D 2015 Medical image retrieval using multi-graph learning for MCI diagnostic assistance Medical Image Computing and Computer-Assisted Intervention–MICCAI 2015 Springer 86 93
+Golub GH Van Loan CF 2012 Matrix Computations JHU Press
+Gōnen M Alpaydın E 2011 Multiple kernel learning algorithms J Mach Learn Res 12 2211 2268
+Gray K Aljabar P Heckemann R Hammers A Rueckert D 2013a Random forest-based similarity measures for multi-modal classification of Alzheimer’s disease Neuroimage 65 167 175 23041336
+Gray KR Aljabar P Heckemann RA Hammers A Rueckert D Initiative A.s.D.N 2013b Random forest-based similarity measures for multi-modal classification of Alzheimer’s disease Neuroimage 65 167 175 23041336
+Group PS 2004 Levodopa and the progression of Parkinson’s disease N Engl J Med 2004 2498 2508
+Hay A 1988 The derivation of global estimates from a confusion matrix Int J Remote Sens 9 1395 1398
+Hu C Sepulcre J Johnson KA Fakhri GE Lu YM Li Q 2016 Matched signal detection on graphs: theory and application to brain imaging data classification Neuroimage 125 587 600 26481679
+Huang L Liu Y Liu X Wang X Lang B 2014 Graph-based active semi-supervised learning: A new perspective for relieving multi-class annotation labor, multimedia and expo (ICME) 2014 IEEE International Conference on IEEE 1 6
+Jankovic J 2008 Parkinson’s disease: clinical features and diagnosis J Neurol Neurosurg Psychiatry 79 368 376 18344392
+Joachims T 2003 Transductive learning via spectral graph partitioning ICML 290 297
+Kim D Kim S Risacher SL Shen L Ritchie MD Weiner MW Saykin AJ Nho K 2013 A graph-based integration of multimodal brain imaging data for the detection of early mild cognitive impairment (E-MCI) MICCAI
+Li YF Tsang IW Kwok JT Zhou ZH 2013 Convex and scalable weakly labeled SVMs J Mach Learn Res 14 2151 2188
+Li YF Zhou ZH 2015 Towards making unlabeled data never hurt IEEE Trans Pattern Anal Mach Intell 37 175 188 26353217
+Lim KO Pfefferbaum A 1989 Segmentation of MR brain images into cerebrospinal fluid spaces, white and gray matter J Comput Assist Tomogr 13 588 593 2745775
+Liu F Zhou L Shen C Yin J 2014 Multiple kernel learning in the primal for multimodal Alzheimer’s disease classification Biomed Health Inf, IEEE J 18 984 990
+Liu S Liu S Cai W Che H Pujol S Kikinis R Feng D Fulham MJ 2015a Multimodal neuroimaging feature learning for multiclass diagnosis of Alzheimer’s disease IEEE Trans Biomed Eng 62 1132 1140 25423647
+Liu S Liu S Cai W Che H Pujol S Kikinis R Feng D Fulham MJ 2015b Multimodal neuroimaging feature learning for multiclass diagnosis of Alzheimer’s disease IEEE Trans Biomed Eng 62 1132 1141 25423647
+Liu S Liu S Cai W Che H Pujol S Kikinis R Feng D Fulham MJ 2015c Multimodal neuroimaging feature learning for multiclass diagnosis of Alzheimer’s disease Biomed Eng, IEEE Trans 62 1132 1140
+Liu W Chang S-F 2009 Robust multi-class transductive learning with graphs IEEE Conference on Computer Vision and Pattern Recognition
+Long D Wang J Xuan M Gu Q Xu X Kong D Zhang M 2012 Automatic classification of early Parkinson’s disease with multi-modal MR imaging PLoS One 7 e47714 23152757
+Marek K Jennings D Lasch S Siderowf A Tanner C Simuni T Coffey C Kieburtz K Flagg E Chowdhury S 2011 The Parkinson progression marker initiative (PPMI) Prog Neurobiol 95 629 635 21930184
+Mueller SG Weiner MW Thal LJ Petersen RC Jack C Jagust W Trojanowski JQ Toga AW Beckett L 2005 The Alzheimer’s disease neuroimaging initiative Neuroimaging Clin N Am 15 869 877 16443497
+Nie F Li J Li X 2016 Parameter-free auto-weighted multiple graph learning: a framework for multiview clustering and semi-supervised classification International Joint Conferences on Artificial Intelligence
+Nie F Wang X Huang H 2014 Clustering and projected clustering with adaptive neighbors Proceedings of the 20th ACM SIGKDD international conference on Knowledge discovery and data mining ACM 977 986
+Nocedal J Wright S 2006 Numerical Optimization Springer Science &amp; Business Media
+Ohtsuka C Sasaki M Konno K Koide M Kato K Takahashi J Takahashi S Kudo K Yamashita F Terayama Y 2013 Changes in substantia nigra and locus coeruleus in patients with early-stage Parkinson’s disease using neuromelanin-sensitive MR imaging Neurosci Lett 541 93 98 23428505
+Peng J An L Zhu X Jin Y Shen D 2016 Structured sparse kernel learning for imaging genetics based Alzheimer’s disease diagnosis International Conference on Medical Image Computing and Computer-Assisted Intervention Springer 70 78
+Plis SM Sui J Lane T Roy S Clark VP Potluru VK Huster RJ Michael A Sponheim SR Weisend MP 2014 High-order interactions observed in multi-task intrinsic networks are dominant indicators of aberrant brain function in schizophrenia Neuroimage 102 35 48 23876245
+PPMI, PPMI 2011 The Parkinson Progression Marker Initiative (PPMI) Prog Neurobiol 95 629 635 21930184
+Prashanth R Roy SD Mandal PK Ghosh S 2014 Automatic classification and prediction models for early Parkinson’s disease diagnosis from SPECT imaging Expert Syst Appl 41 3333 3342
+Rana B Juneja A Saxena M Gudwani S Kumaran S Behari M Agrawal R 2014 A machine learning approach for classification of Parkinson’s disease and controls using T1-weighted MRI Mov Disord 29 S88 S89
+Reisberg B Ferris SH Kluger A Franssen E Wegiel J de Leon MJ 2008 Mild cognitive impairment (MCI): a historical perspective Int Psychogeriatr 20 18 31 18031593
+Salvatore C Cerasa A Castiglioni I Gallivanone F Augimeri A Lopez M Arabia G Morelli M Gilardi M Quattrone A 2014 Machine learning on brain MRI data for differential diagnosis of Parkinson’s disease and progressive supranuclear palsy J Neurosci Methods 222 230 237 24286700
+Shen D Davatzikos C 2002 HAMMER: hierarchical attribute matching mechanism for elastic registration Med Imaging, IEEE Trans 21 1421 1439
+Stern M Siderowf A 2010 Parkinson’s at risk syndrome: can Parkinson’s disease be predicted? Mov Disord 25 S89 S93 20187248
+Suykens JA Vandewalle J 1999 Least squares support vector machine classifiers Neural Process Lett 9 293 300
+Tang J Alelyani S Liu H 2014 Feature selection for classification: a review Data Classification: Algorithms and Applications 37
+Thompson B 2005 Canonical correlation analysis Encycl Stat Behav Sci
+Thompson PM Hayashi KM Dutton RA Chiang MC MDADL Sowell ER Zubicaray Gd Becker JT Lopez OL Aizenstein HJ Toga AW 2007 Tracking Alzheimer’s Disease Ann NY Acad Sci 1097 198 214
+Tong T Gray K Gao Q Chen L Rueckert D 2015 Nonlinear Graph Fusion for Multi-modal Classification of Alzheimer’s Disease MICCAI Munich Germany
+Trzepacz PT Yu P Sun J Schuh K Case M Witte MM Hochstetler H Hake A Initiative A.s.D.N 2014 Comparison of neuroimaging modalities for the prediction of conversion from mild cognitive impairment to Alzheimer’s dementia Neurobiol Aging 35 143 151 23954175
+Tzourio-Mazoyer N Landeau B Papathanassiou D Crivello F Etard O Delcroix N Mazoyer B Joliot M 2002 Automated anatomical labeling of activations in SPM using a macroscopic anatomical parcellation of the MNI MRI single-subject brain Neuroimage 15 273 289 11771995
+Wang B Mezlini AM Demir F Fiume M Tu Z Brudno M Haibe-Kains B Goldenberg A 2014a Similarity network fusion for aggregating data types on a genomic scale Nat Methods 11 333 337 24464287
+Wang B Tsotsos J 2016 Dynamic label propagation for semi-supervised multi–class multi-label classification Pattern Recognit 52 75 84
+Wang H Nie F Huang H Risacher S Saykin AJ Shen L 2011 Identifying AD-sensitive and cognition-relevant imaging biomarkers via joint classification and regression International Conference on Medical Image Computing and Computer-Assisted Intervention Springer 115 123
+Wang Y Nie J Yap PT Li G Shi F Geng X Guo L Shen D Initiative A.s.D.N 2014b Knowledge-guided robust MRI brain extraction for diverse large-scale neuroimaging studies on humans and non-human primates PLoS One 9 e77810 24489639
+Weiner MW Veitch DP Aisen PS Beckett LA Cairns NJ Green RC Harvey D Jack CR Jagust W Liu E 2013 The Alzheimer’s disease neuroimaging initiative: a review of papers published since its inception Alzheimers Dementia 9 e111 e194
+Westman E Muehlboeck JS Simmons A 2012 Combining MRI and CSF measures for classification of Alzheimer’s disease and prediction of mild cognitive impairment conversion Neuroimage 62 229 238 22580170
+Zhang D Wang Y Zhou L Yuan H Shen D Initiative A.s.D.N 2011 Multimodal classification of Alzheimer’s disease and mild cognitive impairment Neuroimage 55 856 867 21236349
+Zhang Y Huang K Geng G Liu C 2015 MTC: A Fast and Robust Graph-Based Transductive Learning Method Neural Netw Learn Syst IEEE Trans 26 1979 1991
+Zhou D Bousquet O Lal TN Weston J Schölkopf B 2004 Learning with local and global consistency Adv Neural Inf Process Syst 16 321 328
+Zhou D Burges CJ 2007 Spectral clustering and transductive learning with multiple views Proceedings of the 24th international conference on Machine learning ACM 1159 1166
+Zhu X Ghahramani Z Lafferty J 2003 Semi-supervised learning using gaussian fields and harmonic functions ICML 912 919
+Zhu X Lafferty J Rosenfeld R 2005 Semi-supervised learning with graphs Carnegie Mellon University, Language Technologies Institute, School of Computer Science
+Zhu X Perry G Smith MA Wang X 2013 Abnormal mitochondrial dynamics in the pathogenesis of Alzheimer’s disease J Alzheimers Dis 33 S253 S262 22531428
+Zhu X Suk HI Lee SW Shen D 2016 Subspace regularized sparse multitask learning for multiclass neurodegenerative disease identification IEEE Trans Biomed Eng 63 607 618 26276982
+Zhu X Suk H-I Zhu Y Thung K-H Wu G Shen D 2015 Multi-view classification for identification of Alzheimer’s disease International Workshop on Machine Learning in Medical Imaging Springer 255 262

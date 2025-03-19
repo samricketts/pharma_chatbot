@@ -1,0 +1,345 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+0370625
+1170
+Biometrics
+Biometrics
+Biometrics
+0006-341X
+1541-0420
+
+28395116
+8140291
+10.1111/biom.12696
+NIHMS1683952
+Article
+Accelerated Failure Time Models for Semi-Competing Risks Data in the Presence of Complex Censoring
+Ha Lee Kyu http://orcid.org/0000-0002-5313-8375
+12*
+Rondeau Virginie 3
+Haneuse Sebastien 4
+1 Epidemiology and Biostatistics Core, The Forsyth Institute, Cambridge, Massachusetts, U.S.A.
+2 Department of Oral Health Policy and Epidemiology, Harvard School of Dental Medicine, Boston, Massachusetts, U.S.A.
+3 Centre INSERM U-897-Epidemiologie-Biostatistique, INSERM, Bordeaux, France
+4 Department of Biostatistics, Harvard T. H. Chan School of Public Health, Boston, Massachusetts, U.S.A.
+* klee@forsyth.org
+16 5 2021
+10 4 2017
+12 2017
+22 5 2021
+73 4 14011412
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Summary. Statistical analyses that investigate risk factors for Alzheimer’s disease (AD) are often subject to a number of challenges. Some of these challenges arise due to practical considerations regarding data collection such that the observation of AD events is subject to complex censoring including left-truncation and either interval or right-censoring. Additional challenges arise due to the fact that study participants under investigation are often subject to competing forces, most notably death, that may not be independent of AD. Towards resolving the latter, researchers may choose to embed the study of AD within the “semi-competing risks” framework for which the recent statistical literature has seen a number of advances including for the so-called illness-death model. To the best of our knowledge, however, the semi-competing risks literature has not fully considered analyses in contexts with complex censoring, as in studies of AD. This is particularly the case when interest lies with the accelerated failure time (AFT) model, an alternative to the traditional multiplicative Cox model that places emphasis away from the hazard function. In this article, we outline a new Bayesian framework for estimation/inference of an AFT illness-death model for semi-competing risks data subject to complex censoring. An efficient computational algorithm that gives researchers the flexibility to adopt either a fully parametric or a semi-parametric model specification is developed and implemented. The proposed methods are motivated by and illustrated with an analysis of data from the Adult Changes in Thought study, an on-going community-based prospective study of incident AD in western Washington State.
+
+Accelerated failure time model
+Bayesian survival analysis
+Illness-death models
+Interval-censoring
+Left-truncation
+Semi-competing risks
+
+1. Introduction
+
+Alzheimer’s disease (AD) is a brain disorder characterized by progressive dementia that slowly destroys memory and cognitive function. It is estimated that more than 5 million Americans have AD and that AD is currently ranked as the sixth leading cause of death in the United States (Alzheimer’s Disease Education and Referral Center, 2015). Starting in 1994, the Adult Changes in Thought (ACT) study is an ongoing community-based prospective study of incident AD and dementia among the elderly, conducted at Group Health Cooperative in western Washington state (Kukull et al., 2002). For the most part, statistical modeling of risk factors for incident AD based on ACT data has been based on the Cox model for the hazard function (Cox, 1972). Examples include investigations of statins (Li et al., 2004), nonsteroidal anti-inflammatory drugs (Breitner et al., 2009) and medications that have anticholinergic effects (Gray et al., 2015). Although the hazard ratio, the measure of association that arises from this model, is ubiquitous in survival analyses, it is by no means the only measure that researchers may choose to compute and report. Indeed, depending on the context, the hazard ratio suffers in relation to the interpretability (or lack thereof) of the hazard function (Wei, 1992; Hernán, 2010; Uno et al., 2015).
+
+Beyond the Cox model, the most prominent regression framework for censored survival data is the accelerated failure time (AFT) model (Buckley and James, 1979; Koul et al., 1981). By placing emphasis away from the hazard function, the AFT model gives researchers the opportunity to consider the impact that covariates have on the survival time directly (e.g., Collett, 2003, Chapter 6). Unfortunately, while it has the potential to offer new insight into risk factor associations for incident AD, estimation and inference for the AFT model in the context of the ACT study must contend with a number of important study design and data features. First, when conducting studies of time-to-event outcomes among the elderly, age is arguably the most relevant time scale (Kom et al., 1997; Lamarca et al., 1998). Because of the arbitrary nature of study entry in studies like ACT, time since study entry, for example, has little (if any) relevance to the real world. By adopting age as the time scale, however, the observed data are subject to left-truncation since study participants were not followed since birth. Second, after enrollment ACT participants were followed-up every two years so that the observed time-to-AD diagnosis data is subject to interval-censoring. Third, a study participant may only be diagnosed with AD if they are alive. In the statistical literature, settings where observation of a non-terminal event of interest is subject to a terminal event, are referred to as semi-competing risks (Fine et al., 2001).
+
+If handled inappropriately, each of these phenomena has the potential to bias results in any given analysis (Odell et al., 1992; Joly et al., 2002). While analysts have many options for handling these phenomena, to the best of our knowledge few papers have considered them simultaneously and most of these have been in the context of the Cox model for the hazard function; Web Appendix A provides a comprehensive overview of the literature and existing software options. In regard to AFT models for semi-competing risks data, while a number of relevant papers have been published (Ding et al., 2009; Ghosh et al., 2012; Armero et al., 2016; Jiang and Haneuse, 2016), each of them is limited in their application to the ACT study, since they do not accommodate left-truncation or interval-censoring. Motivated by this, we propose a flexible, robust Bayesian framework for the analysis of an AFT model for semi-competing risks data subject to left-truncation and/or interval-censoring. As we will discuss, a key feature of the framework is that one can adopt either a parametric or non-parametric form for the baseline survival distribution, which is useful when balancing flexibility with sample size considerations. To help facilitate the latter, we develop two goodness-of-fit criteria that can be used for model comparison. Finally, we note that all of the methods proposed and developed in this article have been implemented in the SemiCompRisks package for R.
+
+2. Model Framework and Observed Data
+
+2.1. An Illness-Death Model
+
+Semi-competing risks data are characterized by study participants being able to experience a non-terminal event (e.g., AD diagnosis), a terminal event (e.g., death) and possibly both. Let Ti1 denote time to the non-terminal event and Ti2 the time to the terminal event for the ith study participant. In the literature, the two main regression-based approaches for the joint analysis of (Ti1, Ti2) are those based on copulas (e.g., Peng and Fine, 2007) and those based on the illness-death model, a special case of the multi-state modeling framework (e.g., Xu et al., 2010). In the latter, which we focus on in this article, statistical analyses proceed by modeling the hazard functions that dictate the rates at which study participants experience the two events. As an alternative, we propose to directly model the times of the events directly via the following AFT model specification: (1) log(Ti1)=xi1⊤β1+γi+ϵi1, Ti1&gt;0,
+
+(2) log(Ti2)=xi2⊤β2+γi+ϵi2, Ti2&gt;0,
+
+(3) log(Ti2−Ti1)=xi3⊤β3+γi+ϵi3, Ti2&gt;Ti1.
+
+In each of expressions (1)–(3), xig is a vector of transition-specific covariates, βg is a corresponding vector of transition-specific regression parameters and ϵig is a transition-specific random variable whose distribution determines that of the corresponding transition time, g = 1,2,3. Note, models (2) and (3) permit the distinction of risk for the terminal event depending on whether the non-terminal event has been observed; the focus on the sojourn time in (3) (i.e., the difference Ti2 − Ti1) renders the overall specification analogous to the so-called semi-Markov illness-death model (Xu et al., 2010). Alternatively, one could adopt the so-called Markov illness-death model in which expression (3) is replaced with (4) log(Ti2)=xi3⊤β3+γi+ϵi3, Ti2&gt;Ti1.
+
+While models (3) and (4) are for different random variables (i.e., the sojourn time, T2 − T1, and the time to the terminal event T2), they are both solely defined on the upper wedge of the (T1, T2) outcome space. Finally, in each of (1)–(4), γi is a study participant-specific random effect that induces positive dependence between the two event times, thereby performing a role analogous to that performed by frailties in models for the hazard function. In the context of AFT models, exp(γi) is sometimes referred to as the fortitude since greater values of exp(γi) correspond to longer survival times (Lambert et al., 2004).
+
+2.2. Interpretation of Covariate Effects
+
+One central appeal of the AFT model is that the regression parameters have an intuitive interpretation (Collett, 2003). Focusing on the model given by expression (1), one can show that the induced survivor distribution for the ith study participant satisfies: (5) S1(t;xi1)=S01{t×exp(−xi1⊤β1)}
+
+where S01(·) is the survivor function among patients with xi1=0 (i.e., the baseline survivor function). Towards interpreting the components of β1 suppose, for simplicity, that xi1 is a single binary covariate with xi1=0/1 denoting female/male. Expression (5) implies that the ratio of the median time to AD among males to the median time to AD among females is exp(β1). As such exp(β1) may be interpreted as an acceleration factor that impacts the time at which a particular survival threshold is brought forward (i.e., accelerated to occur sooner) or pushed back (i.e., decelerated to occur later) for patients with xi1=1. Consider, for example, the median survival, a natural alternative to the mean, and suppose the median time to AD diagnosis for females is 15 years and β1=−0.5. Expression (5) would imply that the median time to AD diagnosis for males is 15×exp(−0.5)≈9.1 years. See Figure 1 for a graphical representation. Finally, we note that, in contrast to models for the hazard function, a negative value of β indicates increased risk in the sense that events occur sooner in time.
+
+2.3. The Observed Data
+
+As described in the Introduction, the observed data in the context we consider are subject to complex censoring. Building on standard notation in the semi-competing risks setting that accommodates right-censoring, we develop notation to additionally accommodate left-truncation and interval-censoring. In practice, while left-truncation will apply simultaneously to Ti1 and Ti2, interval-censoring may not always apply to both events. In the ACT study, for example, death times are known and therefore not subject to interval-censoring. To ensure the proposed framework is as general as possible, we consider the potential for both events to be interval-censored although note that the simpler setting when one or both are observed exactly is a special case that is handled trivially.
+
+Taking age as the time scale for both Ti1 and Ti2, let Li denote the age at study entry (i.e., the left-truncation time). Furthermore, suppose that study participant i was observed at follow-up ages {ci1,...,cimi} and let ci∗ denote the age at the end of study or at administrative right-censoring. Considering interval-censoring for both events, the times to AD and death for the ith study participant satisfy cij≤Ti1&lt;cij+1 for some j and cij′≤Ti2&lt;cij′+1 for some j′ respectively. Finally, letting x→={x1,x2,x3}, the observed data for the ith study participant can be succinctly denoted by Di={Li,x→i,cij,cij+1,cij′,cij′+1}.
+
+Based on this notation, the observed data for any given study participant can follow one of four cases (see Figure 2). Temporarily omitting the subscript i, the first case is for an individual who is right-censored prior to experiencing either a non-terminal or terminal event. For this individual D={L,x→,c∗,∞,c∗,∞}. While the observed data cannot distinguish between the scenario where the individual goes on to experience both events and the scenario where they solely experience the terminal event; for completeness, Figure 2 highlights this distinction with the labels “Case 1a” and “Case 1b.”
+
+The second case is for an individual who experiences the terminal event between times but is not observed to experience the non-terminal event. For this individual D={L,x→,cj′,∞,cj′,cj′+1}. As in the first case, while the observed data cannot distinguish between the scenario where the individual experiences the non-terminal event and the scenario where they do not, Figure 2 highlights this distinction with the labels “Case 2a” and “Case 2b.”
+
+The third case is for an individual who experiences the non-terminal event and is right-censored prior to be observed to experience the terminal event. For this individual, D={L,x→,cj,cj+1,c∗,∞}. Finally, the fourth case is for an individual who is observed to experience both events and for whom Di={L,x→,cj,cj+1,cj′,cj′+1}.
+
+2.4. The Augmented Data Likelihood
+
+When (T1, T2) is subject solely to right-censoring, the observed data likelihood is relatively straightforward to obtain (e.g., Putter et al., 2007). If left-truncation and interval-censoring are additionally present, however, the observed data likelihood does not have a convenient representation. As we elaborate upon, we resolve this by using the data augmentation Markov Chain Monte Carlo (MCMC) strategy of Tanner and Wong (1987). Towards this, following Lee et al. (2015), the joint probability distribution of (T1, T2) can be written as: (6) f(t1,t2∣x→)={f1(t1∣x1)f3(t2−t1∣x3)S2(t1∣x2) for 0&lt;t1≤t2, for semi-Markov model,f1(t1∣x1)f3(t2∣x3)S2(t1∣x2)/S3(t1∣x3) for 0&lt;t1≤t2, for Markov model, f2(t2∣x2)S1(t2∣x1) for 0&lt;t2&lt;t1=∞,
+
+where f1(), f2(), and f3() are either the density functions induced by the specification of the distributions for ϵ1, ϵ2, ϵ3 in models (1)–(3) for the semi-Markov model or those in models (1), (2), (4) for the Markov model. S1(), S2(), and S3() are the corresponding survivor functions. Given left-truncation at L, the conditional joint density is: (7) f(t1,t2∣x→)∫L∞∫L∞f(v1,v2∣x→)dv1dv2.
+
+When Ti1 and/or Ti2 are right-censored or interval-censored, however, evaluation of (7) requires imputation of the unknown (ti1, ti2). This gives rise to “augmented data” for the analysis, specifically Di∗={Li,xi,ti1,ti2} for the ith study participant. We note that a similar method has been used for the analysis of univariate survival data in the context of AFT model (Sha et al., 2006; Komárek and Lesaffre, 2007).
+
+3. A Semi-Parametric AFT Illness-Death Model
+
+3.1. Model Specification
+
+In the context of univariate time-to-event outcomes, there is a rich literature on semi-parametric Bayesian analyses for AFT models (e.g., Christensen and Johnson, 1988; Kuo and Mallick, 1997; Hanson and Johnson, 2004; Ghosh and Ghosal, 2006; Komárek and Lesaffre, 2007). For the proposed AFT illness-death model given by (1)–(4), we proceed by adopting independent Dirichlet process mixtures (DPM) of normal distributions for each ϵig (Ferguson, 1973; Bush and MacEachern, 1996). More precisely, ϵig is taken to be an independent draw from a mixture of Mg normal distributions with means and variances (μgr,σgr2), for r∈{1,…,Mg}. Following convention in the literature, we refer to each component normal distribution as being specific to some “class” (Neal, 2000). Since the class-specific (μgr,σgr2) are not known, they are taken to be draws from some common distribution, Gg0, often referred to as the centering distribution. Furthermore, since the “true” class membership for any given study participant is not known, we let pgr denote the probability of belonging to the rth class for transition g and pg=(pg1,…,pgMg) the collection of such probabilities. Note, pg is defined at the level of the population (i.e., is not study participant-specific) and its components add up to 1.0. In the absence of prior knowledge regarding the distribution of class memberships for the n individuals across the Mg classes, pg is assumed to follow a conjugate symmetric Dirichlet (τg/Mg,…,τg/Mg) distribution, where τg is referred to as the precision parameter. The finite mixture distribution can then be succinctly represented as: (8) ϵig∣ri∼Normal(μri,σri2),(μgr,σgr2)∼Gg0, for r=1,…,Mg,ri∣pg∼Discrete(ri∣pg1,…,pgMg),pg∼Dirichlet(τg/Mg,…,τg/Mg).
+
+Letting Mg→∞, (8) is referred to as a DPM of normal distributions. Since one cannot explicitly represent an infinite number of (μgr,σgr2), MCMC proceeds by only updating (μgr,σgr2) for those classes that are associated with at least one observation (Neal, 2000).
+
+Let β→={β1,β2,β3},μ→={μgr}g,r, and, σ→2={σgr2}g,r. The joint probability density function (pdf) of (T1,T2) with left-truncation at L is then given by (6) and (7), with model parameters ΘSP={β→,μ→,σ→2} in our proposed semi-parametric model with DPM specification described above. Towards this, let ϕ(⋅) and Φ(⋅) denote the pdf and the cumulative distribution function of the standard normal distribution, respectively. Then, letting ϵrk∗(t;xg,γ)=σrk−1{log(t)−(μrk+xg⊤βg+γ)}, (6) and (7) can be specified with (9) fg(t∣ΘSP,xg,γ)=1n∑k=1n(σrkt)−1ϕ{ϵrk∗(t;xg,γ)},Sg(t∣ΘSP,xg,γ)=∫t∞fg(v∣ΘSP,xg,γ)dv,
+
+with t indexing T1 for g=1, T2 for g = 2 and either T2 − T1 or T2 for g=3 depending on whether a semi-Markov or Markov model is adopted.
+
+3.2. Prior Specification and Computation
+
+The Bayesian specification is completed with the specification of prior distributions for the unknown parameters. In our proposed DPM model, the number of mixture components is random and its prior distribution is governed by the precision parameter τg. A number of strategies have been discussed and reviewed for estimation of τg (Antonelli et al., 2016). In our proposed framework, we specify a Gamma (aτg,bτg) hyperprior for τg as the full posterior conditional for τg is straightforward to sample from with the strategy (Escobar and West, 1995). For regression parameters β→, we adopt non-informative flat priors on the real line. For γ={γ1,…,γn}, we assume that each γi is an independent random draw from a Normal(0, θ) distribution. In the absence of prior knowledge on the variance component θ, we adopt a conjugate inverse-Gamma hyperprior, IG(aθ, bθ). Finally, we take the Gg0 as a normal distribution centered at μg0 with a variance σg02 for μgr and an IG(aσg,bσg) for σgr2.
+
+Since the joint distribution of (T1i,T2i) under the semi-parametric DPM model is a mixture of multiple truncated distributions, MCMC is far from straightforward. Nevertheless, we develop an efficient MCMC scheme based on the data augmentation algorithm of Tanner and Wong (1987) in which one iterates between an “imputation step” where the unobserved Ti1 and Ti2 are imputed/updated and a “posterior step” during which model parameters are updated. Details regarding the semi-Markov model specification, defined by expressions (1)–(3), are provided in Web Appendix B; corresponding details regarding the Markov specification, defined by expressions (1), (2), and (4), are also given.
+
+4. A Parametric AFT Illness-Death Model
+
+4.1. Model Specification
+
+While semi-parametric models, such as the one proposed in Section 3, have distinct benefits in terms of their flexibility in data-rich settings (i.e., with relatively large sample size), in small-sample settings, a parametric specification might be more appealing due to its parsimony and computational simplicity. In the literature, a number of distributions have been proposed for parametric AFT models for univariate survival settings including the Weibull, log-logistic, and log-Normal distributions (Collett, 2003; Lambert et al., 2004). For the AFT illness-death model (1)–(3), we build on the log-Normal formulation and take the ϵig to follow independent Normal (μg,σg2) distributions, g=1,2,3. Letting ΘP={β→,μ1,μ2,μ3,σ12,σ22,σ32}, we then have that: (10) fg(t∣ΘP,xg,γ)=(σgt)−1ϕ{ϵg∗(t;xg,γ)}Sg(t∣ΘP,xg,γ)=1−Φ{ϵg∗(t;xg,γ)},
+
+Where ϵg∗(t;xg,γ)=σg−1{log(t)−(μg+xg⊤βg+γ)} is as in expression (9).
+
+4.2. Prior Specification and Computation
+
+For location parameters μg, we adopt non-informative flat priors on the real line. For σg2, we adopt independent inverse Gamma distributions, denoted IG(aσg,bσg). For β→,γ, and θ, we adopt the same priors as those adopted for the DPM model in Section 3.2. As with the semi-parametric model specification, we have developed an efficient computational scheme for obtaining samples from the resulting posterior; details are given in Web Appendix B.
+
+5. Model Comparison Criteria
+
+In all finite-data settings, analysts must balance flexibility of the model specification with limitations of the data. In this regard, model comparison via evaluation of goodness-of-fit is a critical task; we develop two criteria based on the deviance information criterion (DIC; Spiegelhalter et al., 2002) and the log-pseudo marginal likelihood statistic (LPML; Geisser and Eddy, 1979). For the first of these, we note that Celeux et al. (2006) discuss and compare a number of different DIC measures in the context of mixture-based random effects models. Based on their general recommendations, we adapt their DIC3 measure for the AFT illness-death model given by (1)–(4) and propose the following measure: DICID=−4EΘ[logL(t1i,t2i,Di∣Θ)∣t1i,t2i,Di)]+2log∏i=1nEΘ[L(t1i,t2i,Di∣Θ)∣t1,t2,{Di}i=1n],
+
+where Θ denotes a collection of model parameters, either {ΘSP,γ} or {ΘP,γ}. The first term in DICID is associated with a deviance that quantifies a goodness-of-fit while the second term is understood as a measure of complexity. We can estimate the DICID by using the following Monte Carlo approximation: DIC^ID=−4Q∑q=1Qlog{∏i=1nL(t1i(q),t2i(q),Di∣Θ(q))}+2log{∏i=1n1Q∑q=1QL(t1i(q),t2i(q),Di∣Θ(q))}
+
+where Θ(q) denotes the value of &amp; at the qth MCMC iteration, q=1,...,Q. Note, a model with a smaller DIC indicates a better fit to the data.
+
+For the second model comparison criterion, the LPML of the statistic is given as ∑i=1nlogCPOi, the sum of the logarithms subject-specific conditional predictive ordinates: (11) CPOi=L(t1i,t2i,Di∣{t1k,t2k,Dk}k≠i)≈{1Q∑q=1QL(t1i(q),t2i(q),Di∣Θ(q))−1}−1.
+
+The approximation in (11) follows from Monte Carlo estimator (Shao and Ibrahim, 2000). Note, since CPOi is the marginal posterior predictive density of the outcome for the ith subject given a dataset that excludes that particular subject, larger values of LPML indicate a better fit to the data. In practice, following Hanson (2006), one can compute a pseudo Bayes factor (PBF) for the two models by exponentiating difference in their LPML values; intuitively, the PBF in this context attempts to assess the model fit based on the best predictions for future observations when the same process as the original data is used to generate the observations (Kadane and Lazar, 2004).
+
+6. Application
+
+To illustrate the proposed methods, we present a series of analyses using data from the ACT study with the primary goals being to compare and contrast the parametric and semi-parametric frameworks for the baseline survivor function with a number of alternative estimators, and to compare results (in terms of covariate effects) when one fully accommodates left-truncation and interval-censoring with analyses that do not. For simplicity, we focus the illustration in this section on semi-Markov models.
+
+6.1. ACT Data
+
+The available data consists of information on n=4225 ACT study participants enrolled in 1994–2012. Covariates measured at baseline, and available for these analyses, include: age (years), sex (0/1=female/male), race (0/1=white/nonwhite), number of apolipoprotein E (APOE) ϵ4 alleles (0/1=none/at least one), marital status (0/1=married/not married), and the total number of years of education completed (0/1=&lt;15/≥15. Table 1 provides a summary of these covariates. Web Appendix C provides a histogram of age at entry, for which the median was 73 years and the inter-quartile range (69–77).
+
+6.2. Outcomes
+
+At enrollment, one of the eligibility criteria for ACT was that the potential study participant be at least 65 years of age. Consequently, since ACT is not designed to investigate risk of AD at a ges younger than 65 years, we took the time scale for transitions g=1 (i.e., health to AD) and g=2 (i.e., health to death) to be “time since age 65 years” (i.e., t=0 corresponds to age 65 rather than birth). Furthermore, due to confidentiality considerations, the person–time available for these analyses was administratively right-censored at age 89. Columns 2–5 of Table 1 provide the distributions of the four AD/death outcome scenarios, overall and within levels of education, sex, race, APOE, and marital status.
+
+6.3. Analyses
+
+6.3.1. Analysis I: Baseline survival distributions.
+
+The first set of analyses illustrate our strategies for modeling the distributions of ϵig by focusing on estimation of the overall (unadjusted) baseline survival distribution for each of the three transitions. Specifically, we conducted analyses using the methods proposed in Sections 3 and 4 (labeled “AFTDPM” and “AFT-LN,” respectively) without covariates. To investigate the impact of including the subject-specific γi’s, the two sets of analyses are conducted with and without these terms.
+
+For the sake of comparison, we additionally performed parallel unadjusted analyses using methods proposed in Liquet et al. (2012) and implemented in the frailtypack R package (Rondeau et al., 2012). Specifically the methods replace (1)–(3) with models for the hazard function, as in Xu et al. (2010), but without the subject-specific shared frailty. The baseline hazard functions are specified based on a parametric Weibull distribution or on a semi-parametric spline; we refer to these hazard regression model analyses as “HReg-WB” and “HReg-SP,” respectively.
+
+6.3.2. Analysis II: Covariate effects.
+
+For the second set of analyses, we focus attention on estimation and inference with respect to covariate effects. Specifically, we built on the analyses conducted in Analysis I by including the five covariates described in Section 6.1 and summarized in Table 1 into the regression model specification. For transition g=3, since the time being modeled is the so-called sojourn time (i.e., Ti2 − Ti1), we additionally included age at AD diagnosis (i.e., Ti1) as a covariate in x3. In addition, we perform and report on analogous frequentist analyses using HReg-WB and HReg-SP. Finally, we also investigate the impact of ignoring complex censoring and truncation mechanism observed in the ACT data. Specifically, we conduct a naïve semi-competing risks data analyses where we consider the elapsed times from age at entry until the events of interest and interval-censored observations are imputed by mid-point between two visits. For these analyses, we adjust for age by including age at entry as a covariate in the models.
+
+6.4. Specification of Hyperparameters
+
+Following Sections 3.2 and 4.2, we specify hyperparameters for both sets of AFT–DPM and AFT–LN analyses. For the latter, we set (aσg,bσg)=(0.3,0.3), for g ∈ {1,2,3}, corresponding to a prior distribution for σg2 with a median of 4.08 and 95% central mass between 0.16 and 9.75·104. For θ, the variance of subject-specific γi, we set (aθ, bθ)=(0.5, 0.05), corresponding to a prior with a median of 0.22 and 95% central mass between 0.02 and 105.54.
+
+While reasonably non-informative priors can be adopted for the parameters in the AFT–LN model, specification of priors for models that build on a mixture framework, such as the AFT–DPM model, requires care. In particular, we note that priors that assign substantial mass to large values of σgr2 will implicitly assign substantial prior mass to values of the time-to-event (i.e., t1, t2 or t2 − t1, as appropriate) between 0 and 1; the more diffuse the prior for σr becomes, the closer the prior mass assigned for time to event between 0 and 1 gets to 0.5, which results in strong penalization by the prior in estimation of baseline survival probabilities. Kuo and Mallick (1997) noted this in the context of Bayesian AFT models for univariate survival outcomes and chose degenerate with point mass at 0.1 for σgr. For our analyses, we set (aσg,bσg)=(2,1) for each of the three transitions; this choice corresponds to a prior distribution of variance components in AFT–DPM model having a median of 0.60 and 95% central mass between 0.18 and 4.12. Furthermore, we set μg0=log(12) and σg02=103. It is worth noting that, while these choices are (arguably) fairly informative, after mixing over multiple log-Normal distributions, as they arise in the MCMC scheme, our proposed AFT–DPM can flexibly reflect a posteriori, a potentially intricate shape for baseline survivor function. For hyperparameters associated with the precision parameter τg, we set (aτg,bτg)=(1.5,0.0125) so that a priori τg had a mode of 40 and standard deviation of 98. Finally, as in the AFT–LN analysis, we set (aθ, bθ)=(0.5, 0.05) for the AFT–DPM analysis.
+
+6.5. Results
+
+6.5.1. Overall model fit.
+
+Table 2 presents the DIC and LPML measures (proposed in Section 5 applied to Analyses I and II. From the first two rows, we find that the AFT–LN and AFT–DPM analyses that include the γi random effects have DIC values of 6136.9 and 3041.8, respectively, the corresponding DIC values for the analyses that do not include the random effects are 6732.0 and 2827.4. Following convention that differences in DIC greater than 6 indicates strong support for improved fit (e.g., Spiegelhalter et al., 2002; Millar, 2009), it is clear that, regardless of whether the random effects are included, the AFT–DPM vastly superior fit to the AFT– LN model. For LPML, Table 2 indicates values of −3252.6 for AFT–LN and −1484.0 for AFT–DPM when the random effects are included. This yields a PBF of approximately e1769, providing very strong evidence of superior fit for the AFT– DPM model. Finally, comparing the DIC and LMPL values for the various models with and without the random effects, we see that retaining the γ yields an improved fit for AFT– LN but a diminished fit for AFT–DPM. This is likely due to the random effects not only representing participant-level heterogeneity but also partially accounting for the model misspecification (i.e., when the underlying baseline survival distributions are not log-Normal).
+
+6.5.2. Analyses I: Baseline survival distributions.
+
+Results for Analysis I are shown in Figure 3, with the top panels presenting estimates of the hazard function for the baseline survival distributions and the bottom panels the corresponding survivor functions. For the two Bayesian analyses, the lines correspond to pointwise posterior medians based on samples obtained from three independent MCMC chains, each run for 1 million iterations. Across the various MCMC moves that required a MH step, the overall acceptance rate was around 35% indicating high efficiency of the proposed algorithm. Convergence was assessed using the potential scale reduction factor with a threshold of 1.05 applied after taking the first half as burn-in (Gelman et al., 2013).
+
+From Figure 3(a), the baseline hazard function is increasing as a function of time since age 65, indicating that study participants who are alive at any given time point are experiencing an AD diagnosis at an increasing rate over time. This is also seen in the shape of the baseline survivor function, Figure 3(d), where the curve is becoming increasingly steep. Looking across the four analyses methods, the estimated structure of the underlying (unadjusted) distribution of time to AD does not differ (see panels (a) and (d)). In contrast, we do see differences across the estimated structure for the two underlying (unadjusted) distributions for time to death. In Figures 3(b) and 3(e), for example, the two parametric specifications generally correspond but differ from the two semi-parametric specifications which also correspond with each other. In Figures 3(c) and 3(f) the estimates based on the methods proposed by Liquet et al. (2012) indicate that the hazard for death following an AD diagnosis increases dramatically as a function of time since AD. The two estimates based on the proposed Bayesian frameworks, however, suggest a sharp increase early that dissipates and then begins to decrease. Although it is difficult to compare the goodness-of-fit between the two frequentist and two Bayesian analyses, we note that the latter corresponds quite closely to univariate analysis for time to death post-AD diagnosis based on the Kaplan-Meier estimator (see Figure E.1 in the Web Appendix E). Finally, to illustrate the flexibility gained in AFT–DPM, Table C.1 in the Web Appendix C presents a summary of the posterior for the number of clusters generated by the DPM.
+
+6.5.3. Analysis II: Covariate effects.
+
+Table 3 provides posterior median (PM) and 95% credible interval for the regression parameters from Analysis II with patient-specific random effects included. Also shown are point estimates and 95% confidence intervals for the frequentist HReg–WB and HReg–SP analyses. Note, as mentioned in Section 2.2, values of exp(βg) less than 1.0 for the AFT model indicate increased risk for participants with the particular risk factor level.
+
+From the first column of Table 3, we find evidence that individuals who have at least one APOE ϵ4 allele are at significantly increased risk for an AD diagnosis; from both the AFT–LN and AFT–DPM analyses, the median time to an AD diagnosis is estimated to be 22% shorter for these patients compared to individuals without any ϵ4 allele. We also see that individuals who have at least 15 years of education have lower risk of an AD diagnosis; their time to diagnosis is estimated to be 11% longer than individuals with less than 15 years under the AFT–LN model and 8% longer under the AFT–DPM model. While both of these sets of results are consistent with the conclusions drawn on the basis of the HReg–WB and HReg–SP analyses, we emphasize that the reported contrasts are, arguably, more easily interpreted than those provided by models for the hazard function. We provide estimates of three baseline survivor functions for Analysis II in Web Appendix C (see Figure C.2).
+
+Finally, looking at the naïve AFT–DPM analysis, we see changing the time scale (i.e., to time since study entry) and using the midpoint as a means to overcome interval-censoring yields results that differ from those based on the AFT–DPM analysis that directly accommodate both left-truncation and interval-censoring. In particular, the naïve AFT–DPM analysis indicates significant and relatively strong association between male sex and risk of AD (posterior median 0.87; 95% credible interval 0.72, 0.99), whereas the AFT–DPM based on the methods proposed in Section 3 is more consistent with there being no association (posterior median 0.96; 95% credible interval 0.85, 1.03). In addition, while the conclusions regarding the association between having at least one APOE ϵ4 allele and risk of AD are the same between the naïve AFT–DPM and AFT–DPM analyses, the former suggests that the association is much stronger than the AFT–DPM model would suggest. This difference may be in part due to the limited way in which the impact of age on risk of AD is modeled in the naïve AFT–DPM (i.e., as a covariate as opposed to through the baseline survivor function).
+
+7. Discussion
+
+In considering the analysis of semi-competing risks data, our perspective is that the proposed AFT illness-death model serves as a useful complement to the more traditional hazard-based approach of, say, Xu et al. (2010) and Lee et al. (2015). Crucially the two modeling frameworks characterize associations through fundamentally different contrasts (see Section 2.2) and, in this sense, jointly provide an expanded scope for scientific inquiry. As such, depending on the scientific background and goals, analysts may choose to consider one or the other or possibly both.
+
+Towards estimation/inference with respect to the components of the proposed AFT illness-death model, we note that, as the age distribution of the general population increases and greater scientific emphasis is placed on chronic diseases such as AD, studies that are subject to the same complex patterns of truncation and censoring as those considered here for the ACT study will become more and more common. Although naïve approaches to handling these phenomena will not necessarily result in biased results/conclusions, the analyses presented in Section 6 reveal that a naïve approach to estimation/inference for an AFT illness-death model for the ACT data results in substantively different conclusions regarding risk factors for AD when compared to analyses that explicitly account for these phenomena. Without a robust and flexible framework for estimation and inference, such as the one we provide, one would not be able to investigate whether there exists this issue in real data. To further emphasize this point, while the exposition of this article has focused on the data application that motivated the development of the methods, we provide in Web Appendix D details on a simulation study that: (1) highlights the potential for bias when one ignores complex censoring, and (2) shows the proposed framework performs well in small-sample settings in terms of standard operating characteristics.
+
+We embed the framework within the Bayesian paradigm permits researchers to take advantage of well-known benefits including the ability to naturally incorporate prior information and the automated quantification of prediction and uncertainty. As others have noted, however, the specification of priors for complex Bayesian models typically requires care, with sensitivity analyses being an integral component of the overall analysis. Although not presented in detail, we also conducted a series of sensitivity analyses the overarching conclusion of which is that our results presented are relatively robust; see Web Appendix C.
+
+Finally, we note that there are a number of ways in which one could build on the proposed framework. First, while the focus of this article has been semi-competing risks data, we have developed and implemented analogous parametric and semi-parametric univariate AFT models in settings where left-truncation and interval-censoring are present. Such models might, for example, be useful if interest lies in whether there are differences in mortality between patients with and without diagnosis of AD. Technical details are provided in Web Appendix E, together with corresponding results based on the ACT data. Second, while we have sought to provide as general a framework as possible, one could expand and relax the structure adopted for the subject-specific γi random effects. Recently, for example, Rondeau et al. (2015) proposed to specify the distribution of the γi s conditional on the left-truncation time. Implicitly, this corresponds to permitting the distribution to depend on the age at entry thereby increasing flexibility in the specification. Although we have not explicitly implemented this notion in our framework, we did explore it by performing separate analyses among participants who enrolled in ACT before or after age 75, finding little difference in the estimates of θ from the two analyses. Another possibility is to permit the single subject-specific random effect to influence the three transitions in different ways by introducing coefficients α2 and α3 in front of γi in expressions (2) and (3), respectively. A similar model was considered by Knorr-Held and Best (2001) in the disease mapping context and has the advantage of permitting negative correlation. A final possibility is to permit the distribution of the random effects to vary by specific covariates, as is common in the specification of variance components for generalized linear mixed models.
+
+8. Supplementary Materials
+
+Web Appendices, Tables, and Figures referenced in Sections 1,3,4,6, and 7 are available with this article at the Biometrics website on Wiley Online Library.
+
+Supplementary Material
+
+Supplementary Material
+
+Acknowledgements
+
+Co-authors Lee and Haneuse were supported by NIH grant R01 CA181360–01. The authors also gratefully acknowledge the Adult Changes in Thoughts study (NIH grant U01 AG06781).
+
+Figure 1. Graphical representation of the interpretation of exp{β1} as the relative difference between two survivor functions, where β1 is the coefficient for gender (0/1=female/male) in the accelerated failure time model specification given by expression (1) in Section 2.
+
+Figure 2. Graphical representation of four possible observed scenarios for interval-censored semi-competing risks data from the ACT study.
+
+Figure 3. Estimated baseline hazard and survivor functions for the three transition-specific (unadjusted) survival distributions based on the ACT data from Analyses I. Details regarding the analyses are provided in Section 6.3.1.
+
+Table 1 Covariate information for the n=4225 study participants in the ACT data, overall and according to whether the participant was observed to experience an Alzheimers’ disease (AD) diagnosis and/or death.
+
+	Total	Censored prior to AD or death	AD diagnosis and censored prior to death	Death without AD	AD diagnosis and death	
+						
+	n	(%†)	n	(%*)	n	(%*)	n	(%*)	n	(%*)	
+	
+Total	4,225	(100)	2,372	(56)	396	(9)	1,115	(26)	342	(8)	
+Sex											
+ female	2,467	(58)	1,448	(59)	255	(10)	565	(23)	199	(8)	
+ male	1,758	(42)	924	(53)	141	(8)	550	(31)	143	(8)	
+Race											
+ white	3,838	(91)	2,158	(56)	359	(9)	1,005	(26)	316	(8)	
+ non-white	387	(9)	214	(55)	37	(10)	110	(28)	26	(7)	
+ APOE є4 alleles											
+ none	3,293	(78)	1,885	(57)	288	(9)	901	(27)	219	(7)	
+ at least one	932	(22)	487	(52)	108	(12)	214	(23)	123	(13)	
+Education											
+ &lt;15 years	2,132	(50)	1,008	(47)	250	(12)	658	(31)	216	(10)	
+ ≥15 years	2,093	(50)	1,364	(65)	146	(7)	457	(22)	126	(6)	
+Marital status											
+ married	2,374	(56)	1,336	(56)	222	(9)	616	(26)	200	(8)	
+ not married	1851	(44)	1,036	(56)	174	(9)	499	(27)	142	(8)	
+† column%
+
+* row%
+
+Table 2 DIC and LPML for two proposed models fit to ACT data.
+
+		Without γ	With γ	
+				
+		DIC	LPML	DIC	LPML	
+	
+Analysis I	AFT-LN	6732.0	−3256.5	6136.9	−3252.6	
+	AFT-DPM	2827.4	−1396.7	3041.8	−1484.0	
+Analysis II	AFT-LN	6312.6	−2966.9	5882.5	−2661.5	
+	AFT-DPM	2801.7	−1293.7	2866.7	−1351.3	
+
+Table 3 Posterior medians (Est) and 95% credible intervals (CI) for the transition-specific exp(βg), g=1,2,3, for select covariate contrasts based on parametric and semi-parametric AFT illness-death models (AFT-LN and AFT-DPM, respectively,) with patient-specific random effects included. Results are shown based on the proposed methods that account for left-truncation and interval-censoring. For the AFT-DPM model, results are also shown based on a naïve treatment of left-truncation and interval-censoring†. We also present estimated hazard ratios (Est) and 95% confidence intervals (CI) from HReg-WB and HReg-SP models.
+
+	AD Est (95% CI)	Death before AD Est (95% CI)	Death after AD Est (95% CI)	
+	
+Male sex				
+ AFT-LN	0.97 (0.92, 1.04)	0.84 (0.80, 0.87)	0.85 (0.74, 0.97)	
+ AFT-DPM	0.96 (0.85, 1.03)	0.86 (0.82, 0.90)	0.79 (0.70, 0.88)	
+ HReg-WB	1.04 (0.89, 1.22)	1.59 (1.43, 1.78)	1.28 (1.06, 1.55)	
+ HReg-SP	1.04 (0.89, 1.22)	1.94 (1.73, 2.18)	1.31 (1.07, 1.60)	
+ Naïve AFT-DPM	0.87 (0.72, 0.99)	0.77 (0.72, 0.83)	0.83 (0.74, 0.92)	
+Non-white race				
+ AFT-LN	1.03 (0.94, 1.14)	1.00 (0.94, 1.07)	1.21 (0.97, 1.52)	
+ AFT-DPM	1.03 (0.90, 1.13)	0.98 (0.94, 1.03)	1.11 (0.94, 1.32)	
+ HReg-WB	0.88 (0.68, 1.14)	0.97 (0.81, 1.15)	0.84 (0.60, 1.17)	
+ HReg-SP	0.88 (0.68, 1.14)	1.04 (0.87, 1.24)	0.83 (0.59, 1.17)	
+ Naïve AFT-DPM	1.00 (0.78, 1.18)	1.00 (0.91, 1.08)	1.09 (0.93, 1.31)	
+At least one APOE e4 allele				
+ AFT-LN	0.78 (0.73, 0.83)	1.03 (0.98, 1.08)	1.03 (0.90, 1.18)	
+ AFT-DPM	0.77 (0.68, 0.83)	0.96 (0.91, 1.00)	0.98 (0.88, 1.10)	
+ HReg-WB	1.81 (1.55, 2.12)	0.87 (0.77, 0.99)	0.92 (0.77, 1.11)	
+ HReg-SP	1.81 (1.55, 2.11)	0.98 (0.86, 1.12)	0.95 (0.78, 1.15)	
+ Naïve AFT-DPM	0.66 (0.55, 0.74)	0.94 (0.87, 1.01)	0.97 (0.88, 1.08)	
+Education ≥15 years				
+ AFT-LN	1.11 (1.04, 1.18)	1.06 (1.02, 1.10)	1.04 (0.91, 1.18)	
+ AFT-DPM	1.08 (0.97, 1.15)	0.95 (0.89, 1.00)	0.96 (0.86, 1.07)	
+ HReg-WB	0.78 (0.67, 0.91)	0.90 (0.81, 1.00)	0.95 (0.79, 1.14)	
+ HReg-SP	0.79 (0.68, 0.92)	0.97 (0.87, 1.09)	0.97 (0.80, 1.17)	
+ Naïve AFT-DPM	1.10 (0.89, 1.23)	0.94 (0.85, 1.03)	0.97 (0.88, 1.09)	
+Not married				
+ AFT-LN	1.01 (0.96, 1.07)	0.90 (0.86, 0.94)	0.87 (0.76, 0.99)	
+ AFT-DPM	1.00 (0.87, 1.07)	0.90 (0.86, 0.93)	0.78 (0.69, 0.87)	
+ HReg-WB	0.94 (0.81, 1.10)	1.35 (1.21, 1.50)	1.24 (1.03, 1.49)	
+ HReg-SP	0.95 (0.81, 1.11)	1.65 (1.47, 1.85)	1.28 (1.06, 1.55)	
+ Naïve AFT-DPM	0.90 (0.73, 1.05)	0.82 (0.76, 0.87)	0.83 (0.74, 0.93)	
+Age at AD‡				
+ AFT-LN			0.62 (0.58, 0.67)	
+ AFT-DPM			0.66 (0.62, 0.71)	
+ HReg-WB			3.16 (2.70, 3.70)	
+ HReg-SP			2.65 (2.32, 3.04)	
+ Naïve AFT-DPM			0.66 (0.60, 0.72)	
+Age at study entry‡				
+ Naïve AFT-DPM	0.73 (0.69, 0.83)	0.68 (0.65, 0.71)	0.96 (0.90, 1.03)	
+† Time scale is age at study entry; mid-point for interval-censoring
+
+‡ Standardized so that a 1-unit contrast corresponds to a difference of 5 years.
+
+
+References
+
+Alzheimer’s Disease Education and Referral Center (2015). Alzheimer’s Disease Fact Sheet. National Institutes of Health.
+Antonelli J , Trippa L , and Haneuse S . (2016). Mitigating bias in generalized linear mixed models: The case for Bayesian nonparametrics. Statistical Science 31 , 80–95.28979066
+Armero C , Cabras S , Castellanos M , Perra S , Quirós, A., Oruezábal, M., (2016). Bayesian analysis of a disability model for lung cancer survival. Statistical Methods in Medical Research 25 , 336–351.22767866
+Breitner J , Haneuse S , Walker R , Dublin S , Crane P , Gray S , (2009). Risk of dementia and AD with prior exposure to NSAIDs in an elderly community-based cohort. Neurology 72 , 1899–1905.19386997
+Buckley J and James I . (1979). Linear regression with censored data. Biometrika 66 , 429–436.
+Bush CA and MacEachern SN (1996). A semiparametric Bayesian model for randomised block designs. Biometrika 83 , 275–285.
+Celeux G , Forbes F , Robert CP , and Titterington DM (2006). Deviance information criteria for missing data models. Bayesian Analysis 1 , 651–673.
+Christensen R and Johnson W . (1988). Modelling accelerated failure time with a Dirichlet process. Biometrika 75 , 693–704.
+Collett D . (2003). Modeling Survival Data in Medical Research.2nd edition. Boca Raton, FL: CRC press.
+Cox D . (1972). Regression models and life-tables. Journal of the Royal Statistical Society, Series B 34 , 187–220.
+Ding A , Shi G , Wang W , and Hsieh J-J (2009). Marginal regression analysis for semi-competing risks data under dependent censoring. Scandinavian Journal of Statistics 36 , 481–500.
+Escobar MD and West M . (1995). Bayesian density estimation and inference using mixtures. Journal of the American Statistical Association 90 , 577–588.
+Ferguson TS (1973). A Bayesian analysis of some nonparametric problems. The Annals of Statistics 1 , 209–230.
+Fine J , Jiang H , and Chappell R . (2001). On semi-competing risks data. Biometrika 88 , 907–919.
+Geisser S and Eddy WF (1979). A predictive approach to model selection. Journal of the American Statistical Association 74 , 153–160.
+Gelman A , Carlin JB , Stern HS , and Rubin DB (2013). Bayesian Data Analysis. Boca Raton: Chapman and Hall/CRC.
+Ghosh D , Taylor JM , and Sargent DJ (2012). Meta-analysis for surrogacy: Accelerated failure time models and semicompeting risks modeling. Biometrics 68 , 226–232.21668903
+Ghosh SK and Ghosal S . (2006). Semiparametric accelerated failure time models for censored data. Bayesian Statistics and its Applications 15 , 213–229.
+Gray SL , Anderson ML , Dublin S , Hanlon JT , Hubbard R , Walker R , (2015). Cumulative use of strong anticholinergics and incident dementia: A prospective cohort study. JAMA Internal Medicine 175 , 401–407.25621434
+Hanson T and Johnson WO (2004). A Bayesian semiparametric AFT model for interval-censored data. Journal of Computational and Graphical Statistics 13 , 341–361.
+Hanson TE (2006). Inference for mixtures of finite polya tree models. Journal of the American Statistical Association 101 , 1548–1565.
+Hernán MA (2010). The hazards of hazard ratios. Epidemiology 21 , 13–15.20010207
+Jiang F and Haneuse S . (2016). A semi-parametric transformation frailty model for semi-competing risks survival data. Scandinavian Journal of Statistics 44 (1 ), 112–129.
+Joly P , Commenges D , Helmer C , and Letenneur L . (2002). A penalized likelihood approach for an illness–death model with interval-censored data: Application to age-specific incidence of dementia. Biostatistics 3 , 433–443.12933608
+Kadane JB and Lazar NA (2004). Methods and criteria for model selection. Journal of the American Statistical Association 99 , 279–290.
+Knorr-Held L and Best NG (2001). A shared component model for detecting joint and selective clustering of two diseases. Journal of the Royal Statistical Society, Series A 164 , 73–85.
+Kom E , Graubard B , and Midthune D . (1997). Time-to-event analysis of longitudinal follow-up of a survey: Choice of the time-scale. American Journal of Epidemiology 145 , 72–80.8982025
+Komárek A and Lesaffre E . (2007). Bayesian accelerated failure time model for correlated interval-censored data with a normal mixture as error distribution. Statistica Sinica 17 , 549–469.
+Koul H , Susarla V , and Van Ryzin J . (1981). Regression analysis with randomly right-censored data. The Annals of Statistics 9 , 1276–1288.
+Kukull WA , Higdon R , Bowen JD , McCormick WC , Teri L , Schellenberg GD , (2002). Dementia and alzheimer disease incidence: A prospective cohort study. Archives of Neurology 59 , 1737–1746.12433261
+Kuo L and Mallick B . (1997). Bayesian semiparametric inference for the accelerated failure-time model. Canadian Journal of Statistics 25 , 457–472.
+Lamarca R , Alonso J , Gómez G , and Muñoz Á . (1998). Left-´ truncated data with age as time scale: An alternative for survival analysis in the elderly population. The Journals of Gerontology Series A: Biological Sciences and Medical Sciences 53 , M337–M343.9754138
+Lambert P , Collett D , Kimber A , and Johnson R . (2004). Parametric accelerated failure time models with random effects and an application to kidney transplant survival. Statistics in Medicine 23 , 3177–3192.15449337
+Lee KH , Haneuse S , Schrag D , and Dominici F . (2015). Bayesian semiparametric analysis of semicompeting risks data: Investigating hospital readmission after a pancreatic cancer diagnosis. Journal of the Royal Statistical Society, Series C 64 , 253–273.
+Li G , Higdon R , Kukull W , Peskind E , Moore KVV , Tsuang D , (2004). Statin therapy and risk of dementia in the elderly: A community-based prospective cohort study. Neurology 63 , 1624–1628.15534246
+Liquet B , Timsit J-F , and Rondeau V . (2012). Investigating hospital heterogeneity with a multi-state frailty model: Application to nosocomial pneumonia disease in intensive care units. BMC Medical Research Methodology 12 , 79.22702430
+Millar RB (2009). Comparison of hierarchical Bayesian models for overdispersed count data using DIC and Bayes’ factors. Biometrics 65 , 962–969.19173704
+Neal RM (2000). Markov chain sampling methods for dirichlet process mixture models. Journal of Computational and Graphical Statistics 9 , 249–265.
+Odell PM , Anderson KM , and D’Agostino RB (1992). Maximum likelihood estimation for interval-censored data using a Weibull-based accelerated failure time model. Biometrics 48 , 951–959.1420849
+Peng L and Fine J . (2007). Regression modeling of semicompeting risks data. Biometrics 63 , 96–108.17447934
+Putter H , Fiocco M , and Geskus R . (2007). Tutorial in biostatistics: Competing risks and multi-state models. Statistics in Medicine 26 , 2389–2430.17031868
+Rondeau V , Mauguen A , Laurent A , Berr C , and Helmer C . (2015). Dynamic prediction models for clustered and interval-censored outcomes: Investigating the intra-couple correlation in the risk of dementia. Statistical Methods in Medical Research - To appear, 10.1177/0962280215594835 .
+Rondeau V , Mazroui Y , and Gonzalez JR (2012). frailtypack: An R package for the analysis of correlated survival data with frailty models using penalized likelihood estimation or parametrical estimation. Journal of Statistical Software 47 , 1–28.
+Sha N , Tadesse M , and Vannucci M . (2006). Bayesian variable selection for the analysis of microarray data with censored outcomes. Bioinformatics 22 , 2262–2268.16845144
+Shao Q and Ibrahim JG (2000). Monte Carlo methods in Bayesian computation. New York, NY: Springer.
+Spiegelhalter DJ , Best NG , Carlin BP , and Van Der Linde A . (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society, Series B 64 , 583–639.
+Tanner MA and Wong WH (1987). The calculation of posterior distributions by data augmentation. Journal of the American Statistical Association 82 , 528–540.
+Uno H , Wittes J , Fu H , Solomon SD , Claggett B , Tian L , (2015). Alternatives to hazard ratios for comparing the efficacy or safety of therapies in noninferiority studies. Annals of Internal Medicine 163 , 127–134.26054047
+Wei L . (1992). The accelerated failure time model: A useful alternative to the Cox regression model in survival analysis. Statistics in Medicine 11 , 1871–1879.1480879
+Xu J , Kalbfleisch J , and Tai B . (2010). Statistical analysis of illness-death processes and semi-competing risks data. Biometrics 66 , 716–725.19912171

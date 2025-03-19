@@ -1,0 +1,448 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9426302
+20385
+Methods
+Methods
+Methods (San Diego, Calif.)
+1046-2023
+1095-9130
+
+37507059
+10528049
+10.1016/j.ymeth.2023.07.007
+NIHMS1920651
+Article
+Preference Matrix Guided Sparse Canonical Correlation Analysis for Mining Brain Imaging Genetic Associations in Alzheimer’s Disease
+http://orcid.org/0000-0003-3346-8024
+Sha Jiahang a1
+http://orcid.org/0000-0001-7127-3258
+Bao Jingxuan a1
+http://orcid.org/0000-0003-0737-9976
+Liu Kefei b
+Yang Shu a
+Wen Zixuan a
+Wen Junhao cd
+Cui Yuhan c
+Tong Boning a
+http://orcid.org/0000-0002-5015-1099
+Moore Jason H. e
+http://orcid.org/0000-0002-1376-8532
+Saykin Andrew J. f
+http://orcid.org/0000-0002-1025-8561
+Davatzikos Christos c
+http://orcid.org/0000-0003-0660-5230
+Long Qi a
+http://orcid.org/0000-0002-5443-0503
+Shen Li a*
+Alzheimer’s Disease Neuroimaging Initiative2
+a Department of Biostatistics, Epidemiology and Informatics, University of Pennsylvania, 3700 Hamilton Walk, Philadelphia, PA, 19104, USA
+b Suzhou Institute for Advanced Research, University of Science and Technology of China, Suzhou, Jiangsu, 215000, China
+c Center for Biomedical Image Computing and Analytics, University of Pennsylvania, 3700 Hamilton Walk, Philadelphia, PA, 19104, USA
+d Stevens Neuroimaging and Informatics Institute, University of Southern California, 2025 Zonal Ave, Los Angeles, CA, 90033, USA
+e Department of Computational Biomedicine, Cedars-Sinai Medical Center, 8700 Beverly Blvd., Los Angeles, CA, 90048, USA
+f Department of Radiology and Imaging Sciences, Indiana University, 550 N. University Blvd., Indianapolis, IN, 46202, USA
+1 These authors contributed equally to this work.
+
+* Correspondence to li.shen@pennmedicine.upenn.edu.
+24 8 2023
+10 2023
+27 7 2023
+01 10 2024
+218 2738
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Investigating the relationship between genetic variation and phenotypic traits is a key issue in quantitative genetics. Specifically for Alzheimer’s disease, the association between genetic markers and quantitative traits remains vague while, once identified, will provide valuable guidance for the study and development of genetics-based treatment approaches. Currently, to analyze the association of two modalities, sparse canonical correlation analysis (SCCA) is commonly used to compute one sparse linear combination of the variable features for each modality, giving a pair of linear combination vectors in total that maximizes the cross-correlation between the analyzed modalities. One drawback of the plain SCCA model is that the existing findings and knowledge cannot be integrated into the model as priors to help extract interesting correlations as well as identify biologically meaningful genetic and phenotypic markers. To bridge this gap, we introduce preference matrix guided SCCA (PM-SCCA) that not only takes priors encoded as a preference matrix but also maintains computational simplicity. A simulation study and a real-data experiment are conducted to investigate the effectiveness of the model. Both experiments demonstrate that the proposed PM-SCCA model can capture not only genotype-phenotype correlation but also relevant features effectively.
+
+Sparse canonical correlation analysis
+Preference matrix
+Alternating optimization
+Imaging genetics
+Alzheimer’s disease
+
+pmc1. Introduction
+
+Investigating the relationship between genetic variation and phenotypic traits is a key issue in quantitative genetics. Specifically for Alzheimer’s disease, the association between genetic markers and quantitative traits (e.g., molecular, imaging and cognitive measures) remains vague while, once identified, will provide valuable guidance for the study and development of genetics-based treatment approaches.
+
+However, considering the vast number of genetic markers such as single nucleotide polymorphisms (SNPs) and multimodal quantitative traits (QTs), it would be computationally expensive and less powerful to perform univariate testing on all possible SNP-QT pairs. Therefore, as an alternative method, canonical correlation analysis (CCA) is commonly used to detect multi-SNP-multi-QT associations between genotype and quantitative phenotype data in a single model [18, 19, 31, 49, 62]. A plain CCA computes two canonical weight vectors for each modality as linear combinations of feature variables in two modalities that maximize their cross-correlation. Despite all the advantages of CCA, its result is usually not informative: on one hand, the dimensions of SNP and QT datasets are usually extremely high, allowing infinitely many solutions to exist; on the other hand, the low signal-to-noise ratio in most SNP and QT datasets is directly reflected in the result weight vectors, thereby lowering the result interpretability in practice. To counter these drawbacks, sparse CCA (SCCA) is later proposed to reduce the number of variables selected in the canonical weight vectors [26]. While the results by SCCA are much more robust and interpretable in practice, the direct computation of SCCA is expensive, which makes it challenging to perform analysis given limited computational resource. For computational efficiency, in practice, a simplified version of SCCA (equivalent to sparse partial least square regression or SPLS) is often widely used through maximizing the cross-covariance of two canonical variables [50]. This simplification makes some additional assumptions on the problem that SCCA solves but transforms the fractional optimization problem into a constrained optimization problem with closed-form solutions for each subproblem, which reduces the computational cost.
+
+One common disadvantage of these models is that the existing findings from past biomedical research cannot be integrated into the procedure of these models as priors. Nonetheless, the priors about relations between SNPs and QTs are valuable in variable selection and will offer more practical meaning and interpretability in the result by SCCA. In this work, we propose a new SCCA model, named as “preference matrix guided SCCA (PM-SCCA)”, which not only takes priors encoded as a preference matrix but also keeps computational simplicity by transforming it to the simplified SPLS version described above. The discussion about CCA models in the rest of the paper all refer to this simplified version. The preference matrix contains the numeric values of how preferred one SNP is deemed as associated with one QT as priors based on existing biological knowledge. A simulation study and a real-data experiment are conducted to investigate the effectiveness of the model. Both experiments demonstrate that the proposed PM-SCCA model is capable of capturing not only multi-SNP-multi-QT associations but also relevant genetic and phenotypic features effectively.
+
+The subsequent sections of this article are structured as follows. Section 2 outlines the problem formation of the proposed PM-SCCA. In Section 3, we elaborate on the methodology employed for performing PM-SCCA. In Section 4, we present the results from the simulation study for assessing models’ performance as well as the results from the real-data experiment along with ensuing discussion over their biological validity. In Section 5, we summarize and conclude the paper.
+
+2. Problem formulation
+
+Let X∈ℝn×p be the genotyping SNP data and Y∈ℝn×q be the quantitative trait (QT) data (e.g., molecular, imaging, fluid and/or cognitive measures), where n, p and q are the numbers of participants, SNPs and QTs, respectively. Assume the features variables (i.e., columns) in X, Y have been centered at zeros.
+
+Canonical correlation analysis (CCA) aims to find a linear combination of features in X and Y to maximize the correlation between Xu and Yv. Mathematically, it finds the canonical weight vectors u, v that satisfy: (1) maximizeu, vu⊤X⊤Yv∥Xu∥2∥Yv∥2≡maximizeu, vu⊤ΣXYvu⊤ΣXXuv⊤ΣYYv
+
+It is customary to interpret ∑XX and ∑YY as diagonal matrices since the SNP and QT data typically exhibit both high dimensionality and insignificant correlation among features [42, 58, 59]. This simplification allows the fractional optimization problem to be reduced to a constrained optimization problem. Additionally, since sparsity on the loadings is desired for feature selection and practical interpretation in biological settings, we employ a simplified sparse CCA (SCCA), equivalent to sparse PLS (SPLS), for the following problem: (2) maximizeu,vsubject to1n−1u⊤X⊤Yv∥u∥22≤1,∥u∥1≤c1∥v∥22≤1,∥v∥1≤c2
+
+where c1, c2&gt;0 are the regularization parameters for sparsity and the objective function is often referred to as canonical covariance. In this paper, we introduce a new SCCA model, “preference matrix guided SCCA (PM-SCCA)”, and develop an algorithm based on the above computationally simplified model (i.e., Equation (2)). Thus PM-SCCA is formulated as (3) maximizeu, vsubject to(1−λ)⋅1n−1u⊤X⊤Yv+λ|u|⊤E|v|∥u∥22≤1,∥u∥1≤c1∥v∥22≤1,∥v∥1≤c2
+
+where c1, c2&gt;0 and λ∈[0, 1) are the regularization parameters, E is the preference matrix with Ei, j≥0∀i, j, and |⋅| stands for the elementwise absolute value. Each element in the preference matrix E reflects user-specified preference level (based on prior biological knowledge) on the corresponding SNP-QT association, and therefore regularizes the magnitude of the elements of both canonical weight vectors, u and v.
+
+When c1=c2=+ ∞, the sparsity constraints will not be active. In this case, the methods are referred to as CCA and PM-CCA respectively. In our empirical study, we will compare the proposed PM-SCCA and PM-CCA with SCCA and CCA using both simulation and read world data.
+
+3. Methods
+
+We employ an alternating optimization method to solve Equation (2). Alternating optimization is an iterative procedure that proceeds in two alternating steps: update of u while holding v fixed and update of v while holding u fixed.
+
+3.1. Update of u with v fixed
+
+Denote a=(1−λ)⋅1n−1X⊤Yv∈ℝp×1, b=λE|v|∈ℝ+p×1.
+
+The optimization of Equation (3) with respect to u can be written as (4) maximizeu∑i=1paiui+biuisubject to∥u∥22≤1,∥u∥1≤c1.
+
+Notice that, since bi≥0, it can be shown that the optimal ui should have the same sign as ai. Otherwise, by reversing the sign of ui, the objective value can always be increased. Thus, with substitution ui=signaiui, the following problem is equivalent to Equation (4): (5) maximizeu∑i=1pai+bi signaiuisubject to∥u∥22≤1,∥u∥1≤c1.
+
+With w=a1+b1 signa1a2+b2 signa2⋮ap+bp signap.
+
+defined, Equation (5) can be expressed in a more compact form as (6) maximizeu w⊤u subject to ∥u∥22≤1,∥u∥1≤c1.
+
+Equation (6) can be solved by first using a soft-thresholding operator to shrink the elements in w toward zero by a non-negative constant Λ and then normalizing it to the unit ℓ2 ball. Specifically, let S(a, Λ) be the soft-thresholding operator: S(a, Λ)=a−Λ,a&gt;Λa+Λ,a&lt;−Λ0,−Λ≤a≤Λ,
+
+where Λ is a non-negative constant. Note that if a vector a is input, then the soft-thresholding operator shall be applied with the same shrinking constant Λ on every element of a. With this definition, the solution to Equation (6) can be written as u∗=Sw, Λ1Sw, Λ12
+
+3.2. Update of v with u fixed
+
+Solving v with u fixed is the same as solving u with v fixed. Specifically, denote α=(1−λ)⋅1n−1Y⊤Xu∈ℝq×1, β=λE⊤|u|∈ℝ+q×1
+
+The optimization of Eq. (3) with respect to v can be written as (7) maximizev∑j=1qαjvj+βjvjsubject to∥v∥22≤1,∥v∥1≤c2.
+
+Since βj≥0, the optimal vj should the same sign as αj with the same reason as stated for u.
+
+Define γ=α1+β1 signα1α2+β2 signα2⋮αq+βq signαq.
+
+Then, with similar techniques, the optimization problem to update v with u fixed can be boiled down to solving the following problems: (8) maximizev γ⊤v subject to∥v∥22≤1,∥v∥1≤c2. 
+
+Similarly, the solution to Equation (8) can be written as v∗=Sγ, Λ2∥Sγ, Λ2∥2
+
+The original Equation (3) has been reduced to two quadratically constrained linear programming optimization problems, Equation (6) and Equation (8). Notice that, with the ℓ1 constraint, the solution is generally not unique with the nonzero elements possible to assume any non-negative number that satisfies the ℓ1 constraint. Given an initial estimate for u and v, the algorithm for the PM-SCCA alternately updates u and v iteratively until convergence, as outlined in Algorithm 1. Note that Algorithm 1 calls a Quadratically Constrained Linear Programming (QCLP) Solver [37], which is outlined in Algorithm 2.
+
+For soft-thresholding operator used in QCLP solver (outlined in Algorithm 2), the parameter Λ1 and Λ2 can be chosen flexibly. If S(a, Λ)∥S(a, Λ)∥21≤c, then choose Λ=0. Otherwise, choose Λ1 and Λ2 according to the desired sparsity of the solution that fits within the ℓ1 upper bounds c1 and c2. Despite this common practice, we also allow Λ in Algorithm 2 to be an optional input due to the possibility of tuning the parameter c faster and more accurately without using a prespecified parameter grid of c in certain cases.
+
+Additionally, we see the preference matrix E as well-bounded if maxσmin′(X)∥Y∥2,σmin′(Y)∥X∥2n−1≤∥E∥≤∥X∥2∥Y∥2n−1
+
+If E is not well-bounded, then it is advised to perform magnitude alignment as E←E∥X⊤Y∥2(n−1)∥E∥2(A)E∥X∥2∥Y∥2+maxσmin′(X)∥Y∥2,σmin′(Y)∥X∥22(n−1)∥E∥2(B)
+
+where (A) is when X⊤Y can be computed and (B) is otherwise. (B) is considered because X⊤Y is computationally expensive and approximations are sometimes required. Here, σmin′A denotes the smallest non-trivial spectral radius of A. It is specifically defined this way because the matrix is easily ill-conditioned and the minimum spectral radius to be used can be filtered with a deliberately selected cutoff.
+
+In order to determine the optimal sets of hyperparameters c1, c2, λ, it is recommended to employ cross-validation. Depending on the specific task, readers may opt to utilize either canonical covariance or canonical correlation as the cross-validation score metric. For general purposes, we suggest using canonical covariance for cross-validation as it is employed as a fundamental part of the objective function for computation in the simplified CCA models. Furthermore, we conducted additional simulation experiments to compare the models’ performance between these two metrics, and we observed that the use of canonical covariance for cross-validation typically results in the selection of hyperparameter sets that produce testing canonical correlation values closer to the theoretical values. In the next subsection, we provide the convergence analysis.
+
+Alternating minimization is one of the most commonly used strategies to solve these biconvex optimization problems. In practice, this is a balanced choice because it guarantees descent. Some other variant approaches can be explored (ADMM) for this objective function with guaranteed descent, although our algorithm addresses the problem while bearing simplicity. Some other commonly used approaches for both vanilla CCA and some CCA variants usually involve matrix inversion, which is computationally expensive in many settings with hyperparameter tuning that genetics problems usually involve and therefore is less practical.
+
+Algorithm1 PM-SCCA algorithm           ¯Input: Genotype data: X∈ℝn×p; Imaging phenotype data:   Y∈ℝn×q; Preference matrix E∈ℝ+p×q, where n, p  and q are the numbers of observations, SNPs, and QTs,  respectively.Output:Loading weight vectors: u^, v^ 1: Subtract the column mean from the data X, Y for feature  mean centering:        X←X−1n1n1n⊤X         Y←Y−1n1n1n⊤Y   {or use column-wise standardization as necessary} 2: Perform magnitude alignment to E if not well-bounded; 3: Select the hyperparameters c1, c2, λ via cross-validation; 4: Initialize u^, v^, w, γ; 5: repeat 6:  Update u^ with QCLP solverw, c1,Λ1;  7:  Update v^ with QCLP solverγ, c2, Λ2; 8: until convergence¯¯
+
+3.3. Convergence Analysis
+
+The main algorithm (Algorithm 1) is an alternating iterative algorithm that updates u to its optimal solution in the iteration where v is fixed and v to its optimal solution in the iteration where u is fixed. This strategy solves the biconvex problem Equation (3). Since the QCLP solver (Algorithm 2) relies on the partial subgradients of Equation (3), we show that our algorithm monotonously increases the value of the objective function to maximize within each iteration and therefore converges to a local extreme by proving that Equation (3) is upper bounded.
+
+Proof:
+
+Note that the following discussion holds within the domain ∥u∥22≤1 and ∥v∥22≤1. First, by bilinearity it is true Algorithm2 Quadratically Constrained Linear Program-ming (QCLP) Solver [37]¯Input: Coefficient vector: a; ℓ1 constraint: c; soft-   thresholding parameter: ΛOutput: argmax xa⊤x subject to∥x∥22≤1,∥x∥2≤c.   1: S←i : argmaxjaj  2: if 0≤c&lt;1 then  3: return empty set;  4: else if1&lt;c&lt;|S|then   5:   x∗i←c|S|signai,i∈S0,i∉S  (9)  6: else  7:   x∗←S(a, Λ)∥S(a, Λ)∥2          (10)  8:  end if¯¯
+
+that u⊤X⊤Yv≤X⊤Y2&lt;∞. Then, for any X∈ℝp×q, |u|⊤X |v|≤∥|u|∥2∥X |v|∥2≤∥X∥2.
+
+For equation (3) specifically, E will only contain finite values. Thus, ∃M∈ℝ such that ∥E∥2≤∥E∥F≤M&lt;∞.
+
+If magnitude alignment on E is performed for E^ suggested, then it follows that
+
+ ∥E^∥2≤max∥X⊤Y∥2n−1,  E∥X∥2∥Y∥2+maxσmin′(X)∥Y∥2, σmin′(Y)∥X∥22(n−1)∥E∥2≤∥X∥2∥Y∥2n−1&lt;∞
+
+Since x, y &lt;∞ if and only if λx+(1−λ)y&lt;∞, ∀λ∈[0, 1], x, y∈ℝ, we proved Equation (3) is upper bounded.
+
+Note that a biconvex problem is generally not solvable within polynomial time. Therefore, it is not practical to expect a global optimum to be found here unless an informed initialization is made. One common approach is to initialize with the left- and right-singular vectors of X⊤Y. This enables the algorithm to start from somewhere close to the desired optimum, facilitating the convergence within a lower number of iterations. These general principles remain applicable in our specific case. Whether a local optimum can be as effective as a global optimum depends on the particular task being addressed through this mathematical formulation. In the context of the imaging-genetics scenario explored in our paper, a local optimum can be equally efficient if the key variables are highly pronounced, while the trivial variables carry little to no weight. Our algorithm achieves this, as demonstrated by the verification through simulation experiments shown later.
+
+4. Experimental results and discussions
+
+4.1. Simulation study on synthetic data
+
+We perform the simulation analyses to demonstrate that PM-SCCA can outperform SCCA in terms of prediction accuracy and CCA in terms of feature selection performance.
+
+4.1.1. Generation of synthetic data
+
+We assume the data X∈ℝn0×p and Y∈ℝn0×q contain n0 i.i.d. observations of random vectors x∈ℝp and y∈ℝq respectively, with n0=2500, p=200, and q=100.
+
+The probabilistic generative model for tensor CCA (TCCA) can be adapted by treating a matrix as a first-order tensor to generate synthetic data. The generative model for the first-order TCCA takes canonical weights u, v, the targeted canonical correlation ρ≥0, the noise levels ηx≥0, ηy≥0, the means of the features μx, μy, and the number of observations n0 to generate synthetic data. The model adapted to our simulation study is described in detail as follows. [41]
+
+Given u∈ℝp and v∈ℝq specified as ground truth canonical weights for X and Y, we compute u˜=u∥u∥22v˜=v∥v∥22→Σx=u˜u˜⊤+ηxIp−∥u∥22u˜u˜⊤Σy=v˜v˜⊤+ηyIq−∥v∥22v˜v˜⊤Σxy=ρu˜v˜⊤
+
+Then, we generate X, Y by row-stacking n0 draws from x1,…, xp, y1,…, yq∼Nμx, μy,ΣxΣxyΣxy⊤Σy
+
+and separate the matrix as [X | Y]=x1,1⋮xn0, 1⋯⋱⋯x1, p⋮xn0, py1, 1⋮yn0, 1⋯⋱⋯y1, q⋮yn0, q
+
+In our simulation study, we set the targeted canonical correlation as ρ={0.1, 0.3, 0.5, 0.7, 0.9}, the noise levels as ηx=ηy={0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1} and the means of the features μx=0p and μy=0q. Note that in the rest of the article, when η is used without subscript, it indicates η=ηx=ηy is set to the same value and therefore should represent the same as both appearing simultaneously.
+
+We generate the preference matrix by, first, choosing which elements to be nonzero by random sampling and, then, drawing from a truncated normal  ψμE=1, σE2=0.52, 0,+∞ for the blocks between correlated features and the all other parts between uncorrelated feature respectively. As two weight groups in u and two weight groups in v are defined as non-trivial (Fig. 2, Theoretical), 2 × 2 = 4 nontrivial blocks in the covariance matrix of signals without noises between X and Y are expected. We use this pattern as the correlated blocks and the uncorrelated parts for the preference matrix simulation. In this study, 30% ∼ 40% of the elements in the correlated block (60% ∼ 70% false negative rate allowed) and 5% of the elements in the uncorrelated parts are randomly chosen to be nontrivial in the simulated preference matrix. This two-stage process allows not only different levels of quantitative confidence in feature associativity between modalities but also random false-positive and false-negative prior beliefs to exist, which brings the simulation closer to real situations.
+
+4.1.2. Simulation results
+
+With n0=2500 observations in total, we use n=2000 for training-validation and nt=500 for testing for the simulation study. For λ, we include 19 values ranging from 0.09 to 0.95 in increments of 0.05. For c1, we include 10 values equally spaced between 1 and 200, and for c1, we include 10 values equally spaced between 1 and 100. For each model, we first use 5-fold cross-validation for maximal validation canonical covariance to select optimal hyperparameters c1, c2, λ on the validation dataset and, with the selected hyperparameters, re-train the models on the training-validation subset to obtain u^, v^, the estimated canonical weights of the features in X and Y. Then, we calculate the canonical correlation (the expression in Eq (2)) both on the test subset ((C)Cor@Test) and on the full dataset ((C)Cor@Full). Additionally, we collect the canonical covariance on the validation datasets calculated during hyperparameter selection with cross-validation ((C)Cov@Val). We use canonical covariance from cross-validation because the simplified CCA models uses it as a part of the objective function for computation. This provides another robust rule on models’ generalizability. For each model, we execute this process for 100 times with 100 random seeds used in train-validation-test splitting and report the summary of the key metrics for model evaluation.
+
+The proposed model has two primary objectives. First, a satisfactory level of similarity in feature weight distribution between theoretical weight vectors u, v and weight vectors estimated u^, v^ is expected. This can be met if and only if the weight vectors estimated by our models demonstrate sufficient robustness against the datasets synthesized with theoretical weight vectors. We evaluate with CCov@Val and CCor@Test, of which higher values indicate better performance. Second, we aim to achieve a high level of proximity between ρ^=CCorru^, v^, XFull,YFull and ρ=CCorru, v, XFull, YFull. Here, note the actual synthetic datasets may have their canonical correlations, ρ˜, that are calculated by using the theoretical weight vectors on the actual synthetic datasets. Due to the randomness of the noises, ρ˜ may bear values that differ from but are close to ρ. Given our interest in obtaining the weight vectors that closely resemble the theoretical weight vectors, we regard ρ˜ as the optimal canonical correlation that can be recovered in this instance. Therefore, we use |D|=|ρ˜−ρ^| to calculate the absolute canonical correlation difference, where a lower value denotes superior performance.
+
+Figure 1 shows the three metrics employed to assess the models’ performance for various combinations of ρ and η. The PM-guided models, specifically PM-SCCA, are shown to achieve significantly lower absolute canonical correlation difference than non-PM-guided models in almost all cases. This indicates that PM-SCCA exhibits superior performance in recovering the theoretical canonical correlation between two datasets. For CCov@Val and CCor@Test, all four models behave similarly when the signal-noise ratio is high. However, as the noise parameter, η, increases, we find that both PM-guided models yield higher values on both CCov@Val and CCor@Test than the non-PM-guided models, with PM-SCCA leading the performance among four models. Thus, PM-SCCA demonstrates the best generalizability, followed by PM-CCA, provided the new datasets come from the similar distribution as the training datasets.
+
+Tables 1 and 2 present the complete summary data used for Figure 1. For η=0.01, the estimation can only yield information when the signal-noise ratio is reasonably controlled. Specifically, we observe a change point for CCor@Test to assume non-trivial positive values at around ρ= 0.3. Notably, only a subset of results from the experiments conducted are included in Figure 1, Table 1, and Table 2 because the analyses indicate that none of the four models correctly estimate weight vectors when η≥0.05, as evidenced by CCor@Test values all close to 0. Therefore, all results featuring η&gt;0.05 are omitted.
+
+Figure 2 shows the feature selection performance with u^ and v^ by PM-SCCA, PM-CCA, SCCA, CCA with their respective optimal sets of hyperparameters c1, c2, λ under the highest noise parameter η=0.01 and the lowest target canonical correlation ρ= 0.3 with which all four models have non-trivial testing canonical correlation. Both PM-guided methods correctly assigned large weights to the non-trivial features and small to zero weights to the trivial features in ground truth vectors u, v. In contrast, the features SCCA selected scarcely agree with either trivial or non-trivial features in the theoretical ground truth. The results by CCA contain excessive noises and therefore provide very limited information for interpretation in practice. Taking into account what Figure 1 presents, we may assert that PM-guided models demonstrate superior performance in mitigating overfitting and therefore finding generalizable results when compared to non-PM-guided models.
+
+4.2. Analysis of ADNI data
+
+To demonstrate the usefulness of our proposed method in real data analysis, we aimed to mine the group-level associations between the genetic determinants and the brain region-level amyloid-beta deposition with the incorporation of biological prior knowledge. We conducted real data analysis using genotyping and positron emission tomography (PET) imaging with (18)F-AV-45 (florbetapir) obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) biobank database. To evaludate the performance of our proposed PM-SCCA model, we also conducted the same analyses using CCA, SCCA, PM-CCA as the benchmark methods.
+
+4.2.1. Data description and preprocessing
+
+The genotyping, PET imaging, and demographic data used in the preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (http://adni.loni.usc.edu) [44, 47, 48, 55, 56]. The ADNI was launched in 2003 as a public-private partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to test whether serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of mild cognitive impairment (MCI) and early Alzheimer’s disease (AD). Up-to-date information about the ADNI is available at www.adni-info.org.
+
+We downloaded genotyping data from ADNI 1, GO, 2, and 3 studies. We aligned and integrated the downloaded data using Homo sapiens (human) genome assembly NCBI37 (hg19) genome builder. We performed the strand alignment according to 1000 Genome phase 3 [1] using McCarthy Group Tools (https://www.well.ox.ac.uk/~wrayner/tools/). We imputed the genotyping data using the Michigan Imputation Server [17] with 1000 Genome phase 3 reference panel of European ancestry. We annotated our imputed genotyping data using ANNOVAR [53]. After alignment and imputation, we performed the quality control (QC) using the following criteria: genotyping call rate &gt; 98%, minor allele frequency &gt; 0.1%, Hardy-Weinberg Equilibrium &gt; 1e-6, missingness per individual &lt; 5%. The QC was performed using PLINK 1.9 [11]. To validate our PM-SCCA model, we prioritized 87 single nucleotide polymorphisms (SNPs) based on their associations with Alzheimer’s disease (AD). Specifically, we downloaded the genome-wide association study (GWAS) summary statistics of the major AD genetics landmark study, Bellenguez et al. [8], from NHGRI-EBI GWAS Catalog [10]. We prioritized 47 AD-related SNPs with the smallest GWAS association p‐values  and 40 AD-unrelated SNPs with the largest association p‐values , totaling 87 SNP markers.
+
+The PET imaging with (18)F-AV-45 (florbetapir) regional endophenotype quantitative traits (QTs) were pre-processed by the ADNI PET core [28] and directly downloaded from the LONI website. Specifically, the original florbetapir data were downloaded from the LONI3 in the most fully pre-processed format. Each florbetapir image is co-registered using SPM8 [3] to that subject’s magnetic resonance imaging (MRI) image that was closest in time. FreeSurfer [20] processing was carried out to skull-strip, segment, and delineate cortical and subcortical regions in all MRI scans. Then, the volume-weighted florbetapir means were extracted from a cortical summary region that includes frontal, anterior/posterior cingulate, lateral parietal, and lateral temporal regions according to their FreeSurfer naming convention. Standardized uptake value ratios (SUVRs) [38, 52] are provided. In our study, we further normalized the summary SUVR based on the whole cerebellum reference region [30, 13] as recommended for the cross-sectional studies [35, 9, 12]. We extracted the first visit of each subject for the subsequent analysis. After preprocessing, our (18)F-AV-45 (florbetapir) endophenotype consists of 68 SUVRs of the global cortical target (CTX) regions and 955 subjects. Among 68 regions, 24 regions were found to be AD-related by previous studies [21].
+
+We constructed a binary preference matrix for our PM-SCCA model based on the relevance of the corresponding features to AD. Specifically, we employed a 68-by-87 dimensional binary matrix in which “1” indicates the corresponding row (regional CTX SUVR (18)F-AV-45 florbetapir imaging QT) and column (genetic determinants) were identified to be influential to AD.
+
+We downloaded the demographic information from an Alzheimer’s Disease Modelling Challenge, named QT-PAD project (http://www.pi4cs.org/qt-pad-challenge). We summarized the population characteristics in Table 3
+
+4.2.2. Results and discussion
+
+AD is a complex and multifaceted neurodegenerative disorder [45, 46, 57] while its underlying neuropathological mechanism remains largely unknown. Despite many studies investigating the case/control status of AD relying on a single modality [32, 33, 34], studying AD from the imaging-genetics perspective may enhance the statistical power [5] and may provide new insights into the phenotypic characteristics and genetic mechanisms of the brain [7, 6]. Borrowing the power of the amyloid pathogenesis hypothesis of AD [21, 27], one promising approach to understanding the mechanism of AD is to identify group-level associations between regional amyloid-beta deposition and genetic markers. To facilitate this, we constructed two datasets containing AD-related and AD-unrelated features, respectively. Using a preference matrix, we employed the PM-SCCA model and identified pairs of features that exhibited significant AD-relatedness, enabling us to search for group-level imaging-genetics associations (Figure 3). To evaluate our model, we also employed the baseline CCA, SCCA, and PM-CCA models for comparison.
+
+To obtain robust and replicable group-level imaging-genetics associations, we employed the cross-validation and hyperparameter tuning process. Specifically, we equally divided 955 subjects into three folds where two folds were treated as a training-validation dataset and the third fold was treated as an independent testing set. To tune the hyperparameters c1, c2, and λ, we employed a three-fold cross-validation procedure within the training-validation dataset. For c1, we tested ten candidate values equally spaced between 1 and 68; For c2, we tested ten values equally spaced between 1 and 84; and For λ, we tested values ranging from 0.05 to 0.95 in increments of 0.05. We trained our models on two folds of the training-validation dataset and then validated them by applying the weights to the remaining fold of data and calculating the absolute value of the canonical correlation. We repeated this process for all possible combinations of the three folds and selected the hyperparameter set that produced the highest average absolute validation canonical correlation. We then retrained our models with the best-tuned hyperparameters on the entire training-validation dataset and reported the resulting canonical correlation as the training correlation. To evaluate the generalizability of our models, we applied the weights from the training model to the independent testing dataset to obtain the testing canonical correlation. We repeated this entire process 100 times using 100 different random seeds to split the subjects into folds. Finally, we reported the mean and standard error of the training and testing canonical correlations across the 100 random splits.
+
+In summary, our PM-SCCA model outperforms the other baseline models (Table 4). The preference matrix guided models demonstrate lower training canonical correlations and higher testing canonical correlations compared to the model without the incorporation of the preference matrix, indicating that the preference matrix can aid models in reducing overfitting. Furthermore, when comparing the PM-SCCA with PM-CCA, the incorporation of sparsity enables the model to produce more robust results (with lower standard error) and even higher training and testing canonical correlations.
+
+We compared the association matrices reconstructed from the weights learned by the four CCA models that were used to project the regional (18)F-AV-45 QTs and SNP markers to obtain the canonical correlations (Figure 4). For each of the four models, the association matrix was calculated by averaging the corresponding matrices across the 100 random splits. Our PM-SCCA model achieved the best biological interpretability. Specifically, on one hand, the CCA and SCCA models selected multiple AD-unrelated features. On the other hand, although the PM-CCA was able to select AD-related genetic markers and do further prioritization, the algorithm cannot prioritize the regional (18)F-AV-45 imaging QTs to relevant genetic features. Our PM-SCCA achieves the two-dimensional feature selections by leveraging the information from the preference matrix.
+
+We annotated brain regions that are highly associated with AD genetic markers to investigate the brain functions that are mostly associated with genetics. The absolute value of the group-level imaging-genetics association matrix was summed up across all SNPs and resulted in a vector of length 68, where each element represents an aggregated genetic relatedness of the corresponding imaging QT (Figure 5). We then used the resulting vector to functionally annotate brain regions through Neurosynth [64] and NeuroVault [23]. Our brain functional annotation results indicate that the prefrontal cortex area is most closely correlated with the AD genetic marker prioritized regions. In the previous study involving 17 normal subjects engaging in a transitive inference task with determinate and indeterminate relations, the prefrontal cortex is suggested to play an essential role in resolving indeterminate relations [22]. Additionally, a functional magnetic resonance imaging (MRI) study indicates the neural representations of different dimensions of emotion (valence, intensity, and recognition) are closely related to different regions in the prefrontal cortex [24]. These results provide biological validation for our identified group-level imaging-genetics associations, showing that the functions associated with imaging ROIs mostly associated with genetic markers are significantly linked to AD.
+
+We further validated our group-level imaging-genetics associations from the genetics perspective. We summed up the absolute value of the group-level imaging-genetics association matrix across the (18)F-AV-45 imaging dimension, resulting in a vector of aggregated imaging endophenotype relatedness of corresponding genetic markers with length 87. We then filtered out the genetic markers with low aggregated imaging relatedness. After the filtering, we obtain 47 genetic markers and all of them are AD-related. Next, we further prioritized 16 SNPs with aggregated imaging relatedness greater than one standard deviation of the mean aggregated imaging relatedness and mapped them to their nearest genes using ANNOVAR [53]. We conducted the gene set enrichment analysis using Gene Ontology [14, 16, 4] and PANTHER [15, 40, 39]. As a result, we found two pathways that have been significantly enriched: the apoptosis signaling pathway (with fold enrichment 27.45) and the epidermal growth factor receptor signaling pathway (with fold enrichment 24.17). From the previous experimental study, we found that the amyloid-beta is able to activate the caspase signaling pathway and induce significant apoptosis in primary cultured cerebral cortical neurons [25], whose mechanism is later shown to be preceded by selective alterations in the expression of the apoptosis-related genes [63]. On the other hand, the epidermal growth factor receptor signaling pathway has been found to be a preferred target for treating amyloid-beta–induced memory loss [54] and preventing APOE4 and amyloid-beta-induced cognitive and cerebrovascular deficits in female mice [51]. These findings support the biological validity of the genetic markers selected by our PM-SCCA model.
+
+5. Conclusion
+
+In summary, we have proposed a preference matrix guided sparse canonical correlation analysis (PM-SCCA) model to investigate the relationship between genetic variations such as SNPs and imaging quantitative traits (QTs). Our model can detect biologically meaningful multi-SNP-mulit-QT associations and has the potential to provide new insights into AD. The incorporation of the preference matrix can facilitate the feature selection, where features proven to be related to AD are encouraged to be selected. Moreover, sparsity regularization can further achieve feature selections within the AD-related feature group. Our simulation study demonstrated that our models could both select the nontrivial features and recover the theoretical canonical correlation without overfitting. Our real data analysis demonstrated that our model could identify biologically interpretable features.
+
+Our PM-SCCA is a useful statistical method to understand the relationship between two sets of variables without lossing biological interpretability. Our PM-SCCA model can encourage the selection of features that are in the same pathways and can further reveal the intricate interplay between selected features. As such, prioritizing the features that share the strong correlations between regional brain Amyloid-beta deposition and genetics is just one application of our PM-SCCA model. However, the utility of PM-SCCA extends beyond this. It can identify the gene expression profiles that are associated to different subtypes of the diffuse large B-cell lymphoma [2, 36, 43, 60], and discover robust associations between blood cell counts and protein abundance using proteomics and methylomics data across multiple cohorts [29].
+
+Our PM-SCCA study has potential limitations. First, our study fixed 60% − 70% false negative rate in the preference matrix and designed the experiments to investigate how the target canonical correlation and noise level in the datasets may affect the models. The model performance with PM false negative rate, target CC, and noise level all varying can be further investigated in the future. Second, our PM-SCCA model can only leverage the information from one preference matrix at a time. the SCCA models that can simultaneously borrow information from multiple levels of prior knowledge are needed to mine biologically interpretable multi-SNP-multi-QT associations from multiple perspectives.
+
+Acknowledgment
+
+This work was supported in part by the National Institutes of Health grants R01 LM013463, RF1 AG063481, RF1 AG068191, U01 AG066833, U01 AG068057 and S10 OD023495.
+
+Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12–2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Figure 1: The canonical covariance on the validation datasets (in the order of magnitude 1e-4), the absolute difference between the recovered canonical correlation and the actual canonical correlation on each synthetic datasets (mean and standard deviation), and the canonical correlation on the test datasets (mean) for PM-SCCA, PM-CCA, SCCA, and CCA with synthetic datasets generated with ρ={0.1, 0.3, 0.5, 0.7, 0.9} and η={0.001, 0.005, 0.01}.
+
+Figure 2: Estimated canonical weights of X features (u^, left) and Y features (v^, right) by PM-SCCA, PM-CCA, SCCA, and CCA on simulated data ρ= 0.3, η=0.01.
+
+Figure 3: Framework of analysis of ADNI data.
+
+The study of AD is complex and multifaceted [57]. One promising approach to understanding the mechanism of AD is the discovery of group-level associations between regional amyloid-beta deposition and genetic markers. To facilitate this, we constructed two datasets containing AD-related and AD-unrelated features, respectively. Using a preference matrix, we identified pairs of features that exhibited significant AD-relatedness, enabling us to search for group-level imaging-genetics associations. Abbreviations: AD: Alzheimer’s disease; SUVR: standardized uptake value ratios; CTX: global cortical target; SNPs: single nucleotide polymorphisms.
+
+Figure 4: Comparison of group-level imaging-genetics associations.
+
+The group-level imaging-genetics associations can provide a more comprehensive understanding of the pathological mechanisms for AD [61]. We compared the association matrices reconstructed from the weights learned by the four CCA models that were used to project the regional (18)F-AV-45 QTs and SNP markers to obtain the canonical correlations. For each of the four models, the association matrix was calculated by averaging the corresponding matrices across the 100 random splits. Abbreviations: CCA: canonical correlation analysis; SCCA: sparse canonical correlation analysis; PM-CCA: preference matrix guided canonical correlation analysis; PM-SCCA: preference matrix guided sparse canonical correlation analysis; SNP: single nucleotide polymorphisms; QTs: quantitative traits.
+
+Figure 5: Genetic relatedness of 68 imaging QTs summarized from group-level imaging-genetics association matrix.
+
+We constructed the region-level genetic relatedness of 68 (18)F-AV-45 imaging QTs by summing up the absolute value of the group-level imaging-genetics association matrix across all SNPs. The darker red color represents that the corresponding regions are more genetically associated. (A) Genetic relatedness of 68 imaging QTs on the left hemisphere; (B) The axial view of genetic relatedness of 68 imaging QTs on the whole brain; (C) Genetic relatedness of 68 imaging QTs on the right hemisphere. Abbreviations: SNP: single nucleotide polymorphisms; QTs: quantitative traits.
+
+Table 1 The target canonical correlation, ρ, the noise parameters, η, and the actual canonical correlation, ρ˜, of the synthetic datasets used in the simulation study. The canonical covariance on the validation datasets (mean and standard deviation, in the order of magnitude 1e-4), the absolute difference between the recovered canonical correlations and the actual canonical correlation on each synthetic datasets (mean and standard deviation), and the canonical correlation on the test datasets (mean), given by PM-guided models.
+
+PM-SCCA	
+ρ	η	ρ˜	μ^Cov@Val	σ^Cov@Val	μ^|D|	σ^|D|	μ^Cor@Test	
+0.1	0.001	0.0866	4.8237	1.1157	0.1188	0.0316	0.0672	
+0.1	0.005	0.1171	8.1206	1.5506	0.1230	0.0348	0.0742	
+0.1	0.01	0.0947	7.8513	1.2883	0.1109	0.0673	−0.0020	
+0.1	0.05	0.1047	39.1858	7.0949	0.1099	0.0637	0.0014	
+0.3	0.001	0.3259	25.8502	0.9592	0.0169	0.0020	0.3222	
+0.3	0.005	0.2995	21.2462	1.5817	0.0452	0.0167	0.2424	
+0.3	0.01	0.3022	13.4311	2.7865	0.0323	0.0255	0.0958	
+0.3	0.05	0.3106	38.6897	7.3042	0.1126	0.0745	0.0069	
+0.5	0.001	0.5191	44.1314	1.0696	0.0147	0.0009	0.5167	
+0.5	0.005	0.5030	39.8898	1.4643	0.0106	0.0047	0.4530	
+0.5	0.01	0.4938	34.2092	2.0177	0.0412	0.0144	0.3345	
+0.5	0.05	0.5023	38.3398	7.1229	0.3032	0.0783	−0.0024	
+0.7	0.001	0.6857	58.0269	1.1134	0.0089	0.0006	0.6861	
+0.7	0.005	0.7103	55.5742	1.0871	0.0102	0.0042	0.6637	
+0.7	0.01	0.7105	55.1928	1.7614	0.0616	0.0114	0.5880	
+0.7	0.05	0.7040	39.3355	6.7596	0.5292	0.0883	−0.0067	
+0.9	0.001	0.9016	74.9956	1.1269	0.0014	0.0002	0.8983	
+0.9	0.005	0.9006	75.7257	1.2390	0.0185	0.0032	0.8688	
+0.9	0.01	0.8956	71.4985	1.4331	0.0691	0.0082	0.7996	
+0.9	0.05	0.9040	38.0900	6.4746	0.7087	0.0830	−0.0018	
+PM-CCA	
+ρ	η	ρ˜	μ^Cov@Val	σ^Cov@Val	μ^|D|	σ^|D|	μ^Cor@Test	
+0.1	0.001	0.0866	4.6201	1.1718	0.1372	0.0232	0.0780	
+0.1	0.005	0.1171	5.8433	1.5535	0.1580	0.0357	0.0629	
+0.1	0.01	0.0947	4.1458	1.6818	0.2061	0.0613	−0.0042	
+0.1	0.05	0.1047	18.3390	7.7987	0.1889	0.0638	−0.0124	
+0.3	0.001	0.3259	24.7222	0.9418	0.0349	0.0019	0.3197	
+0.3	0.005	0.2995	20.1022	1.7429	0.0575	0.0146	0.2451	
+0.3	0.01	0.3022	9.5375	3.0880	0.0332	0.0194	0.0905	
+0.3	0.05	0.3106	20.0623	9.0711	0.0528	0.0283	0.0084	
+0.5	0.001	0.5191	43.1007	1.1098	0.0220	0.0010	0.5130	
+0.5	0.005	0.5030	36.4425	1.5393	0.0175	0.0059	0.4241	
+0.5	0.01	0.4938	30.4494	2.4106	0.0483	0.0203	0.3001	
+0.5	0.05	0.5023	17.7948	7.5620	0.2161	0.0664	0.0065	
+0.7	0.001	0.6857	57.1741	1.1266	0.0128	0.0007	0.6840	
+0.7	0.005	0.7103	53.1532	1.1317	0.0134	0.0045	0.6361	
+0.7	0.01	0.7105	51.1109	2.0419	0.0840	0.0140	0.5328	
+0.7	0.05	0.7040	21.0020	8.7994	0.4186	0.0627	−0.0119	
+0.9	0.001	0.9016	74.3326	1.1352	0.0013	0.0003	0.8968	
+0.9	0.005	0.9006	73.5624	1.3117	0.0359	0.0030	0.8400	
+0.9	0.01	0.8956	66.3297	1.6879	0.1053	0.0074	0.7333	
+0.9	0.05	0.9040	20.6521	8.7334	0.6105	0.0629	−0.0187	
+
+Table 2 The target canonical correlation, ρ, the noise parameters, η, and the actual canonical correlation, ρ˜, of the synthetic datasets used in the simulation study. The canonical covariance on the validation datasets (mean and standard deviation, in the order of magnitude 1e-4), the absolute difference between the recovered canonical correlations and the actual canonical correlation on each synthetic datasets (mean and standard deviation), and the canonical correlation on the test datasets (mean), given by vanilla models.
+
+SCCA	
+ρ	η	ρ˜	μ^Cov@Val	σ^Cov@Val	μ^|D|	σ^|D|	μ^Cor@Test	
+0.1	0.001	0.0866	4.4106	1.1160	0.1595	0.0131	0.0813	
+0.1	0.005	0.1171	5.8460	1.5001	0.1564	0.0467	0.0516	
+0.1	0.01	0.0947	5.8212	1.4679	0.1777	0.0717	−0.0146	
+0.1	0.05	0.1047	26.3407	6.4901	0.1703	0.0725	−0.0092	
+0.3	0.001	0.3259	24.4279	1.0466	0.0319	0.0039	0.3142	
+0.3	0.005	0.2995	15.4644	1.7130	0.0880	0.0043	0.1875	
+0.3	0.01	0.3022	7.4557	2.3430	0.0574	0.0314	0.0335	
+0.3	0.05	0.3106	25.6368	5.5683	0.0765	0.0682	−0.0061	
+0.5	0.001	0.5191	43.6410	1.0976	0.0190	0.0009	0.5153	
+0.5	0.005	0.5030	35.9321	1.6572	0.0145	0.0040	0.4160	
+0.5	0.01	0.4938	24.4337	2.5970	0.0463	0.0102	0.2240	
+0.5	0.05	0.5023	27.6384	6.1344	0.2529	0.0798	−0.0083	
+0.7	0.001	0.6857	57.7397	1.1227	0.0105	0.0005	0.6853	
+0.7	0.005	0.7103	52.0602	1.2847	0.0186	0.0037	0.6217	
+0.7	0.01	0.7105	46.1880	2.2393	0.1041	0.0096	0.4621	
+0.7	0.05	0.7040	27.5815	6.1522	0.4336	0.0788	−0.0061	
+0.9	0.001	0.9016	74.8590	1.1327	0.0014	0.0002	0.8978	
+0.9	0.005	0.9006	73.6035	1.3854	0.0381	0.0041	0.8375	
+0.9	0.01	0.8956	63.7250	1.8347	0.1323	0.0084	0.6866	
+0.9	0.05	0.9040	27.4097	7.2420	0.6370	0.0877	−0.0069	
+CCA	
+ρ	η	ρ˜	μ^Cov@Val	σ^Cov@Val	μ^|D|	σ^|D|	μ^Cor@Test	
+0.1	0.001	0.0866	4.3501	1.1402	0.1625	0.0083	0.0858	
+0.1	0.005	0.1171	4.5906	1.6026	0.1998	0.0051	0.0654	
+0.1	0.01	0.0947	2.8408	1.8024	0.2702	0.0117	−0.0227	
+0.1	0.05	0.1047	12.0889	8.7378	0.2709	0.0084	−0.0146	
+0.3	0.001	0.3259	23.8874	1.0227	0.0424	0.0017	0.3142	
+0.3	0.005	0.2995	15.2703	1.6853	0.0921	0.0029	0.1899	
+0.3	0.01	0.3022	4.9386	3.1409	0.0752	0.0077	0.0592	
+0.3	0.05	0.3106	11.3707	8.3313	0.0678	0.0073	−0.0045	
+0.5	0.001	0.5191	42.9288	1.1270	0.0234	0.0010	0.5124	
+0.5	0.005	0.5030	34.1525	1.6561	0.0223	0.0033	0.4001	
+0.5	0.01	0.4938	23.0776	2.6115	0.0375	0.0056	0.2258	
+0.5	0.05	0.5023	10.2840	8.2069	0.1236	0.0072	−0.0022	
+0.7	0.001	0.6857	57.1092	1.1292	0.0130	0.0007	0.6836	
+0.7	0.005	0.7103	51.0726	1.2596	0.0200	0.0033	0.6107	
+0.7	0.01	0.7105	44.3358	2.4120	0.1051	0.0068	0.4493	
+0.7	0.05	0.7040	13.2813	9.0978	0.3335	0.0091	−0.0309	
+0.9	0.001	0.9016	74.3255	1.1378	0.0013	0.0003	0.8967	
+0.9	0.005	0.9006	72.4614	1.4056	0.0462	0.0034	0.8237	
+0.9	0.01	0.8956	61.0916	1.9863	0.1435	0.0066	0.6554	
+0.9	0.05	0.9040	13.2115	9.3816	0.5322	0.0086	−0.0244	
+
+Table 3 Participant characteristics.
+
+We summarized the number of subjects in each diagnosis group along with their age and sex information. In particular, we reported the mean ± standard deviation (mean ± sd) for the age and the number of females/males (F/M) of all subjects within each diagnosis group. Abbreviations: CN: cognitive normal; SMC: subjective memory complaint; EMCI: early mild cognitive impairment; LMCI: late mild cognitive impairment; AD: Alzheimer’s disease; sd: standard deviation; F/M: females/males.
+
+Diagnosis	CN	SMC	EMCI	LMCI	AD	Overall	
+Number	237	96	272	225	125	955	
+Age (mean ± sd)	74.61 ± 5.53	72.26 ± 5.76	71.10 ± 7.42	72.93 ± 7.45	74.48 ± 8.40	72.96 ± 7.12	
+Sex (F/M)	108∕129	58∕38	118∕154	89∕136	51∕74	424∕531	
+
+Table 4 Training and testing canonical correlations in the analysis of ADNI data.
+
+We used cross-validation and hyperparameter tuning to obtain reliable imaging-genetics associations. We tuned the hyperparameters using three-fold cross-validation. We conducted the training-testing process 100 times and reported mean and standard error of the training and testing canonical correlations across the 100 random splits. Abbreviations: CCA: canonical correlation analysis; SCCA: sparse canonical correlation analysis; PM-CCA: preference matrix guided canonical correlation analysis; PM-SCCA: preference matrix guided sparse canonical correlation analysis.
+
+Methods	CCA	SCCA	PM-CCA	PM-SCCA	
+Training	0.2737 (±0.0016)	0.2702 (±0.0018)	0.2277 (±0.0021)	0.2424 (±0.0022)	
+Testing	0.1676 (±0.0041)	0.1676 (±0.0042)	0.1759 (±0.0046)	0.1799 (±0.0044)	
+
+Highlights
+
+Canonical correlation analysis guided by a matrix with confidence in feature linkages.
+
+PM-guided sparse CCA overpowers prototypes in both generalizability and CC recovery.
+
+PM-SCCA achieves bimodal feature selection; computationally feasible while accurate.
+
+Detects PET-gene associations, biologically validated by functional annotation &amp; GSEA.
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service to our customers we are providing this early version of the manuscript. The manuscript will undergo copyediting, typesetting, and review of the resulting proof before it is published in its final form. Please note that during the production process errors may be discovered which could affect the content, and all legal disclaimers that apply to the journal pertain.
+
+2 Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf
+
+3 https://adni.loni.usc.edu/
+
+CRediT author statement
+
+Jiahang Sha: Conceptualization, Methodology, Formal analysis, Software, Validation, Writing – Original Draft. Jingxuan Bao: Conceptualization, Methodology, Data curation, Software, Visualization, Writing - Original Draft. Kefei Liu: Conceptualization, Methodology, Formal analysis, Software, Writing - Review &amp; Editing. Shu Yang: Conceptualization, Writing - Review &amp; Editing. Zixuan Wen: Data curation, Writing - Review &amp; Editing. Junhao Wen: Data curation, Writing - Review &amp; Editing. Yuhan Cui: Data curation, Writing - Review &amp; Editing. Boning Tong: Data curation, Writing - Review &amp; Editing. Jason H. Moore: Funding acquisition, Writing - Review &amp; Editing. Andrew J. Saykin: Funding acquisition, Resources, Writing - Review &amp; Editing. Christos Davatzikos: Funding acquisition, Resources, Writing - Review &amp; Editing. Qi Long: Funding acquisition, Resources, Writing - Review &amp; Editing. Li Shen: Supervision, Conceptualization, Methodology, Funding acquisition, Resources, Writing - Review &amp; Editing.
+
+
+References
+
+[1] 1000 Genomes Project Consortium A global reference for human genetic variation. Nature, 526 (7571 ):68, 2015.26432245
+[2] Alizadeh Ash A , Eisen Michael B , Eric Davis R , Ma Chi , Lossos Izidore S , Rosenwald Andreas , Boldrick Jennifer C , Sabet Hajeer , Tran Truc , Yu Xin , Distinct types of diffuse large b-cell lymphoma identified by gene expression profiling. Nature, 403 (6769 ):503–511, 2000.10676951
+[3] Ashburner John , Barnes Gareth , Chen C , Daunizeau Jean , Flandin Guillaume , Friston Karl , Gitelman D , Kiebel S , Kilner J , Litvak V , Spm8 manual. Functional Imaging Laboratory, Institute of Neurology, 2012.
+[4] Ashburner Michael , Ball Catherine A , Blake Judith A , Botstein David , Butler Heather , Michael Cherry J , Davis Allan P , Dolinski Kara , Dwight Selina S , Eppig Janan T , Gene ontology: tool for the unification of biology. Nature genetics, 25 (1 ):25–29, 2000.10802651
+[5] Bao Jingxuan , Chang Changgee , Zhang Qiyiwen , Saykin Andrew J , Shen Li , Long Qi , and Alzheimer’s Disease Neuroimaging Initiative. Integrative analysis of multi-omics and imaging data with incorporation of biological information via structural bayesian factor analysis. Briefings in Bioinformatics, page bbad073, 2023.36882008
+[6] Bao Jingxuan , Wen Zixuan , Kim Mansu , Saykin Andrew J , Thompson Paul M , Zhao Yize , and Shen Li . Identifying imaging genetic associations via regional morphometricity estimation. In PACIFIC SYMPOSIUM ON BIOCOMPUTING 2022, pages 97–108. World Scientific, 2021.
+[7] Bao Jingxuan , Wen Zixuan , Kim Mansu , Zhao Xiwen , Lee Brian N , Jung Sang-Hyuk , Davatzikos Christos , Saykin Andrew J , Thompson Paul M , Kim Dokyoon , Identifying highly heritable brain amyloid phenotypes through mining alzheimer’s imaging and sequencing biobank data. In PACIFIC SYMPOSIUM ON BIOCOMPUTING 2022, pages 109–120. World Scientific, 2021.
+[8] Bellenguez Céline , Küçükali Fahri , Jansen Iris E , Kleineidam Luca , Moreno-Grau Sonia , Amin Najaf , Naj Adam C , Campos-Martin Rafael , Grenier-Boley Benjamin , Andrade Victor , New insights into the genetic etiology of alzheimer’s disease and related dementias. Nature genetics, 54 (4 ):412–436, 2022.35379992
+[9] Brendel Matthias , Högenauer Marcus , Delker Andreas , Sauerbeck Julia , Bartenstein Peter , Seibyl John , Rominger Axel , Alzheimer’s Disease Neuroimaging Initiative, Improved longitudinal [18f]-av45 amyloid pet by white matter reference and voi-based partial volume effect correction. Neuroimage, 108 :450–459, 2015.25482269
+[10] Buniello Annalisa , MacArthur Jacqueline A L , Cerezo Maria , Harris Laura W , Hayhurst James , Malangone Cinzia , McMahon Aoife , Morales Joannella , Mountjoy Edward , Sollis Elliot , The nhgri-ebi gwas catalog of published genome-wide association studies, targeted arrays and summary statistics 2019. Nucleic acids research, 47 (D1 ):D1005–D1012, 2019.30445434
+[11] Chang CC Second-generation plink: rising to the challenge of larger and richer datasets. GigaScience, 4 , 2015.
+[12] Chen Kewei , Roontiva Auttawut , Thiyyagura Pradeep , Lee Wendy , Liu Xiaofen , Ayutyanont Napatkamon , Protas Hillary , Luo Ji Luo , Bauer Robert , Reschke Cole , Improved power for characterizing longitudinal amyloid-β pet changes and evaluating amyloid-modifying treatments with a cerebral white matter reference region. Journal of Nuclear Medicine, 56 (4 ):560–566, 2015.25745091
+[13] Clark Christopher M , Schneider Julie A , Bedell Barry J , Beach Thomas G , Bilker Warren B , Mintun Mark A , Pontecorvo Michael J , Hefti Franz , Carpenter Alan P , Flitter Matthew L , Use of florbetapir-pet for imaging β-amyloid pathology. Jama, 305 (3 ):275–283, 2011.21245183
+[14] Gene Ontology Consortium. The gene ontology (go) database and informatics resource. Nucleic acids research, 32 (suppl_1 ):D258–D261, 2004.14681407
+[15] Gene Ontology Consortium. Expansion of the gene ontology knowledgebase and resources. Nucleic acids research, 45 (D1 ):D331–D338, 2017.27899567
+[16] Gene Ontology Consortium. The gene ontology resource: 20 years and still going strong. Nucleic acids research, 47 (D1 ):D330–D338, 2019.30395331
+[17] Das S , Forer L , Schonherr S , Sidore C , Locke AE , Kwong A , Vrieze SI , Chew EY , Levy S , McGue M , Schlessinger D , Next-generation genotype imputation service and methods. Nat Genet, 48 (10 ):1284–1287, 2016.27571263
+[18] Du L , Huang H , Yan J , Kim S , Risacher SL , Inlow M , Moore JH , Saykin AJ , Shen L , and Initiative Alzheimer’s Disease Neuroimaging. Structured sparse canonical correlation analysis for brain imaging genetics: an improved graphnet method. Bioinformatics, 32 (10 ):1544–51, 2016.26801960
+[19] Du L , Jingwen Y , Kim S , Risacher SL , Huang H , Inlow M , Moore JH , Saykin AJ , Shen L , and Initiative Alzheimer’s Disease Neuroimaging. A novel structure-aware sparse learning algorithm for brain imaging genetics. Med Image Comput Comput Assist Interv, 17 (Pt 3 ):329–36, 2014.25320816
+[20] Fischl Bruce . Freesurfer. Neuroimage, 62 (2 ):774–781, 2012.22248573
+[21] Frisoni Giovanni B , Altomare Daniele , Thal Dietmar Rudolf , Ribaldi Federica , van der Kant Rik , Ossenkoppele Rik , Blennow Kaj , Cummings Jeffrey , van Duijn Cornelia , Nilsson Peter M , The probabilistic model of alzheimer disease: the amyloid hypothesis revised. Nature Reviews Neuroscience, 23 (1 ):53–66, 2022.34815562
+[22] Goel Vinod , Stollstorff Melanie , Nakic Marina , Knutson Kris , and Grafman Jordan . A role for right ventrolateral prefrontal cortex in reasoning about indeterminate relations. Neuropsychologia, 47 (13 ):2790–2797, 2009.19523967
+[23] Gorgolewski Krzysztof J. , Varoquaux Gael , Neurovault.org: a web-based repository for collecting and sharing unthresholded statistical maps of the human brain. Frontiers in Neuroinformatics, 9 :8, 2015.25914639
+[24] Grimm Simone , Schmidt Conny F , Bermpohl Felix , Heinzel Alexander , Dahlem Yuliya , Wyss Michael , Hell Daniel , Boesiger Peter , Boeker Heinz , and Northoff Georg . Segregated neural representation of distinct emotion dimensions in the prefrontal cortex—an fmri study. Neuroimage, 30 (1 ):325–340, 2006.16230029
+[25] Han Xiao-Jian , Hu Yang-Yang , Yang Zhang-Jian , Jiang Li-Ping , Shi Sheng-Lan , Li Ye-Ru , Guo Miao-Yu , Wu Hong-Li , and Wan Yu-Ying . Amyloid β-42 induces neuronal apoptosis by targeting mitochondria. Molecular medicine reports, 16 (4 ):4521–4528, 2017.28849115
+[26] Hardoon David R. and Shawe-Taylor John . Sparse canonical correlation analysis. Machine Learning, 83 (3 ):331–353, November 2010.
+[27] Jack Clifford R , Knopman David S , Jagust William J , Petersen Ronald C , Weiner Michael W , Aisen Paul S , Shaw Leslie M , Vemuri Prashanthi , Wiste Heather J , Weigand Stephen D , Tracking pathophysiological processes in alzheimer’s disease: an updated hypothetical model of dynamic biomarkers. The lancet neurology, 12 (2 ):207–216, 2013.23332364
+[28] Jagust William J , Landau Susan M , Koeppe Robert A , Reiman Eric M , Chen Kewei , Mathis Chester A , Price Julie C , Foster Norman L , and Wang Angela Y . The alzheimer’s disease neuroimaging initiative 2 pet core: 2015. Alzheimer’s &amp; Dementia, 11 (7 ):757–771, 2015.
+[29] Jiang Min-Zhi , Aguet François , Ardlie Kristin , Chen Jiawen , Cornell Elaine , Cruz Dan , Durda Peter , Gabriel Stacey B , Gerszten Robert E , Guo Xiuqing , Canonical correlation analysis for multi-omics: Application to cross-cohort analysis. Plos Genetics, 19 (5 ):e1010517, 2023.37216410
+[30] Joshi Abhinay D , Pontecorvo Michael J , Clark Chrisopher M , Carpenter Alan P , Jennings Danna L , Sadowsky Carl H , Adler Lee P , Kovnat Karel D , Seibyl John P , Arora Anupa , Performance characteristics of amyloid pet with florbetapir f 18 in patients with alzheimer’s disease and cognitively normal subjects. Journal of Nuclear Medicine, 53 (3 ):378–384, 2012.22331215
+[31] Kim M , Min EJ , Liu K , Yan J , Saykin AJ , Moore JH , Long Q , and Shen L . Multi-task learning based structured sparse canonical correlation analysis for brain imaging genetics. Med Image Anal, 76 :102297, 2022.34871929
+[32] Kim Mansu Structural connectivity enriched functional brain network using simplex regression with graphnet. In Machine Learning in Medical Imaging, pages 292–302, Cham, 2020. Springer International Publishing.
+[33] Kim Mansu A structural enriched functional network: An application to predict brain cognitive performance. Medical Image Analysis, 71 :102026, 2021.33848962
+[34] Kochunov Peter A White Matter Connection of Schizophrenia and Alzheimer’s Disease. Schizophrenia Bulletin, 47 (1 ):197–206, 07 2020.
+[35] Landau Susan M , Fero Allison , Baker Suzanne L , Koeppe Robert , Mintun Mark , Chen Kewei , Reiman Eric M , and Jagust William J . Measurement of longitudinal β-amyloid change with 18f-florbetapir pet and standardized uptake value ratios. Journal of Nuclear Medicine, 56 (4 ):567–574, 2015.25745095
+[36] Lenz Georg , Wright George W , Tolga Emre NC , Kohlhammer Holger , Dave Sandeep S , Eric Davis R , Carty , Lam Lloyd T , Shaffer AL , Xiao Wenming , Molecular subtypes of diffuse large b-cell lymphoma arise by distinct genetic pathways. Proceedings of the National Academy of Sciences, 105 (36 ):13520–13525, 2008.
+[37] Liu Kefei , Long Qi , and Shen Li . Grouping effects of sparse cca models in variable selection. arXiv preprint arXiv:2008.03392, 2020.
+[38] Lopresti Brian J , Klunk William E , Mathis Chester A , Hoge Jessica A , Ziolko Scott K , Lu Xueling , Meltzer Carolyn C , Schimmel Kurt , Tsopelas Nicholas D , DeKosky Steven T , Simplified quantification of pittsburgh compound b amyloid imaging pet studies: a comparative analysis. Journal of Nuclear Medicine, 46 (12 ):1959–1972, 2005.16330558
+[39] Mi Huaiyu , Muruganujan Anushya , Ebert Dustin , Huang Xiaosong , and Thomas Paul D . Panther version 14: more genomes, a new panther go-slim and improvements in enrichment analysis tools. Nucleic acids research, 47 (D1 ):D419–D426, 2019.30407594
+[40] Mi Huaiyu , Muruganujan Anushya , Huang Xiaosong , Ebert Dustin , Mills Caitlin , Guo Xinyu , and Thomas Paul D . Protocol update for large-scale genome and gene function analysis with the panther classification system (v. 14.0). Nature protocols, 14 (3 ):703–721, 2019.30804569
+[41] Min Eun Jeong , Chi Eric C. , and Zhou Hua . Tensor canonical correlation analysis. Stat, 8 (1 ):e253, 2019. e253 sta4.253.
+[42] Parkhomenko Elena , Tritchler David , and Beyene Joseph . Sparse canonical correlation analysis with application to genomic data integration. Statistical Applications in Genetics and Molecular Biology, 8 (1 ):1–34, January 2009.19222376
+[43] Rosenwald Andreas , Wright George , Chan Wing C , Connors Joseph M , Campo Elias , Fisher Richard I , Gascoyne Randy D , Konrad Muller-Hermelink H , Smeland Erlend B , Giltnane Jena M , The use of molecular profiling to predict survival after chemotherapy for diffuse large-b-cell lymphoma. New England Journal of Medicine, 346 (25 ):1937–1947, 2002.12075054
+[44] Saykin AJ , Shen L , Yao X , Kim S , Nho K , Risacher SL , Ramanan VK , Foroud TM , Faber KM , Sarwar N , Munsie LM , Hu X , Soares HD , Potkin SG , Thompson PM , Kauwe JS , Kaddurah-Daouk R , Green RC , Toga AW , Weiner MW , and Initiative Alzheimer’s Disease Neuroimaging. Genetic studies of quantitative mci and ad phenotypes in adni: Progress, opportunities, and plans. Alzheimers Dement, 11 (7 ):792–814, 2015.26194313
+[45] Schafer Erin C , Mathews Lauren , Mehta Smita , Hill Margaret , Munoz Ashley , Bishop Rachel , and Moloney Molly . Personal fm systems for children with autism spectrum disorders (asd) and/or attention-deficit hyperactivity disorder (adhd): An initial investigation. Journal of communication disorders, 46 (1 ):30–52, 2013.23123089
+[46] Shen L , Kim S , Qi Y , Inlow M , Swaminathan S , Nho K , Wan J , Risacher SL , Shaw LM , Trojanowski JQ , Weiner MW , Saykin AJ , and Adni. Identifying neuroimaging and proteomic biomarkers for mci and ad via the elastic net. Multimodal Brain Image Analysis, 7012 :27–34, 2011.27054198
+[47] Shen L , Kim S , Risacher SL , Nho K , Swaminathan S , West JD , Foroud T , Pankratz N , Moore JH , Sloan CD , Huentelman MJ , Craig DW , Dechairo BM , Potkin SG , Jack CR Jr. , Weiner MW , Saykin AJ , and Initiative Alzheimer’s Disease Neuroimaging. Whole genome association study of brain-wide imaging phenotypes for identifying quantitative trait loci in mci and ad: A study of the adni cohort. Neuroimage, 53 (3 ):1051–63, 2010.20100581
+[48] Shen L , Thompson PM , Potkin SG , Bertram L , Farrer LA , Foroud TM , Green RC , Hu X , Huentelman MJ , Kim S , Kauwe JS , Li Q , Liu E , Macciardi F , Moore JH , Munsie L , Nho K , Ramanan VK , Risacher SL , Stone DJ , Swaminathan S , Toga AW , Weiner MW , Saykin AJ , and Initiative Alzheimer’s Disease Neuroimaging. Genetic analysis of quantitative phenotypes in ad and mci: imaging, cognition and biomarkers. Brain Imaging Behav, 8 (2 ):183–207, 2014.24092460
+[49] Shen Li and Thompson Paul M. . Brain imaging genomics: Integrated analysis and machine learning. Proceedings of the IEEE, 108 (1 ):125–162, 2020.31902950
+[50] Sun Liang , Ji Shuiwang , and Ye Jieping . Canonical correlation analysis for multilabel classification: A least-squares formulation, extensions, and analysis. IEEE Transactions on Pattern Analysis and Machine Intelligence, 33 (1 ):194–200, 2011.20733223
+[51] Thomas Riya , Zuchowska Paulina , Morris Alan WJ , Marottoli Felecia M , Sunny Sangeeta , Deaton Ryan , Gann Peter H , and Tai Leon M . Epidermal growth factor prevents apoe4 and amyloid-beta-induced cognitive and cerebrovascular deficits in female mice. Acta neuropathologica communications, 4 :1–14, 2016.26727948
+[52] Tolboom Nelleke , Yaqub Maqsood , Boellaard Ronald , Luurtsema Gert , Windhorst Albert D , Scheltens Philip , Lammertsma Adriaan A , and Van Berckel Bart NM . Test-retest variability of quantitative [11 c] pib studies in alzheimer’s disease. European journal of nuclear medicine and molecular imaging, 36 :1629–1638, 2009.19384547
+[53] Wang Kai , Li Mingyao , and Hakonarson Hakon . Annovar: functional annotation of genetic variants from high-throughput sequencing data. Nucleic acids research, 38 (16 ):e164–e164, 2010.20601685
+[54] Wang Lei , Chiang Hsueh-Cheng , Wu Wenjuan , Liang Bin , Xie Zuolei , Yao Xinsheng , Ma Weiwei , Du Shuwen , and Zhong Yi . Epidermal growth factor receptor is a preferred target for treating amyloid-β–induced memory loss. Proceedings of the National Academy of Sciences, 109 (41 ):16743–16748, 2012.
+[55] Weiner MW , Veitch DP , Aisen PS , Beckett LA , Cairns NJ , Green RC , Harvey D , Jack CR , Jagust W , Liu E , Morris JC , Petersen RC , Saykin AJ , Schmidt ME , Shaw L , Shen L , Siuciak JA , Soares H , Toga AW , Trojanowski JQ , and Initiative Alzheimer’s Disease Neuroimaging. The alzheimer’s disease neuroimaging initiative: a review of papers published since its inception. Alzheimers Dement, 9 (5 ):e111–94, 2013.23932184
+[56] Weiner MW , Veitch DP , Aisen PS , Beckett LA , Cairns NJ , Green RC , Harvey D , Jack CR Jr. , Jagust W , Morris JC , Petersen RC , Saykin AJ , Shaw LM , Toga AW , Trojanowski JQ , and Initiative Alzheimer’s Disease Neuroimaging. Recent publications from the alzheimer’s disease neuroimaging initiative: Reviewing progress toward improved ad clinical trials. Alzheimers Dement, 13 (4 ):e1–e85, 2017.28342697
+[57] Wen Junhao , Yang Zhijian , Nasrallah Ilya M , Cui Yuhan , Erus Guray , Srinivasan Dhivya , Abdulkadir Ahmed , Mamourian Elizabeth , Hwang Gyujoon , Singh Ashish , Genetic, clinical underpinnings of subtle early brain change along alzheimer’s dimensions. bioRxiv, pages 2022–09, 2022.
+[58] Witten DM , Tibshirani R , and Hastie T . A penalized matrix decomposition, with applications to sparse principal components and canonical correlation analysis. Biostatistics, 10 (3 ):515–534, April 2009.19377034
+[59] Witten Daniela M and Tibshirani Robert J. . Extensions of sparse canonical correlation analysis with applications to genomic data. Statistical Applications in Genetics and Molecular Biology, 8 (1 ):1–27, January 2009.19222376
+[60] Witten Daniela M and Tibshirani Robert J . Extensions of sparse canonical correlation analysis with applications to genomic data. Statistical applications in genetics and molecular biology, 8 (1 ), 2009.
+[61] Wu Ruiming , Bao Jingxuan , Kim Mansu , Saykin Andrew J , Moore Jason H , Shen Li , and ADNI. Mining high-level imaging genetic associations via clustering ad candidate variants with similar brain association patterns. Genes, 13 (9 ):1520, 2022.36140686
+[62] Yan J , Du L , Kim S , Risacher SL , Huang H , Moore JH , Saykin AJ , Shen L , and Initiative Alzheimer’s Disease Neuroimaging. Transcriptome-guided amyloid imaging genetic analysis via a novel structured sparse learning algorithm. Bioinformatics, 30 (17 ):i564–71, 2014.25161248
+[63] Yao Mingzhong , Nguyen Thuy-Vi V , and Pike Christian J . β-amyloid-induced neuronal apoptosis involves c-jun n-terminal kinase-dependent downregulation of bcl-w. Journal of Neuroscience, 25 (5 ):1149–1158, 2005.15689551
+[64] Yarkoni Tal , Poldrack Russell , Nichols Thomas , Van Essen David , and Wager Tor . Large-scale automated synthesis of human functional neuroimaging data. Nature Methods, 8 :665–70, 06 2011.21706013

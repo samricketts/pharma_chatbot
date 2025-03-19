@@ -1,0 +1,514 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+8411723
+3864
+Genet Epidemiol
+Genet. Epidemiol.
+Genetic epidemiology
+0741-0395
+1098-2272
+
+30635941
+6537099
+10.1002/gepi.22184
+NIHMS1003941
+Article
+Constrained Instruments and their Application to Mendelian Randomization with Pleiotropy
+Jiang Lai 12
+Oualkacha Karim 3
+Didelez Vanessa 4
+Ciampi Antonio 12
+Rosa Pedro 56
+Benedet Andrea L. 6
+Mathotaarachchi Sulantha 6
+Richards J. Brent 7
+Greenwood Celia M.T. *12
+Alzheimer’s Disease Neuroimaging Initiative**
+1 Lady Davis Institute, Jewish General Hospital, Montreal
+2 Department of Epidemiology, Biostatistics and Occupational Health, McGill University, Montreal
+3 Université du Québec ÀMontréal, Montréal
+4 Leibinz Institute for Prevention Research and Epidemiology - BIPS &amp; Department of Mathematics, University of Bremen
+5 Department of Neurology &amp; Neurosurgery, McGill University
+6 Translational Neuroimaging Laboratory, McGill University Research Centre for Studies in Aging, Douglas Hospital, McGill University
+7 Department of Medicine, McGill University, Montreal
+* Corresponding Author. celia.greenwood@mcgill.ca
+3 1 2019
+12 1 2019
+6 2019
+01 6 2019
+43 4 373401
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+In Mendelian randomization (MR), inference about causal relationship between a phenotype of interest and a response or disease outcome can be obtained by constructing instrumental variables from genetic variants. However, MR inference requires three assumptions, including that the genetic variants only influence the outcome through phenotype of interest. Pleiotropy, i.e., the situation in which some genetic variants affect more than one phenotype, can invalidate these genetic variants for use as instrumental variables; thus a naive analysis will give biased estimates of the causal relation.
+
+Here, we present new methods (Constrained Instrumental Variable methods [CIV]) to construct valid instrumental variables and perform adjusted causal effect estimation when pleiotropy exists and when the pleiotropic phenotypes are available. We demonstrate that a smoothed version of CIV performs approximate selection of genetic variants that are valid instruments, and provides unbiased estimates of the causal effects.
+
+We provide details on a number of existing methods, together with a comparison of their performance in a large series of simulations. CIV performs robustly across different pleiotropic violations of the MR assumptions. We also analyzed the data from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (Mueller et al., 2005) to disentangle causal relationships of several biomarkers with AD progression.
+
+Mendelian randomization
+pleiotropy
+instruments
+smoothed algorithm
+
+1 Introduction
+
+Mendelian randomization (MR) is a popular epidemiological study design that incorporates genetic information (G) as an instrument to estimate the causal effect of a modifiable exposure (X) on a disease (Y) (Figure 1). From a statistical perspective, Mendelian randomization is an application of instrumental variable methods (Smith and Ebrahim (2003); Didelez and Sheehan (2007); Lawlor, Harbord, Sterne, Timpson, and Davey Smith (2008); Wehby, Ohsfeldt, and Murray (2008)) to eliminate bias from unmeasured confounding factors (U). Assuming a structural model set-up, the following conditions are necessary for G to be a valid instrument: (A1) G and X are not independent; (A2) G and Y are conditionally independent given exposure X and unmeasured confounding factors U; (A3) G and confounders U are independent. Mendelian randomization is complicated by the possible violation of these assumptions; perhaps one of the most important cases is the possible presence of pleiotropy. Pleiotropy occurs when more than one phenotype is influenced by the same group of genotypes. If these phenotypes are found on the causal pathway for the response Y, then pleiotropy is a violation of assumption (A2). However, it is possible to accommodate pleiotropy within an extension of the original causal framework that includes one or more additional phenotypes (Z) (Figure 2).
+
+In econometric research, such a framework has been discussed to account for multiple risk factors (X) simultaneously (Wooldridge (2015), Angrist (2006), Ludwig and Kling (2007)). However, in genetic studies the extraction of causal effects for individual risk factors with pleiotropic phenotypes is rarely discussed (Burgess and Thompson (2015), Kang, Zhang, Cai, and Small (2016)). Instead, most of the recent Mendelian randomization studies are conducted using the two-stage least squares (2SLS) estimator approach (Baum, Schaffer, Stillman, et al. (2003)). Specifically, a prediction of X is constructed from the ordinary least square (OLS) regression X ~ G and called X^. Then the OLS regression Y∼X^ is fitted and β^ is proposed as the causal effect estimator.
+
+When there are exogenous variables, they can be included as covariates. Hence a potential extension of 2SLS to accommodate pleiotropy is to control for Z as covariates. This, however, is unsatisfactory. It would be ideal to identify instruments, G, for X that are unrelated to Z in order to estimate the causal effect of X on Y in the absence of pleiotropic effects. However, adjusting for covariates, Z, will enable construction of an instrument for X|Z, which is not answering the same question. Furthermore, controlling for Z can induce collider bias (Greenland (2003); Cole et al. (2009)). It is worth noting that adjusting for Z as covariates in 2SLS is equivalent to estimating the causal effect on measures that have been residualized for Z. That is, to work with (G*, X*, Y*), where G*, X* and Y* are defined as G* = (I − Pz)G, X* = (I − Pz)X, and Y* = (I − Pz)Y, where Pz = ZT(ZTZ)−1Z (Wang and Zivot (1998); Lovell (2008)). More details can be found in Appendix A.
+
+A second approach to coping with pleiotropy is based on the multiple linear regression of Y on X and Z jointly. However, if X and Z are highly correlated, the resulting estimator of β could be unstable, i.e. the standard errors could be large (Farrar and Glauber (1967); Grapentine (2000); Grewal, Cote, and Baumgartner (2004)). Collider bias is also a concern here.
+
+In a third approach, sisVIVE (Some Invalid Some Valid Instrument Variable Estimator (Kang et al., 2016)), pleiotropy is treated as unobservable and G is modeled as a mixture of “valid” and “invalid” instruments, with a L1 penalized regression to infer the causal effect of X on Y. This approach is not guaranteed to eliminate pleiotropy: indeed, the sisVIVE estimator β^ would be biased when there are 50% of genotypes are pleiotropic. Moreover, if the αx is much stronger than αz (in Figure 2) then sisVIVE may have difficulty identifying the pleiotropic genotypes, which would give biased causal effect estimates.
+
+A variety of additional approaches to coping with pleiotropy can be found in the literature, e.g. direct genotype selection, generalized methods of moments (GMM), Egger regression, etc. However, there has been limited recent work on solutions for inference when potential pleiotropic phenotypes are observed.
+
+In this paper we present a novel approach to dealing with pleiotropy, based on the general framework of Figure 2: the idea is to construct a new instrumental variable by maximizing the association with X (i.e. instrumental strength) and minimizing possible correlation with potential pleiotropic phenotypes Z. There are four innovative aspects in this method: (1) the pleiotropic effect is eliminated by shrinking the correlation with potential pleiotropic phenotypes towards zero; (2) the instrumental strength is retained coherently in the model; (3) our penalization algorithm forces approximately sparse and valid genotype selection, which reduces the overfitting problem resulting from the use of multiple genotypes, especially when the number of genotypes is larger than the number of samples and most existing IV methods fails.
+
+After introducing notation and outlining a formal framework for pleiotropy that also accommodates existing research (Section 2), we devote Section 3 to the presentation of our novel idea: constrained instrumental variable (CIV). A computationally feasible method, CIV_smooth, is then introduced to implement instrument construction and causal effect estimation. In Section 4 we compare by simulation the performance of our methods with the closest popular approaches, including variants of 2SLS approach, sisVIVE and Allele scores. In Section 5 we conduct an MR study estimating the effects of four biomarkers (Aβ 1–42, T-tau, P-tau, glucose metabolism) on Alzheimer’s disease risk using our methods.
+
+2 Notation and Background
+
+2.1 Notation
+
+For each individual, i = 1, ...n, let Yi denote the response of interest, and Y = (Y1, ...,Yn)T ∈ Rn×1 the vector of observations. Let Gi ∈ Rp represent the set of genotypes, where p is the number of SNPs being analyzed, and G = (G1, ..., Gn)T ∈ Rn×p the matrix of observations. Also, we denote by Zi ∈ Rk the vector of additional phenotypes that may be affected by some elements of Gi, and by Z = (Z1, ..., Zn)T ∈ Rn×k the matrix of observations. Finally, let X = (X1, ..., Xn)T ∈ Rn×1 denote the vector of the phenotype of interest.
+
+Figure 2 lays out a general structure for our explorations. We assume that genotypes G, phenotype of interest X, the response Y and potential pleiotropic phenotypes Z have all been measured for each individual. The total causal effect of X on Y is the sum of the direct causal effect represented by the scalar parameter β, and any indirect causal effects. The latter is a product of the causal effect of X on Z, represented by γxz, and the direct causal effect of Z on Y, represented by η. Pleiotropy is present when the association between G and Z, represented by the parameter αz, is non-zero. In this case, as previously mentioned, conditioning on Z may induce collider bias. The methods discussed below attempt to address this issue.
+
+The genetic variants in G are strong instruments for X if the association between G and X, represented by αx, is strong. Note that G may contain many genetic variants and only some of them may influence Z. The relationships between phenotype of interest X, potential pleiotropic phenotypes Z, unmeasured confounders U and outcomes Y may vary from one situation to another, i.e. not all of the edges or arrows in Figure 2 need to be present in every particular study or scenario.
+
+The relationships in Figure 2 can be formally expressed in the following linear structural equations: (1a) Z=Gaz+ζzU+εz
+
+(1b) X=Gax+ZYzx+ζxU+εx
+
+(1c) Y=Xβ+Zη+ζyU+εy
+
+Or (2a) X=Gax+ζxU+εx
+
+(2b) Z=Gaz+XYxz+ζzU+εz
+
+(2c) Y=Xβ+Zη+ζyU+εy
+
+The parameters ζx, ζz and ζy represent the impact of unmeasured confounding factors U on X, Z and Y, respectively. The errors εx, εz, and εy for X, Z and Y, respectively, are assumed to be independent and identically distributed.
+
+Each of the following assumptions for the relationship between X and Z represents an interesting scenario. X and Z are conditionally independent given G and U (γzx = γxz = 0), i.e. the simplest case of pleiotropy.
+
+There is a direct causal impact of Z on X (γzx ≠ 0 and γxz = 0).
+
+There is a direct causal impact of X on Z (γxz ≠ 0 and γzx = 0).In this case, the total causal effect of X on Y is β + γxzη. Although this is an important scenario, we do not address it in this paper, since we are focusing on the estimation of β.
+
+Assuming that the set G may be quite large, containing many genetic variants in association with X, using all elements of G in the analysis may introduce bias in the estimation of β: indeed some components of G may affect Z, so that the total causal effect from G to Y is mediated by both X and Z. In MR applications, those components of G which do have an impact on Z are usually eliminated, possibly causing other types of bias (e.g. weak instrument bias (Burgess, Thompson, and Collaboration (2011)), selection bias (Smith and Ebrahim (2003)), etc.).
+
+Our goal is to determine the best MR estimator of β when possibly pleiotropic variables Z are measured and available and when the set G contains several variants. We are searching for the best approach to remove bias in the estimation of β.
+
+2.2 Two stage least squares
+
+The simplest MR method is two-stage least squares (2SLS) regression. Given valid instruments G, the following two stages define a 2SLS model: In the first stage, a new variable X^ is obtained from the fitted values from ordinary least square regression X ~ G.
+
+In the second stage, the ordinary least square estimates of β from the regression Y∼X^ are obtained.
+
+2SLS works well if G is a set of valid instruments with αz=0. This rarely occurs naturally, but can sometimes be achieved by carefully selecting a subset of variants G that are approximately valid. Most researchers using MR make intensive efforts to select instruments G that are most likely to satisfy the three key assumptions [A1-A3] of MR. Variants known to be in pleiotropic pathways, or variants showing associations with possibly pleiotropic phenotypes, are removed from the set of variants to be considered. However, this selection process is necessarily ad hoc. In this paper, we refer to the original 2SLS as “2SLS_naive”.
+
+A variation of the 2SLS approach – the Allele Score method (Burgess and Thompson (2013)) – constructs summarized genetic scores G* = Gw. The weights w correspond to estimated genetic effect sizes for each genotype, and can be derived internally from data under analysis or externally from prior knowledge. Protection against winner’s curse can be incorporated into the estimation of w through internal cross-validation or external sources for the estimates of genetic associations.
+
+2.3 Statistical methods for selection of valid instruments
+
+Several methods have been proposed for improving causal estimation in the presence of pleiotropy, e.g. Egger regression (Bowden, Smith, and Burgess (2015)), CUE (Davies et al. (2015)), LIML (Hansen, Heaton, and Yaron (1996)), Allele score (Burgess and Thompson (2013)); these methods generally assume that the pleiotropic phenotypes are unknown, and use all the components of G.
+
+In the same vein, Kang et al. (2016) proposed to select components of G, again without explic- itly using the phenotypes Z. The proposed approach, named by the authors as “some invalid some valid IV estimator (sisVIVE)”, incorporates all causal effects from G to Y using the following model: (3a) Yi=Giδ+Xiβ+εyi,
+
+(3b) E(εyi|Gi)=0,i=1…n,
+
+(3c) Xi=Giα+εxi.
+
+where δ represents the direct effects of the instruments G on outcome Y. Indirect effects of G on Y are captured through X, and β represents the causal effect parameter of interest. α is the association parameter between G and X. The central idea of Kang et al. (2016) is to operate a sparse selection of genetic variants (components of G) by a LASSO type penalization, which leads to the constrained optimization problem: (β,δ)∈argmin1/2‖PG(Y−Gδ−Xβ)‖22+λ‖δ‖1,
+
+where PG = G(GTG)−1GT. In other words, the projected error of predicting Y from G and X is minimized, while controlling the impact of invalid instruments in G on Y (through the penalty term).It has been shown that, under certain conditions, sisVIVE is robust to certain types of invalid instruments, e.g. pleiotropic genotypes, and their direct causal effect on Y (without going through X).
+
+2.4 Adjustment for exogenous or endogenous variables
+
+In Mendelian randomization terminology, the term “endogenous variable” describes factors that are explained by the genotype—phenotype relationships and impact response Y. For example, common endogenous variables include health-related behaviors and risk-related phenotypes. Both X and Z in Figure 2 are endogenous since they are determined by genotypes and have impact on the response, albeit with different functions. Endogenous variables are the variables of primary concern for MR studies.
+
+In contrast, covariates such as age and sex that are not associated with the genotype-phenotype causal pathways of interest are termed “exogenous”; normally it is possible to adjust for these variables in a straightforward way. One solution is to replace G, X, Y by G* = (I − Pz)G and X*, Y* respectively, where Pz = ZT(ZTZ)−1Z. Then straightforward two-stage least squares (2SLS) can be applied to the new (G*, X*, Y*); we refer to this method as “2SLS_exo”.It is worth noting that this method is equivalent to controlling for Z as covariates in both first stage and second stage regressions. Details are given in Appendix A.
+
+Although this has sometimes been implemented with pleiotropic phenotypes (i.e. W = Z), this is not an appropriate approach: the estimate of β remains biased, since pleiotropic variables, Z, are not exogenous (Engle, Hendry, and Richard (1983)). Note, if αz ≠ 0, treatment of Z as an exogenous variable may introduce collider bias due to dependence between G and u after conditioning on Z.
+
+Another multiple regression-type approach, this time to account for endogenous variables, can be derived from the underlying linear structural model (Figure 1) by building a multiple linear regression of Y on X^ and Z^ jointly in a two-stage least squares (2SLS) model, where X^ and Z^ are the predicted phenotypes using G as the instruments. We refer to this method as “2SLS_mul”. The 2SLS_mul method uses G to account for endogeneity of Z, without controlling for it explicitly. However, using this approach, the resulting estimator of β will be unstable if X and Z are highly correlated (Farrar and Glauber (1967); Grapentine (2000); Graham (2003); Grewal et al. (2004)).
+
+Both of these two multiple regression solutions for secondary phenotype variables can be embedded within the Allele score method to adjust for Z variables, and we refer to these methods as “Allele_mul” and “Allele_exo”.The original sisVIVE approach assumes all pleiotropic phenotypes are unmeasured and treats them as sources of the indirect causal effect G on Y, and thus does not use Z variables directly. If measures of secondary phenotypes are available, Kang et al. (2016) suggested adjusting (G, X, Y) apriori on Z (as in 2SLS_exo), thus treating Z measures as exogenous variables. We refer to this method as “sisVIVE_exo”.
+
+2.5 Design choices: one sample, a first sample with and without an external validation sample, or two sample
+
+In the causal inference literature, the term “one-sample analysis” refers to the situation in which a single dataset (a sample) is used to perform a data analysis task, typically the estimation of the parameters in a model. Unless the sample size is enormous, a one-sample analysis is often considered flawed due to the problem of overfitting; see Thaler’s work on “winner’s curse” (Thaler, 1988). Using sample splitting techniques – i.e. cross-validation or splitting the sample into a “learning sample” and a “testing or validation” sample (James, Witten, Hastie, &amp; Tibshirani, 2013) – will alleviate the problem, though not remove it. Obtaining an external validation sample, i.e. a second sample from an external source with exactly the same variables as the original one, has been argued to be a better approach to reduce overfitting bias and increase generalizability (Friedman, Hastie, &amp; Tibshirani, 2001).
+
+In the framework of this paper, the model presented in Figure 2 has the parameters of interest αx and β. In Table 1 we distinguish different study designs that could be used with pleiotropic phenotypes Z. In the one sample setup (first row in Table 1) the data includes variables G, X, Z and Y. An external validation sample, if available, must also contain G, X, Z and Y (second row of Table 1). We will refer to this situation as “one sample analysis with external validation”, to distinguish it from both the “one sample” and the “two-sample” setups. Note that we consider one-sample designs with internal splitting as a one-sample situation.
+
+Indeed in the causal inference literature, the “two-sample” setup is a design in which two studies are performed for two distinct analytic tasks. Specifically, in one study given G and X, αx is estimated; and in the other study given G and Y (or G, X and Y), β is estimated. One advantage to this approach is that large datasets (study 1) may be available to estimate the instrument strengths even though Y was not measured. Another advantage is that such separation of the data protects against overfitting. If valid instruments are constructed using the dataset with G and X, the corresponding causal effect estimates from the second sample should be less subject to the overfitting bias.
+
+Although all methods discussed in this paper work for the one-sample set-up, not all of these methods can be adapted to the one sample analysis with external validation or the two-sample set-up. The ordinary 2SLS method adapts easily to a two-sample set-up (Angrist and Krueger (1992); Dee and Evans (2003)). However, this adaptation does not improve asymptotic efficiency (Inoue and Solon (2010)). When there are additional phenotypes (Z) to be considered, neither 2SLS_exo nor 2SL_mul can be adapted to one sample with external validation set-up or the two-sample set-up because they both require one-sample individual level data to calculate the appropriate residuals. In contrast, methods that propose valid instrument construction using Y include sisVIVE, and its variants (sisVIVE_exo, sisVIVE_mul) can be extended to one sample analysis with external validation. Specifically, the valid instrument selection is obtained from the original sample, and is used to infer the causal effect β on the external validation sample. Furthermore, the Allele method and its variants adjusting for exogenous variables (Allele_exo, Allele_mul) extend to the two-sample situation since the Allele weights only depend on G, X (and Z). Detailed implementation of these methods is presented in the section 4.1.
+
+3 Constrained Instrumental variable
+
+Let us consider the situation where potentially pleiotropic phenotypes (Z) are measured and available. We propose here a novel approach that we call “Constrained Instrumental Variable (CIV )”. The central idea is to maximize instrument strength, while attempting to control the impact of pleiotropic effects. In what follows we will consider two cases separately. In Section 3.1, we show that in the particular case p &lt; n, a new instrumental variable can be obtained as a solution of an un-penalized maximization problem. In Section 3.2, we show that the addition of an appropriate penalty term to the aforementioned maximization problem leads to workable solutions with no restriction on p.
+
+3.1 Special case: CIV when p &lt; n
+
+We are looking for a linear combination of the genotype data such that the resulting instrument strength is maximized, and the association between new instruments and pleiotropic phenotypes Z is zero. In mathematical terms we aim to find a vector c ∈ Rp which solves the following optimization problem: (4) maxc∈Rpc⊤G⊤X
+
+subject to conditions: (5a) c⊤G⊤Gc=1,
+
+(5b) c⊤G⊤Z=0.
+
+Note that Equation (5a) is a normalizing condition which ensures the unicity of the solution (the norm of the projection c on G is constrained to be 1).
+
+This maximization problem is well-defined when p &lt; n and p ≥ k (where k is the number of possibly pleiotropic phenotypes), and can be solved using simple linear algebra (see Appendix B). Let c^ be the solution to the constrained optimization problem above. We will refer to Gc^ as the CIV_naive instruments.
+
+The strength of the CIV_naive instruments can be measured by the F-statistic of linear model X ~ G against the null hypothesis that the excluded instruments are irrelevant. As a rule of thumb, instrumental variables with F-statistics &lt; 10 are usually considered weak instruments. CIV_naive is designed to retain instrument strength, however, it may not always yield the strongest possible global F-statistic due to constraint (5b) (Boyd &amp; Vandenberghe, 2004; Tofallis, 1999).
+
+In a one-sample analysis, the new instrumental variable Gc is used to infer the causal effect of X on Y using methods from linear structural equation modeling such as 2SLS. Furthermore, the CIV_naive approach translates naturally to two-sample analyses. The linear vector c is estimated in the first-stage dataset, and the estimate c^ is used in the second stage dataset to create the new instrumental variable Gc^ and to estimate the causal effect β.
+
+3.2 A penalized maximization: CIV smooth
+
+The existence of a unique solution for the optimization problem when p &lt; n (see Section 3.1 and Appendix B) is a definite asset of CIV_naive. On the other hand, an important concern is that when p &gt; n, solutions may not exist at all. Another concern is that, regardless of whether or not p &lt; n, a reduction in the number of components may be desirable to avoid overfitting and to provide insight into the causal impact of SNPs. To address these two concerns, we propose an improvement of CIV_naive which guarantees existence (though not uniqueness) of solutions and allows for variable selection. This is achieved by imposing a penalty on the optimization problem (4). We will call the proposed method CIV_smooth.
+
+Different choices of penalty functions lead to different solutions. However, in this context, neither L1 nor L2 penalties will result in a sparse solution under any level of regularization, because of the linear constraint (3c). Figure 3 illustrates this for two instruments G = (g1, g2); the L1 and L2 penalty contours intersect the linear constraint at non-sparse solutions for c.
+
+Therefore, we propose instead to use a L0 penalty, and to maximize the constrained function (6) maxc∈Rpc⊤G⊤X−λ|c|0
+
+subject to conditions: (7a) c⊤G⊤Gc≤1,
+
+(7b) c⊤G⊤Z=0,
+
+Where |c|0 is the L0 norm of c and λ is the regularization parameter. The problem described by (4a)–(4c) is equivalent to maximizing a convex function over a convex set. However, even for moderate values of p, it is computationally impractical to exhaustively enumerate all possible sets of |c|0; this problem with the L0 norm has been proven to be NP-hard (Natarajan (1995)). Therefore, instead we consider smoothed L0 penalties: fσ(x)=exp(−x22σ2), for σ goes to 0. In the limit, |c|0≈p−∑jfσ(cj), thereby the problem (4) can be approximated by: (8) maxc∈Rpc⊤G⊤X−λ(p−∑jfσ(cj))
+
+subject to conditions (7a) and (7b). Equation (8) is solved for a decreasing sequence of (σ → 0) and a given value of λ, resulting in approximately sparse solutions (see Appendix C). Unfortunately there are no theoretical guarantees for the uniqueness of such numerical solutions. Often there are multiple solutions; however, when this occurs the corresponding values of the objective function (8) are usually very similar. See Appendix D for details of the solutions.
+
+Higher values of λ (stronger penalization) lead to somewhat sparser solutions. In practice λ is chosen by K-fold cross-validation to minimize the projected prediction error (Kang et al., 2016) ||PG* (Y – Xβ*)||, where PG* = G* T(G* TG*)−1G* is the projector onto the columns of the genetic matrix G*=Gc^ given multiple solutions c^. In the ideal case in which all the components of G* are valid instruments (which implies the absence of pleiotropy), the regression residual Y – Xβ* is orthogonal to the columns of G*: PG* (Y − Xβ*) = 0. Notice that this orthogonality condition ensures valid solutions for constrained instrument weights, but not necessarily minimal prediction errors. More discussions about this choice of using projected prediction error as criteria for selecting regularization parameter λ can be found in Appendix E.
+
+The estimate of the exposure’s causal effect, β, is then obtained using valid instruments G*. For example, in the two-stage least square context (2SLS), the estimator of the causal effect is given by: β^=(X⊤PG*X)−1X⊤PG*Y.
+
+Although asymptotic variance estimates are available for standard 2SLS estimates, they are not available for the CIV methods. Indeed, the new instruments G* depend on all observations of X and Z, so that XiGi* and XjGj* are not independent for i ≠ j. As a consequence, this weak law of large numbers cannot be invoked, and the convergence of 1n∑i=1nXiG*i to E|XiG*i| is not assured. Instead, bootstrap estimates of the sample variance of β^ can be obtained.
+
+CIV_naive can be extended to two-sample causal effect estimation. The weight c can be estimated on the first sample, and then applied to the second sample for causal effect estimation. In contrast, CIV_smooth can benefit from an external validation sample where (G, X and Y) are available in two datasets. These adaptations to more general study designs are included in our simulations below.
+
+In this paper, MR analyses were restricted to the case of a single risk factor X, although most of the mentioned methods can be extended in some way to allow for a multivariate X. For CIV_naive and CIV_smooth, we demonstrated how to account for multivariate X in Appendix B and C, respectively. The corresponding multiple solutions c^ can be used with multivariate 2SLS to infer the causal effect of X on Y.
+
+In summary, CIV_naive and CIV_smooth are formulated as optimization problems, which ensures that the resulting instrument G* is strong and valid for estimating the causal effect of X on Y. However, in the construction algorithm for CIV_smooth, we could not prove convergence to a unique solution for weight c, nor could we establish an analytical form for the variance of c and the estimate of β. In contrast, the most traditional benchmark in MR literature, 2SLS, though always producing consistent estimates for β with an asymptotic formula for its variance, is not designed to produce strong and valid instruments. On the other hand, this concern is addressed in both the Allele Score method and in the sisVIVE, which can both be seen as natural competitors of our approach. Therefore, we designed and carried out a simulation study to compare CIV_naive and CIV_smooth with Allele score and sisVIVE methods as well as the benchmark 2SLS.
+
+4 Simulation
+
+The purpose of this simulation study is to assess the performance of our novel approach and of the three most popular methods over a broad variety of scenarios that mimic what we would expect to find in genetic studies. Two scenarios of pleiotropy were simulated in two series of simulations. Also, the association parameters αX and αZ were varied to study the impact of instrument strength on performance. Both one-sample and two-sample/validation sample set-up were simulated in each of the two scenarios.
+
+4.1 Simulation Design
+
+With reference to Figure 2, we capture possible violations of the MR assumptions by varying the parameters αz, αx, γxz, γzx, while keeping η and β fixed, as well as the association of the unknown confounder U with X, Z, and Y. For a given set of conditions corresponding to a violation of the MR assumptions, we simulated a set of independent genotypes G, exposures X, pleiotropic phenotypes Z, an unknown confounder U, and outcome Y. We have implemented two series of simulations corresponding to the following scenarios: Series I. Standard pleiotropy: the pleiotropic phenotype Z is not directly associated with X. (γxz = γzx = 0 in Figure 2).
+
+Series II: Z → X: direct causal pathway from Z to X and G to Z (γzx ≠ 0 and γxz = 0 in Figure 2).
+
+Table 2 summarizes the general design of the simulations. Notice that the following elements are the same in the two series: n, the number of observations; p, the total number of SNPs (components of G); MAF, the minor allele frequency of each SNP. In contrast, the following parameters vary in both series: pz, the number of SNPs that have direct causal impact on Z (2 values); αx, the association parameter between G and X (2 values); αz, the association parameter between G and Z (2 values). In total there are 2 × 2 × 2 = 8 combinations of parameters. Finally, (γxz, γzx) were set to(0, 0) in Series I and (0, 0.1) in Series II.
+
+Structural Equations for Simulation Series I : Standard Pleiotropy
+
+(9) xi=ax∑j=1pGij+ui+εx,i,zi=az∑j=1pzGij+ui+εz,i,yi=xi+zi+ui+εy,i,
+
+where εx,i, εz,i, εy,i, ui ~ N(0, 1).
+
+Structural Equations for Simulation Series II : Z → X
+
+(10) zi=az∑j=1pzGij+ui+εz,i,xi=ax∑j=1pGij+Yzxzi+ui+εx,i,yi=xi+zi+ui+εy,i
+
+where εx,i, εz,i, εy,i, ui ~ N(0, 1).
+
+In each simulated dataset, 100 SNPs (G in Equation (9)) with a minor allele frequency 0.33 and n = 500 observations were generated, with values randomly sampled from (0, 1, 2). Among all 100 SNPs there are pz ∈ {20, 50} SNPs directly related to Z. Notice that smaller values of αx(=0.1) represent weak instruments G for X, while large values of αz(=1) represent strong instruments G for Z. Therefore, our scenarios comprise weak and strong instruments for one or both of X and Z. 200 datasets were generated for each scenario, and results compared the estimates and variance of the causal effect, β.
+
+We conducted both one-sample and validation-sample simulations for Series I and II. In one sample simulations we compared the bias of causal effect estimators across all the methods discussed in this work: 2SLS_naive, 2SLS_exo, 2SLS_mul, Allele, Allele_exo, Allele_mul, sisVIVE, sisVIVE_exo, CIV, CIV_smooth. The strength of constructed instruments G*, and correlation between G* and Z, are also compared across all methods except 2SLS_naive, 2SLS_exo and 2SLS_mul. The pleiotropic correlation of sisVIVE variants is presented as the maximum correlation between Z and genotypes selected by the methods.
+
+In external validation sample and two-sample simulations, we compared causal effect estimation bias, instrument strength, and pleiotropic correlation across all methods except 2SLS_naive, 2SLS_exo and 2SLS_mul. As explained in Section 2.5, from the first sample, a vector of weights c^ is constructed and used to create a new instrument, G*=Gc^, which is then used to infer the causal effect β^ on the second sample. Notice that the vector of weights is obtained differently for different methods: for Allele_score methods it is obtained from ordinary linear regression; for sisVIVE methods from a LASSO regression; and for CIV from the constrained optimization problem (4, 5a, 5b).
+
+The feature selection performances of siVIVE, sisVIVE_exo and CIV_smooth are also reported for all the simulation scenarios. The feature selection result from CIV_smooth is extracted as follows: we first obtain CIV_smooth estimates c^. For each converged solution c^, a feature j is recognized as significant if coefficient |cj| ≥ 0.2 ∗ maxj |cj|, j = 1, ..., p. All selected features are then recognized as selected valid instruments.
+
+4.2 Simulation Results
+
+The simulations were designed to assess the performances of CIV_naive and CIV_smooth. The expectation was that both approaches would provide strong instruments with near zero pleiotropic correlation compared with other methods. Moreover, CIV_smooth should reduce the number of selected pleiotropic genotypes, thus providing more valid instruments and more accurate β^ compared with some competitors; specifically, the validity of the instrument obtained from CIV_smooth should be comparable with those obtained from sisVIVE.
+
+One Sample Simulation
+
+These expectations were met in one-sample simulations, as shown in Figures 4, 5, 6, and Table 3 for Series I. The F statistics of Figure 4 show that the instrument strengths of CIV_naive and CIV_smooth are superior to that of sisVIVE and sisVIVE_exo across scenarios. Although, as expected, the largest instrument strengths are obtained from the three variants of the Allele Score method; across all scenarios the F-statistics of the CIV approaches are greater than 10, indicating that instrument strength is retained despite the adjustments for pleiotropy. The pleiotropic correlations for one-sample simulations, presented in Figure 5, show that, confirming our expectations, both CIV_smooth and CIV_naive have exactly 0pleiotropic correlations in all scenarios, while sisVIVE, Allele and Allele_mul show substantial non-zero values.
+
+The feature selection results in Table 3 show that sisVIVE outperforms CIV_smooth in the strong pleiotropy case, with a smaller true positive rate and a much smaller false positive rate. In contrast, in the weak pleiotropy case, it is the CIV_smooth that outperforms sisVIVE: here the sisVIVE approach does not eliminate any genetic variants, while CIV_smooth correctly eliminates 30% to 50% of the invalid genotypes.
+
+The bias of β^ across methods from simulation Series I in one-sample set-up is presented in Figure 6. For all methods, this bias is smaller for strong instrument scenarios than for weak instrument scenarios, and is higher for strong pleiotropy scenarios than for weak pleiotropy scenarios. Moreover, for all methods, the most biased estimates are those obtained from weak instruments and strong pleiotropy scenarios. It should be noted that in the latter case, β^ is unbiased for CIV_smooth, sisVIVE and Allele_mul. Also, CIV_smooth outperforms CIV_naive in each scenario in terms of magnitude of the β^ bias. The reason for the discrepancy between CIV_smooth and CIV_naive is that CIV_smooth includes a prediction optimization procedure, while CIV_naive does not (see Appendix E).
+
+The simulation results for Series II in the one sample set-up, in general, are similar to those for Series I (Figures 7 – 9 and Table 4 for Series II). The only difference between the results of series II and series I lies in the performance of 2SLS_mul: unlike Series I, the estimates of β^ from 2SLS_mul are significantly biased in the scenario of weak instruments and strong pleiotropy from Series II (Figure 7). When both pleiotropy and instruments are strong (first row of Figure 7) methods conditional on Z (sisVIVE_exo, Allele_exo, 2SLS_exo) give a smaller estimate of β^ than those without conditioning on Z (sisVIVE, Allele, 2SLS). This is the collider bias induced by conditioning on Z. The same pattern can be seen in two other rows of Figure 7. A different pattern is seen when the instruments are weak but the pleiotropy is strong (third row of Figure 7). Conditioning on Z in this situation may be exacerbating the imprecision due to weak instruments.
+
+Two Sample Simulation
+
+Two sample and external validation sample bias results are shown in Figure 10 for Series I simulations. External validation sample results are shown above the horizontal line in each image, and two-sample results are shown below the line, only for methods that adapt to these situations.
+
+Across all scenarios, CIV_naive has substantially larger variances than all other methods, to the extent that it is impossible to even evaluate bias. CIV_naive is not designed to optimize prediction of Y in the second sample, and does not use Y in the instrument construction process of the first sample. Hence, CIV_naive weights are not robust across datasets. In fact, the instrument strengths for CIV_naive in two-sample set-up (Figure 11) are significantly lower than in one-sample set-up (Figure 4). Figure 12 shows that the pleiotropic correlations of CIV_naive from the two-sample set-up are larger than those from the one-sample simulations (Figure 5), for the same reason.
+
+For the two-sample set-up, Allele_mul gives unbiased results in all scenarios, however the Allele_exo is biased in the scenario of weak instruments and strong pleiotropy. In general, across all scenarios, the strongest instruments as well as highest pleiotropic correlations occur for the three variants of the Allele_score method.
+
+The simulation results for Series II in two-sample set-up are similar to those for Series I: they are shown in the Figures 13 – 15.
+
+External Validation Sample Simulation
+
+The validation sample simulation results validate our hypothesis that CIV_smooth is more robust than CIV_naive; CIV_smooth is unbiased in all scenarios and is much less variable than CIV_naive. It is likely that CIV_smooth attains robustness by incorporating a penalty approach to select genotypes, and uses Y in the instrument construction process to optimize projected predictions of X on Y, thus achieving greater stability of β^.
+
+The F-statistics of CIV_smooth from Series I in the external validation-sample set-up (Figure 11) are substantially lower than the F-statistics from the one-sample set-up, as might be expected. Also, the pleiotropic correlations of CIV smooth from the two-sample set-up (Figure 12) are larger than those from the one-sample simulations (see Figure 5) for the same reason as was seen for CIV_naive above. In general, across all scenarios, the estimated instrument strength and the pleiotropic correlation of CIV_smooth are comparable with those of sisVIVE and sisVIVE_exo.
+
+Simulation Summary
+
+In conclusion, CIV_smooth and Allele_mul methods provide the only unbiased causal effect estimates in all scenarios. The sisVIVE estimates are biased in some scenarios, especially for weak pleiotropy scenarios. Allele_mul retains high pleiotropic correlation when strong pleiotropy exists, since it does not select the components of G. The estimated instrument strength and pleiotropic correlation of CIV_smooth are always close to those of its close competitors; moreover they are the only unbiased casual effect estimation method that performs feature selection.
+
+5 Data Analysis: Alzheimer’s Disease from the ADNI cohort
+
+Alzheimer’s disease (AD) is a chronic neurodegenerative disorder that causes a slow decline in memory and reasoning skills. It is well known that biomarkers, including cerebrospinal fluid tau protein (CSF-tau) and CSF amyloid beta-protein ending at amino acid position 42 (CSF-Aβ 1–42), are reliable measures of AD progression (Hardy and Higgins (1992); Frost, Jacks, and Diamond (2009); Shaw et al. (2009)). Recently, other biomarkers such as glucose metabolism and neural functional activity have been added while exploring the mechanisms underlying late-onset Alzheimer’s disease (LOAD) using multi-factorial data analysis (Iturria-Medina et al., 2016). However, at this point, there is still some uncertainty on whether the changes in these biomarkers plays a causal role in AD progression or are simply associated with AD progression.
+
+We have used instrumental variable methods to try to disentangle causal relationships for AD. Data used in the preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). The ADNI was launched in 2003 as a public-private partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to test whether serial magnetic resonance imaging (MRI), positron emission tomography (PET), other biological markers, and clinical and neuropsychological assessment can be combined to measure the progression of mild cognitive impairment (MCI) and early Alzheimer’s disease (AD).
+
+The outcome (AD status) studied here is a binary case-control variable, where “case” is a subject with either MCI or early AD. Thus we use logistic regression in the second stage of MR analysis to estimate a causal risk ratio (CRR) (Burgess, Granell, Palmer, Sterne, &amp; Didelez, 2014; Clarke &amp; Windmeijer, 2012). The sisVIVE method, however, requires the outcome to be continuous; therefore we adjusted outcome Y, X, and Z for the exogenous covariates sex, education and age, and replaced these with their predictors Y^ (which can be considered quasi-continuous), X^ and Z^, to which we can apply sisVIVE. In this case, any bias towards the null in the causal effect estimates from sisVIVE would be largely due to the impact of confounding factors (Palmer, Thompson, Tobin, Sheehan, &amp; Burton, 2008).
+
+A very important limitation of performing MR analysis in ADNI data is the retrospective nature of its study design. Ascertainment in ADNI was retrospective by disease status, and therefore, instruments that would be valid for a prospective study design may not remain valid after retrospective sampling (Didelez &amp; Sheehan, 2007). Specifically, the estimated first stage (X ~ G) association from case-control samples may be biased relative to the true association in a general population sample (Tapsoba, Kooperberg, Reiner, Wang, &amp; Dai, 2014; Tchetgen Tchetgen, 2013). If the disease being studied is rare, it is possible to conduct first stage regression only on the control sample, then perform causal effect estimation on the whole sample using MR methods applicable to two-sample/validation sample set-ups (Lin &amp; Zeng, 2009).
+
+For illustration of CIV below, we select in turn each of the four available biomarkers (CSF-Aβ 1–42, CSF-Ptau, CSF-Ttau and glucose metabolism) as X, and then assign the other three to be the pleiotropic phenotypes, Z. This then raises another limitation of our MR analysis of these data: we are assuming there is no causal relationship from X → Z since this would imply a different total causal effect than the one that we are estimating. Given our rotation of phenotypes between the (X, Z) position, we are essentially assuming there is no direct causal relationship between any of these phenotypes and that pleiotropy is induced merely by sharing some genetic contributions. Therefore, we suggest that the results below should be interpreted as simply illustrating our methods and not as making substantive causal statements.
+
+5.1 Outcome, Exposures and Instruments
+
+Outcome Y
+
+A subject is either from the control group, or is a “case” if diagnosed with MCI or AD. In total we analyzed n = 491 subjects including 151 controls (Y = 0) and 340 cases (Y = 1).
+
+Exposures X
+
+We are interested in estimating the causal effect on AD progression of four biomarkers, including CSF amyloid beta 1–42 (Aβ 1–42) (X1), natural log of Phosphorylated Tau Protein (Ptau) (X2), natural log of Total Tau protein (Ttau) (X3) and brain glucose metabolism (FDG SUVR) (X4).It is well known that the isoforms of Apolipoprotein E (ApoE), a class of apolipoprotein that mediates cholesterol metabolism, is associated with both Aβ aggregation and Tau protein phosphorylation (Brecht et al., 2004; Frautschy &amp; Cole, 2010; Strittmatter &amp; Roses, 1995; Sunderland et al., 2004), which implies potential pleiotropy. All exposure variables were adjusted for covariates including age, sex and education. Profiles of the subjects are summarized in Table 5.
+
+Instruments G
+
+For each of the exposures Xk, k = 1, ..., 4, the strongly associated SNPs reported by the NHGRI-EBI Catalog of published genome-wide association studies (Burdett et al., 2016) were collected from the ADNI Imputed Genotype data. The missing genotypes were imputed based on the 1000 Genome Project, utilizing the same protocol for the ROS/MAP and AddNeuroMed study. When there were very highly correlated (ρ ≥0.8) SNPs which are known to belong to the same gene, we kept only one representative SNP. The SNP set was then further reduced by using a univariate feature selection based on significant F-statistics (p ≤ 0.05). Hence, the final selected SNPs comprised 12 SNPs for Aβ (X1), 6 SNPs for Ptau (X2), 4 SNPs for Ttau (X3) and 17 SNPs for glucose metabolism (X4).
+
+5.2 Mendelian Randomization Analysis
+
+The assumption (A1) of Mendelian randomization states that the SNPs must be associated with biomarkers of interest. Strong instruments with F-statistics bigger than 10 are usually preferred in MR applications. The F-statistics for instrument strength, based on the set of SNPs selected for each biomarker, were 12.44 (Aβ ), 12.01 (Ptau), 4.52 (Ttau) and 5.94 (SUVR). We also performed the Sargan test for over-identification (Baum et al., 2003) to test the MR assumption (A2) and (A3). The p-values of the Sargan test were 1.5e-4, 5e-5, 0.23 and 3e-4 for Xk, k = 1, ..., 4, implying the existence of invalid instruments in G for Mendelian randomization for Amyloid β 1–42 (X1), Ptau (X2) and glucose (X4) on AD progression (Y). The reason for these small p-values is that the selected SNPs that are strongly associated with Ptau have even stronger associations with Aβ. Details about the associations of instruments G with the 4 biomarkers are shown in Figure 16 and 17.
+
+Mendelian randomization was performed to evaluate the potential causal effects of variability in each biomarker (X) on the AD progression (Y) in two steps. In the first step, we used only the control samples to obtain weights with applicable methods (Allele methods, sisVIVE methods and CIV_smooth). In the second step, using the whole sample, we constructed instrumental variables using the weights obtained from the first step, and inferred causal effects of each biomarker Xk on AD progression while adjusting for the other three biomarkers as secondary phenotypes. In this set-up, if we assume that the control sample is similar to the whole population from which the individuals were drawn, then the retrospective nature of ADNI is respected. As said above, we also acknowledge that our analyses assume no causal relationship from X to Z for each (G, X, Z, Y) set-up, and results need to be interpreted in this light. It is important to note that in this analysis, we can only include CIV_smooth, Allele_scores and sisVIVE because not all methods can be adapted to this two-step approach. We excluded CIV_naive due to its unstable performance in two-step approach (See section 4.2).
+
+5.3 Results
+
+Using CIV_smooth we found a significant causal effect of Aβ 1–42 on AD progression, implying lower Amyloid β 1–42 levels in AD patients than controls. The 95% confidence intervals of the causal effect estimates (log-odds) for Aβ 1–42 obtained from two-sample/validation sample anal-yses are reported in Figure 18. Neither the three variants of Allele_score methods, nor the two variants of sisVIVE methods identified a significant causal effect of Aβ 1–42 peptide levels on AD progression. In contrast, none of the methods found significant causal effects for Ttau, Ptau and glucose on AD progression.
+
+The observation of significant causal impact for Aβ 1–42 on Alzheimer’s disease study is consistent with some previous publications. In fact, multiple observational studies have reported decreasing Aβ 1–42 in cerebrospinal fluid of patients with Alzheimer’s disease compared to normal control subjects (Herukka et al., 2007; Maruyama et al., 2001; Sunderland et al., 2003). However, as mentioned above, these results are merely illustrative of the performance of our methods.
+
+6 Discussion
+
+In this paper we proposed a new constrained instrumental variable method for causal inference when pleiotropy is suspected. This method, CIV_smooth, is an improved variant of a conceptually simpler one, CIV_naive, which is defined within the broader framework of instrumental variable theory. CIV_naive optimizes an objective function under a “hard” constraint; CIV_smooth adds to this a soft constraint to favor smoothed L0 solutions. In our simulation study, we have presented and compared the performance of CIV_smooth, CIV_naive, and other popular methods. A variety of simulation scenarios were constructed to mimic realistic pleiotropic relationships. We found that CIV_smooth compares favorably to its closest competitors with respect to instrument strength, pleiotropic correlation, and causal effect estimation bias in a one-sample analysis design. We note furthermore that CIV_naive, while outperforming its competitors in specific situations, is uniformly outperformed by CIV_smooth. To illustrate the performance of CIV_smooth and its competitors, we conducted MR analysis on data from Alzheimer’s Disease Neuroimaging Initiative (ADNI) (Mueller et al., 2005), with the aim of estimating the causal effects of the biomarkers Aβ 1–42, Ptau protein, Ttau protein and glucose metabolism on AD progression. CIV_smooth found only one significant causal effect, that of Aβ 1–42 on AD progression; this indicates that the previously known association of this biomarker with AD progression may be causal. In contrast, all the other methods failed to uncover any significant causal effect.
+
+The main advantage of the CIV_smooth method is that it constructs valid instruments that are strongly associated with a phenotype of interest. Indeed by construction, CIV_smooth aims to balance the “validity” (pleiotropic correlation) and instrument strength (association with phenotype) of solutions. This balance is desirable, since strong instruments will provide consistent causal effect estimates, while approximately valid instruments will reduce the pleiotropy-induced bias. The simulations show that the CIV_smooth provides unbiased causal effect estimates by achieving this balance; though it could be slightly outperformed by its competitors on either pleiotropic correlation or instrument strength, but not both. At the same time, the novel feature selection aspect of CIV_smooth does not introduce significant bias in causal effect estimation in one-sample analyses.
+
+Another advantage of CIV_smooth is the option of separating instrument construction and causal effect estimation. In fact, the construction of CIV_smooth instruments relies on a coefficient vector c estimated from a sample of G, X, Z, Y. Then, any estimation method for linear structural equations can be applied to CIV_smooth instruments G* → X → Y for causal inference. Due to this separation of first-stage and second-stage analysis, CIV_naive, CIV_smooth, and Allele_scores can be trained and assessed on different datasets. It should be noted that the consistency of CIV_smooth is reasonable and comparable with that of its closest competitors, while CIV_naive is often found to be severely inconsistent. Therefore, it is clear that CIV_smooth has substantial flexibility in terms of model assessment and causal effect estimation.
+
+In the presence of pleiotropic phenotypes Z (αz ≠ 0 in Figure 2), any method that conditions on Z would induce collider bias. The main advantage of CIV_smooth is to propose a selection of valid instruments G* that are meant to approach, as closely as possible, the ideal situation, αz* = 0 Nevertheless, collider bias in CIV_smooth will still be induced when there are high absolute values of pleiotropic correlation between G* and Z. However, Simulation Series I and II show that CIV_smooth is more robust than sisVIVE and 2SLS methods even though spurious association may have been introduced by the constrained projections (see Figures 7 – 9 and 13 – 15). We plan additional investigation in future work.
+
+In this paper we did not consider scenario (iii) of section 2.1 corresponding to γxz ≠ 0, in which the total causal effect of X on Y includes a contribution through Z. In this scenario, we do have a true X → Z relationship with total causal effect of β + η. Therefore sisVIVE is unlikely to perform well if there are pleiotropic genotypes since by its definition all genotypes are invalid for X (a valid genotype only impacts Y through X). Also, neither CIV_naive nor CIV_smooth estimate β + η, and generalizations do not seem to be easy. Although some preliminary simulation results including an X → Z causal relationship did show that CIV_smooth may have potential in this scenario, in that the direct causal effect β of X on Y can be estimated adequately, a good estimate of the total causal effect requires extensive changes to the present methodology, and is beyond the scope of this paper. Leaving out scenario (iii) is certainly a limitation of this work that will require further careful research. On the other hand, even with this limitation the results of this paper have practical applications. Indeed, it may be plausible that any correlation between Z and X is due to a “common cause” and not to any causal relation X → Z or Z → X, in which case this “common cause” would be absorbed by U and fall under the case we consider here (both γxz and γzx are zero).We note further that conditioning on Z when γxz ≠ 0 may exacerbate collider bias.
+
+The major limitation of our method is the multiplicity of solutions occurring in certain regions of the parameter space. We have attempted to alleviate this problem by launching the algorithm from multiple initial points, and combining the resulting instruments into a matrix (observation × instrument), which becomes itself an instrument G* (see Appendix C for details).
+
+Another limitation of CIV_smooth is the ad hoc choice of the threshold used in the variable selection step. In this work we are fixing the threshold at 0.2, an empirical choice based on our simulation (see Section 4.1 for details). However, this choice may be problematic in applications featuring large numbers of pleiotropic genotypes.
+
+A third limitation of CIV_smooth is its failure to eliminate the influence of pleiotropic phenotypes when Z contains only some but not all pleiotropic phenotypes. We conducted a sensitivity analysis of CIV_smooth, varying the proportion of observed pleiotropic phenotypes. The results show that in most scenarios sisVIVE and sisVIVE_exo methods estimate the causal effects with the smallest bias among all competitors. However, if αz is small and more than 50% of pleiotropic phenotypes are observed (in Z), then CIV_smooth does provide better (smaller bias) causal effect estimates than sisVIVE methods and Allele methods. This result points to some avenues for future research through investigations of robustness to improve the performance of CIV and CIV_smooth. See Appendix F for details (particularly Figure S3 and S5).
+
+In our MR analysis of the ADNI data set, an important limitation is that ADNI is a retrospectively-designed study. In an attempt to alleviate this problem, we implemented the two-stage approach, introduced by Jiang, Scott, and Wild (2006): in the first stage weighted scores were constructed from the control samples; in the second stage instruments were constructed with these scores on the whole dataset, and the causal effect of each individual biomarker was estimated while treating the other biomarkers as secondary phenotypes. However, this two stage approach cannot completely resolve the problems associated with using an MR approach on a retrospective study (Bowden &amp; Vansteelandt, 2011; Tchetgen Tchetgen, Walter, &amp; Glymour, 2013).
+
+Another limitation of the ADNI data analysis is that we treated causal effect estimation for multiple phenotypes as a series of estimations, each with one of the phenotypes as X and the others as Z. This reduction was necessary to compare methods, since only CIV allows multivariate versions of both X and Z. However, such set-up is only appropriate when there is no direct causal impact X → Z for each pair (X, Z), in which case the total causal effect of X on Y is equal to the direct causal effect. If this assumption is not true for any pair of (X, Z), the β estimator from different methods would be measuring different effects (total or direct effects) or would even be invalid. Therefore, as already mentioned, the results of ADNI analysis in this paper simply serve as a demonstration of our CIV methods, and should not be used to make definite causal statements regarding Alzheimer’s disease.
+
+In future research we will attempt to overcome some of the limitations of the CIV methods. One useful direction is to propose a measure of quality of solutions. Such a measure could be used to discard solutions of poor quality, or alternatively to combine solutions using quality based weights. A more complex approach could also be developed by adding further soft constraints (e.g. quality based constraints, group constraints) to the current version of our CIV_smooth algorithm.
+
+In future work we intend to apply our approach to study causation in a larger setting. Such data could be obtained from UKbiobank (Sudlow et al. (2015)), which is a prospective data containing health information of 500,000 participants as well as their genetic profiles. UKbiobank is an ideal source to study the causal effects of multiple potentially pleiotropic biomarkers, since it contains information on a rich variety of phenotypes and disease outcomes (including Alzheimer’s disease) for each participant. However, the large sample size of the UK Biobank presents a serious computational challenge for CIV_smooth. We need, therefore, to develop successful strategies to integrate MR results from subsamples of workable size for CIV_smooth.
+
+In conclusion, this paper proposes a new approach (CIV_smooth) for conducting Mendelian randomization analyses when pleiotropy is suspected. Assuming a linear structural model linking together genotypes, phenotypes and outcome yields “approximately valid” instruments to adjust causal effect estimation when potential pleiotropic phenotypes are measured. We have shown in simulations that the performance of (CIV_smooth) is comparable, and occasionally preferable, to other popular methods, namely 2SLS, Allele, and sisVIVE. We have also shown in the analysis of a dataset on Alzheimer’s disease that the method produces reasonable results. In view of these results, we hope that CIV_smooth will be integrated into the family of MR analyses methods, making Mendelian randomization a more common practice even when pleiotropy is observed.
+
+Supplementary Material
+
+Supp info
+
+7 Acknowledgements
+
+The simulation studies in this paper were enabled in part by support provided by the GRAHAM computer cluster of Compute Canada (nzt-671-ab).
+
+Data collection and sharing for this project was funded by the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (National Institutes of Health Grant U01 AG024904) and DOD ADNI (Department of Defense award number W81XWH-12–2-0012). ADNI is funded by the National Institute on Aging, the National Institute of Biomedical Imaging and Bioengineering, and through generous contributions from the following: AbbVie, Alzheimer’s Association; Alzheimer’s Drug Discovery Foundation; Araclon Biotech; BioClinica, Inc.; Biogen; Bristol-Myers Squibb Company; CereSpir, Inc.; Cogstate; Eisai Inc.; Elan Pharmaceuticals, Inc.; Eli Lilly and Company; EuroImmun; F. Hoffmann-La Roche Ltd and its affiliated company Genentech, Inc.; Fujirebio; GE Healthcare; IXICO Ltd.; Janssen Alzheimer Immunotherapy Research &amp; Development, LLC.; Johnson &amp; Johnson Pharmaceutical Research &amp; Development LLC.; Lumosity; Lundbeck; Merck &amp; Co., Inc.; Meso Scale Diagnostics, LLC.; NeuroRx Research; Neurotrack Technologies; Novartis Pharmaceuticals Corporation; Pfizer Inc.; Piramal Imaging; Servier; Takeda Pharmaceutical Company; and Transition Therapeutics. The Canadian Institutes of Health Research is providing funds to support ADNI clinical sites in Canada. Private sector contributions are facilitated by the Foundation for the National Institutes of Health (www.fnih.org). The grantee organization is the Northern California Institute for Research and Education, and the study is coordinated by the Alzheimer’s Therapeutic Research Institute at the University of Southern California. ADNI data are disseminated by the Laboratory for Neuro Imaging at the University of Southern California.
+
+Figure 1: A directed acyclic graph (DAG) representing a situation where Mendelian randomization using genetic variants G as instruments can be useful for inferring whether a phenotype X is causally related to an outcome Y. U represents unmeasured confounding factors.
+
+Figure 2: A general diagram representing potential pleiotropic influences in Mendelian randomization studies. G: genotypes. X: phenotype of exposure. Z: potential pleiotropic phenotypes. Y: response of interest. αx, αz are the genetic association parameters between X ~ G and Z ~ G. p is the causal effect of interest (X on Y). n: the pleiotropic pathways of Z on Y. Γxz and Γzx represent the possible direct causal effects of X on Z and Z on X respectively.
+
+Figure 3: Graph demonstrating the maximization problem with LASSO penalty and L2 penalty. Rectangle: LASSO penalty contour with the same level of penalization. Circle: L2 penalty contour with the same level of penalization. Straight line: the solution space required by condition (5b); it has zero probability of intersecting a sparse solution here. Pixels with color from yellow to red: coordinates of C = (c1,c2) with absolution correlation values from high to low levels.
+
+Figure 4: Log transformed F-statistics of X~G* for each MR method in one sample set-up for simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Vertical line denotes F-statistics=10.
+
+Figure 5: Pleiotropic correlation of Z and G* for each MR method in one sample set-up for simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Note that the pleiotropic correlations from CIVsmooth, CIVnajve, sisVIVEexo and Alleleexo are exactly 0 in some scenarios.
+
+Figure 6: Boxplots of the bias of the causal effect estimates, β- 1, from a one-sample set-up in simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G.
+
+Figure 7: Boxplots of the bias of the causal effect estimates, β- 1, from a one-sample set-up in simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G.
+
+Figure 8: Log transformed F-statistics of X ~G* for each MR method in one sample set-up for simulation series II. The panels display results for different values of αx and corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Vertical line denotes F-statistics=10.
+
+Figure 9: Pleiotropic correlation of Z and G* for each MR method in one sample set-up for simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Note that the pleiotropic correlations from CIVsmooth, CIVnaive, sisVIVEexo and Alleleexo are exactly 0 in some scenarios, and therefore do not appear on the graphs.
+
+Figure 10: Boxplots of the bias of the causal effect estimates, β - 1, from external validation sample and two-sample set-ups in simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 11: log transformed F-statistics of X ~ G* for each MR method (in the second sample) in simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Vertical line denotes F-statistics =10. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 12: Pleiotropic correlation of Z and G* for each MR method (in the second sample) in simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Note that the pleiotropic correlation values from Alleleexo are exactly 0 in some scenarios. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 13: Boxplots of the bias of the causal effect estimates, β - 1, from external validation sample and two-sample set-ups in simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 14: Log transformed F-statistics of X ~ G* for each MR method (in the second sample) in simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. Vertical line denotes F-statistics =10. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 15: Pleiotropic correlation of Z and G* for each MR method (in the second sample) in simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. &lt;/p/&gt; Note that the pleiotropic correlation values from Alleleexo are exactly 0 in some scenarios, and therefore nothing can be seen on the graphs. The dashed line separates external validation sample (VS) results from two-sample (TS) results.
+
+Figure 16: The associations between instruments selected for phenotypes and phenotypes of interest. Left: log-Pvalues for association test between the selected SNPs (for Aβ) and all biomarkers. Right: log-Pvalues for association test between the selected SNPs (for Ptau) and all biomarkers.
+
+Figure 17: The associations between instruments selected for phenotypes and phenotypes of interest. Left: log-Pvalues for association test between the selected SNPs (for Ttau) and all biomarkers. Right: log-Pvalues for association test between the selected SNPs (for glucose metabolism) and all biomarkers.
+
+Figure 18: 95% bootstrapped confidence interval of causal estimation (log-odds) of Amyloid beta 1–42 protein levels (supposedly negative effects) on AD progression using CIVsmooth and Allele methods in external validation sample set-ups. It is important to note that the confidence interval shown here for sisVIVE methods results from treating Y as continuous, since sisVIVE is not designed for binary outcomes.
+
+Table 1: A comparison of study designs considered here.
+
+Study design	Number of samples	Variables required	
+One sample analysis	One	(X, Z, Y, G) on 1 dataset.	
+One sample analysis with external validation sample	Two: (1) learning, and (2) validation	(X, Z, Y, G) on both dataset 1 and dataset 2.	
+two sample analysis in Mendelian Randomization (MR)	Two: (1) Learning weights, and (2) learning causal effects	(X, Z, G) on dataset 1. (G, Y) on dataset 2.	
+
+Table 2: The parameter settings used in the two series of simulations: (i) n: number of individuals. (ii) p: number of genotypes in total. (iii) pz: number of pleiotropic genotypes with effects on Z. (iv) MAF: minor allele frequency of all SNPs in the simulation. (v) αx: association parameter between G and X. (vi) αz: association parameter between G and Z.
+
+Simulation	n	β	η	p	pz	MAF	(αx, αz)	γxz	γzx	
+I. Standard pleiotropy	500	1	1	100	20;50	0.33	(1,1); (1,0.1); (0.1,1); (0.1,0.1)	0	0	
+II. Z → X	500	1	1	100	20;50	0.33	(1,1); (1,0.1); (0.1,1); (0.1,0.1)	0.1	0	
+
+Table 3: Feature selection table of CIV_ smooth, sisVIVE and sisVIVE_exo from a one-sample set-up in simulation series I. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. TP: Average number of selected true positive variables out of 100-pz. FP: Average number of selected false positive variables out of pz.
+
+	pz =20	pz =50	
+	
+Strong IV		TP	FP		TP	FP	
+			
+(αx = 1)	CIV_smooth	79.55	7.42	CIV_smooth	49.98	13.15	
+Strong Pleiotropy	sisVIVE	73.78	0.02	sisVIVE	36.99	0.08	
+(αz = 1)	sisVIVE_exo	41.11	0.02	sisVIVE_exo	8.18	0.53	
+			
+Strong IV		TP	FP		TP	FP	
+			
+(αx = 1)	CIV_smooth	77.00	14.53	CIV_smooth	46.99	27.18	
+Weak Pleiotropy	sisVIVE	80.00	19.98	sisVIVE	50.00	50.00	
+(αz = 1)	sisVIVE_exo	80.00	20.00	sisVIVE_exo	50.00	50.00	
+	
+Weak IV		TP	FP		TP	FP	
+			
+(αx = 0.1)	CIV_smooth	70.47	11.76	CIV_smooth	45.07	31.17	
+Strong Pleiotropy	sisVIVE	68.22	0.00	sisVIVE	32.72	0.26	
+(αz = 1)	sisVIVE_exo	79.24	19.76	sisVIVE_exo	50.00	50.00	
+			
+Weak IV		TP	FP		TP	FP	
+			
+(αx = 0.1)	CIV_smooth	69.72	11.80	CIV_smooth	43.29	27.53	
+Weak Pleiotropy	sisVIVE	80.00	20.00	sisVIVE	49.97	49.95	
+(αz = 0.1)	sisVIVE_exo	80.00	20.00	sisVIVE_exo	49.90	49.73	
+
+Table 4: Feature selection table of CIV_smooth, sisVTVE and sisVIVE_exo from a one-sample set-up in simulation series II. The panels display results for different values of αx and αz corresponding to different instrument strength and pleiotropy severity. pz denotes the number of pleiotropic components among all 100 SNPs in G. TP: Average number of selected true positive variables out of 100-pz. FP: Average number of selected false positive variables out of pz.
+
+	pz = 20	pz = 50	
+	
+Strong IV		TP	FP		TP	FP	
+			
+(αx = 1)	CIV_smooth	79.60	6.86	CIV_smooth	48.94	12.29	
+Strong Pleiotropy	sisVIVE	73.23	0.00	sisVIVE	36.39	0.04	
+(αz = 1)	sisVIVE_exo	39.85	0.00	sisVIVE_exo	8.34	0.52	
+			
+Strong IV		TP	FP		TP	FP	
+			
+(αx = 1)	CIV_smooth	77.19	15.06	CIV_smooth	47.20	26.93	
+Weak Pleiotropy	sisVIVE	80.00	20.00	sisVIVE	50.00	49.97	
+(αz = 0.1)	sisVIVE_exo	80.00	20.00	sisVIVE_exo	49.98	49.98	
+	
+Weak IV		TP	FP		TP	FP	
+			
+(αx = 0.1)	CIV_smooth	70.68	12.09	CIV_smooth	46.48	34.62	
+Strong Pleiotropy	sisVIVE	68.54	0.00	sisVIVE	31.92	0.04	
+(αz = 1)	sisVIVE_exo	78.48	19.52	sisVIVE_exo	50.00	50.00	
+			
+Weak IV		TP	FP		TP	FP	
+			
+(αx = 0.1)	CIV_smooth	70.06	12.03	CIV_smooth	43.75	27.48	
+Weak Pleiotropy	sisVIVE	80.00	20.00	sisVIVE	49.98	49.93	
+(αz = 0.1)	sisVIVE_exo	79.97	19.93	sisVIVE_exo	50.00	50.00	
+
+Table 5: Characteristics of subjects studied in ADNI.
+
+	Number	Age (years) (mean ± SD)	Gender(M/F)	education (years) (mean ± SD)	
+Control	151	75.93 ± 5.86	86/65	16.3+2.7	
+MCI/AD	340	74.08 ± 7.63	212/128	5.89 ± 2.92	
+MCI	277	73.64 ± 7.53	173/104	16.03 ± 2.81	
+AD	63	76.03 ± 7.78	39/24	15.27 ± 3.31	
+
+** Data used in preparation of this article were obtained from the Alzheimer’s Disease Neuroimaging Initiative (ADNI) database (adni.loni.usc.edu). As such, the investigators within the ADNI contributed to the design and implementation of ADNI and/or provided data but did not participate in analysis or writing of this report. A complete listing of ADNI investigators can be found at: http://adni.loni.usc.edu/wp-content/uploads/how to apply/ADNI Acknowledgement List.pdf
+
+
+References
+
+Angrist JD (2006). Instrumental variables methods in experimental criminological research: what, why and how. Journal of Experimental Criminology, 2 (1 ), 23–44.
+Angrist JD , &amp; Krueger AB (1992). The effect of age at school entry on educational attainment: an application of instrumental variables with moments from two samples. Journal of the American statistical Association, 87 (418 ), 328–336.
+Baum CF , Schaffer ME , Stillman S , (2003). Instrumental variables and gmm: Estimation and testing. Stata journal, 3 (1 ), 1–31.
+Bowden J , Smith GD , &amp; Burgess S (2015). Mendelian randomization with invalid instruments: effect estimation and bias detection through egger regression. International journal of epidemiology, 44 (2 ), 512–525.26050253
+Bowden J , &amp; Vansteelandt S (2011). Mendelian randomization analysis of case-control data using structural mean models. Statistics in Medicine, 30 (6 ), 678–694.21337362
+Boyd S , &amp; Vandenberghe L (2004). Convex optimization. Cambridge university press.
+Brecht WJ , Harris FM , Chang S , Tesseur I , Yu G-Q , Xu Q , . . . others (2004). Neuronspecific apolipoprotein e4 proteolysis is associated with increased tau phosphorylation in brains of transgenic mice. Journal of Neuroscience, 24 (10 ), 2527–2534.15014128
+Burdett T , Hall P , Hasting E , Hindorff L , Junkins H , Klemm A , . . . others (2016). The nhgri-ebi catalog of published genome-wide association studies. Available at: www.ebiacuk/gwas
+Burgess S , Granell R , Palmer TM , Sterne JA , &amp; Didelez V (2014). Lack of identification in semiparametric instrumental variable models with binary outcomes. American journal of epidemiology, 180 (1 ), 111–119.24859275
+Burgess S , &amp; Thompson SG (2013). Use of allele scores as instrumental variables for mendelian randomization. International journal of epidemiology, 42 (4 ), 1134–1144.24062299
+Burgess S , &amp; Thompson SG (2015). Multivariable mendelian randomization: the use of pleiotropic genetic variants to estimate causal effects. American journal of epidemiology, 181 (4 ), 251–260.25632051
+Burgess S , Thompson SG , &amp; Collaboration CCG (2011). Avoiding bias from weak instruments in mendelian randomization studies. International journal of epidemiology, 40 (3 ), 755–764.21414999
+Clarke PS , &amp; Windmeijer F (2012). Instrumental variable estimators for binary outcomes. Journal of the American Statistical Association, 107 (500 ), 1638–1652.
+Cole SR , Platt RW , Schisterman EF , Chu H , Westreich D , Richardson D , &amp; Poole C (2009). Illustrating bias due to conditioning on a collider. International journal of epidemiology, 39 (2 ), 417–420.19926667
+Davies NM , Hinke Kessler Scholder S , Farbmacher H , Burgess S , Windmeijer F , &amp; Smith GD (2015). The many weak instruments problem and mendelian randomization. Statistics in medicine, 34 (3 ), 454–468.25382280
+Dee TS , &amp; Evans WN (2003). Teen drinking and educational attainment: evidence from two-sample instrumental variables estimates. Journal of Labor Economics, 21 (1 ), 178–209.
+Didelez V , &amp; Sheehan N (2007). Mendelian randomization as an instrumental variable approach to causal inference. Statistical methods in medical research, 16 (4 ), 309–330.17715159
+Engle RF , Hendry DF , &amp; Richard J-F (1983). Exogeneity. Econometrica: Journal of the Econometric Society, 277–304.
+Farrar DE , &amp; Glauber RR (1967). Multicollinearity in regression analysis: the problem revisited. The Review of Economic and Statistics, 92–107.
+Frautschy SA , &amp; Cole GM (2010). Why pleiotropic interventions are needed for alzheimer’s disease. Molecular neurobiology, 41 (2–3 ), 392–409.20437209
+Friedman J , Hastie T , &amp; Tibshirani R (2001). The elements of statistical learning (Vol. 1) (No. 10). Springer series in statistics New York, NY, USA:.
+Frost B , Jacks RL , &amp; Diamond MI (2009). Propagation of tau misfolding from the outside to the inside of a cell. Journal of Biological Chemistry, 284 (19 ), 12845–12852.19282288
+Graham MH (2003). Confronting multicollinearity in ecological multiple regression. Ecology, 84 (11 ), 2809–2815.
+Grapentine T (2000). Path analysis vs. structural equation modeling. Marketing Research, 12 (3 ), 12.
+Greenland S (2003). Quantifying biases in causal models: classical confounding vs collider-stratification bias. Epidemiology, 14 (3 ), 300–306.12859030
+Grewal R , Cote JA , &amp; Baumgartner H (2004). Multicollinearity and measurement error in structural equation models: Implications for theory testing. Marketing Science, 23 (4 ), 519–529.
+Hansen LP , Heaton J , &amp; Yaron A (1996). Finite-sample properties of some alternative gmm estimators. Journal of Business &amp; Economic Statistics, 14 (3 ), 262–280.
+Hardy JA , &amp; Higgins GA (1992). Alzheimer’s disease: the amyloid cascade hypothesis. Science, 256 (5054 ), 184.1566067
+Herukka S-K , Helisalmi S , Hallikainen M , Tervo S , Soininen H , &amp; Pirttilä T (2007). Csf aβ42, tau and phosphorylated tau, apoe e4 allele and mci type in progressive mci. Neurobiology of aging, 28 (4 ), 507–514.16546302
+Inoue A , &amp; Solon G (2010). Two-sample instrumental variables estimators. The Review of Economics and Statistics, 92 (3 ), 557–561.
+Iturria-Medina Y , Sotero R , Toussaint P , Mateos-Pérez J , Evans A , Initiative ADN , (2016). Early role of vascular dysregulation on late-onset alzheimer/’s disease based on multifactorial data-driven analysis. Nature Communications, 7 .
+James G , Witten D , Hastie T , &amp; Tibshirani R (2013). An introduction to statistical learning (Vol. 112 ). Springer.
+Jiang Y , Scott AJ , &amp; Wild CJ (2006). Secondary analysis of case-control data. Statistics in medicine, 25 (8 ), 1323–1339.16220494
+Kang H , Zhang A , Cai TT , &amp; Small DS (2016). Instrumental variables estimation with some invalid instruments and its application to mendelian randomization. Journal of the American Statistical Association, 111 (513 ), 132–144.
+Lawlor DA , Harbord RM , Sterne JA , Timpson N , &amp; Davey Smith G (2008). Mendelian randomization: using genes as instruments for making causal inferences in epidemiology. Statistics in medicine, 27 (8 ), 1133–1163.17886233
+Lin D , &amp; Zeng D (2009). Proper analysis of secondary phenotype data in case-control association studies. Genetic epidemiology, 33 (3 ), 256–265.19051285
+Lovell MC (2008). A simple proof of the fwl theorem. The Journal of Economic Education, 39 (1 ), 88–91.
+Ludwig J , &amp; Kling JR (2007). Is crime contagious? The Journal of Law and Economics, 50 (3 ), 491–518.
+Maruyama M , Arai H , Sugita M , Tanji H , Higuchi M , Okamura N , . . . others (2001). Cerebrospinal fluid amyloid β 1–42 levels in the mild cognitive impairment stage of alzheimer’s disease. Experimental neurology, 172 (2 ), 433–436.11716567
+Mueller SG , Weiner MW , Thal LJ , Petersen RC , Jack CR , Jagust W , . . . Beckett L (2005). Ways toward an early diagnosis in alzheimer’s disease: the alzheimer’s disease neuroimaging initiative (adni). Alzheimer’s &amp; Dementia, 1 (1 ), 55–66.
+Natarajan BK (1995). Sparse approximate solutions to linear systems. SIAM journal on computing, 24 (2 ), 227–234.
+Palmer TM , Thompson JR , Tobin MD , Sheehan NA , &amp; Burton PR (2008). Adjusting for bias and unmeasured confounding in mendelian randomization studies with binary responses. International journal of epidemiology, 37 (5 ), 1161–1168.18463132
+Shaw LM , Vanderstichele H , Knapik-Czajka M , Clark CM , Aisen PS , Petersen RC , . . . others (2009). Cerebrospinal fluid biomarker signature in alzheimer’s disease neuroimaging initiative subjects. Annals of neurology, 65 (4 ), 403–413.19296504
+Smith GD , &amp; Ebrahim S (2003). ‘mendelian randomization’: can genetic epidemiology contribute to understanding environmental determinants of disease? International journal of epidemiology, 32 (1 ), 1–22.12689998
+Strittmatter WJ , &amp; Roses AD (1995). Apolipoprotein e and alzheimer disease. Proceedings of the National Academy of Sciences, 92 (11 ), 4725–4727.
+Sudlow C , Gallacher J , Allen N , Beral V , Burton P , Danesh J , . . . others (2015). Uk biobank: an open access resource for identifying the causes of a wide range of complex diseases of middle and old age. PLoS medicine, 12 (3 ), e1001779.25826379
+Sunderland T , Linker G , Mirza N , Putnam KT , Friedman DL , Kimmel LH , . . . others (2003). Decreased β -amyloid1–42 and increased tau levels in cerebrospinal fluid of patients with alzheimer disease. Jama, 289 (16 ), 2094–2103.12709467
+Sunderland T , Mirza N , Putnam KT , Linker G , Bhupali D , Durham R , . . . others (2004). Cerebrospinal fluid β -amyloid1–42 and tau in control subjects at risk for alzheimer’s disease: The effect of apoe ε4 allele. Biological psychiatry, 56 (9 ), 670–676.15522251
+Tapsoba J. d. D. , Kooperberg C , Reiner A , Wang C-Y , &amp; Dai JY (2014). Robust estimation for secondary trait association in case-control genetic studies. American journal of epidemiology, 179 (10 ), 1264–1272.24723002
+Tchetgen Tchetgen EJ (2013). A general regression framework for a secondary outcome in case–control studies. Biostatistics, 15 (1 ), 117–128.24152770
+Tchetgen Tchetgen EJ , Walter S , &amp; Glymour MM (2013). Commentary: building an evidence base for mendelian randomization studies: assessing the validity and strength of proposed genetic instrumental variables. International journal of epidemiology, 42 (1 ), 328–331.23508417
+Thaler RH (1988). Anomalies: The winner’s curse. The Journal of Economic Perspectives, 2 (1 ), 191–202.
+Tofallis C (1999). Model building with multiple dependent variables and constraints. Journal of the Royal Statistical Society: Series D (The Statistician), 48 (3 ), 371–378.
+Wang J , &amp; Zivot E (1998). Inference on structural parameters in instrumental variables regression with weak instruments. Econometrica, 1389–1404.
+Wehby GL , Ohsfeldt RL , &amp; Murray JC (2008). ‘mendelian randomization’equals instrumental variable analysis with genetic instruments. Statistics in medicine, 27 (15 ), 2745–2749.18344186
+Wooldridge JM (2015). Introductory econometrics: A modern approach. Nelson Education.

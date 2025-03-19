@@ -1,0 +1,462 @@
+LICENSE: This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+
+
+9713490
+21159
+Med Image Anal
+Med Image Anal
+Medical image analysis
+1361-8415
+1361-8423
+
+34871931
+8792340
+10.1016/j.media.2021.102309
+NIHMS1762020
+Article
+Embracing the Disharmony in Medical Imaging: A Simple and Effective Framework for Domain Adaptation
+Wang Rongguang *13
+Chaudhari Pratik 12
+Davatzikos Christos 134
+iSTAGING consortium5, PHENOM consortium6, Alzheimer’s Neuroimaging consortium7†
+1 Department of Electrical and Systems Engineering, University of Pennsylvania, PA, USA
+2 General Robotics, Automation, Sensing and Perception (GRASP) Laboratory, University of Pennsylvania
+3 Center for Biomedical Image Computing and Analytics (CBICA), University of Pennsylvania
+4 Department of Radiology, Perelman School of Medicine, University of Pennsylvania
+† See investigators in Habes et al. (2021) for 5, Chand et al. (2020) for 6, and Jack Jr et al. (2008) for 7.
+
+* Corresponding author: rgw@seas.upenn.edu, 3700 Hamilton Walk, 7th Floor, Center for Biomedical Image Computing and Analytics, University of Pennsylvania, Philadelphia, PA 19104, USA.
+9 12 2021
+2 2022
+26 11 2021
+01 2 2023
+76 102309102309
+This file is available for text mining. It may also be used consistent with the principles of fair use under the copyright law.
+Domain shift, the mismatch between training and testing data characteristics, causes significant degradation in the predictive performance in multi-source imaging scenarios. In medical imaging, the heterogeneity of population, scanners and acquisition protocols at different sites presents a significant domain shift challenge and has limited the widespread clinical adoption of machine learning models. Harmonization methods, which aim to learn a representation of data invariant to these differences are the prevalent tools to address domain shift, but they typically result in degradation of predictive accuracy. This paper takes a different perspective of the problem: we embrace this disharmony in data and design a simple but effective framework for tackling domain shift. The key idea, based on our theoretical arguments, is to build a pretrained classifier on the source data and adapt this model to new data. The classifier can be fine-tuned for intra-study domain adaptation. We can also tackle situations where we do not have access to ground-truth labels on target data; we show how one can use auxiliary tasks for adaptation; these tasks employ covariates such as age, gender and race which are easy to obtain but nevertheless correlated to the main task. We demonstrate substantial improvements in both intra-study domain adaptation and inter-study domain generalization on large-scale real-world 3D brain MRI datasets for classifying Alzheimer’s disease and schizophrenia.
+
+Graphical Abstract
+
+Heterogeneity
+Distribution shift
+Domain adaptation
+Domain generalization
+MRI
+
+pmc1 Introduction
+
+Deep learning models have shown great promise in several fields related to medicine, including medical imaging diagnostics (Esteva et al., 2017; Rathore et al., 2017) and predictive modeling (Bashyam et al., 2020b). Applications of medical imaging range from relatively common segmentation tasks (Menze et al., 2014), to more complex and high level decision-support functions, such as estimating different patterns of brain diseases (Dong et al., 2015; Varol et al., 2017; Chand et al., 2020) and producing personalized prognosis (Rathore et al., 2018). However, despite their promise, complex deep learning models tend to have poor reproducibility across hospitals, scanners, and patient cohorts, since these high-dimensional models can overfit specific studies, and hence achieve modest generalization performance (Davatzikos, 2019; Zhou et al., 2020). While a potential solution to this weakness is to train on very large databases of diverse studies, this approach is limited in several ways. Firstly, the characteristics of imaging devices change constantly, and hence even amply trained models are bound to face the same generalization challenges for new studies. Secondly, training labels, such as clinical or molecular classifications, or treatment measurements, are often scarce and hard to obtain. It is therefore impractical to expect that such ample training is possible in many problems. Finally, even if it were possible to train a model on large and diverse databases that would cover all possible variations across images, such a model would almost certainly sacrifice accuracy in favor of generalization under diverse conditions, i.e. it would have to rely on coarse imaging features that are stable across imaging devices and patient populations, and might fail to capture subtle and highly informative detail.
+
+Herein, we propose a domain adaptation framework, which overcomes these limitations by allowing trained models to adapt to new imaging conditions in two paradigms: intra-study adaptation and inter-study generalization. To improve the prediction accuracy of a model on heterogeneous images within each single study, intra-study adaptation strategy fast adapts a model which is pre-trained on the entire study to each sub-groups, e.g. age range, race, scanner type, by fine-tuning. We use label information in the re-training process in this situation. For adaptation between different studies, our inter-study generalization method can avoid using ground truth from the unseen study in view of the scarcity of labels in medical imaging. Fundamental in our approach is the utilization of “auxiliary tasks”, i.e., learning tasks that can be performed on readily available data from a new imaging condition (scanner, site, or population), and which can be used to adapt the primary trained model (e.g. disease classification) to these new conditions. An example of auxiliary tasks are estimation of readily available demographic characteristics, since such data is amply available in most practical settings. Essentially, the auxiliary tasks help an already trained model adapt to new imaging conditions, by adapting the features extracted by networks that are shared between the primary learning task and the auxiliary tasks. We conducted extensive experiments on clinical large-scale studies of 2,614 3D T1-MRI scans to evaluate the effectiveness of the proposed framework for both Alzheimer’s disease and schizophrenia classification tasks. Experimental results indicate that our proposed framework substantially improves the performance in both intra-study adaptation and inter-study generalization paradigms.
+
+Contributions
+
+Our main contributions are as follows. We discuss the necessity of adaptation instead of learning invariant representations for accurate prediction. We also introduce a regularization term in fine-tuning process of domain adaptation for diverse population and imaging devices.
+
+We propose a novel auxiliary task-based domain generalization method, that is able to adapt a model to an unseen study without accessing to prediction labels, with the guidance of easily accessible demographic information.
+
+We conduct extensive experiments on two classification tasks to evaluate the effectiveness of the proposed method. Our framework is superior to the baseline models according to the experimental comparison results.
+
+Organization of the manuscript
+
+We have organized this manuscript as follows. We first provide a detailed description of related work on domain adaptation and domain generalization in Section 2. Our goal is to compare and contrast existing methods and motivate our approach, which is described in detail in Section 3. Next, we discuss the iSTAGING and PHENOM consortia, and details of the experimental setup in Section 4, followed by experimental results on intra-study and inter-study classification in Section 5. We provide a detailed discussion of these results along with pointers for future work in Section 6.
+
+2 Related Work
+
+We discuss the related literature in this section. We focus on the main techniques that have been shown to be suitable to handle domain-shift in the medical imaging and computer vision literature.
+
+Non-deep-learning-based methods for harmonization
+
+Several non-deep learning-based methods for harmonization have been proposed to correct the bias in multi-site medical imaging data, e.g., the effect of the scanner. Methods based on parametric empirical Bayes (Morris, 1983) such as ComBat methods (Johnson et al., 2007; Pomponio et al., 2020) remove sources of variability, specifically site differences, by performing location and scale adjustments to the data. A linear model estimates the location and scale differences in cross-site data, while preserving other biologically-relevant covariates, such as sex and age. Methods such as Wachinger et al. (2021) explicitly add features pertaining to non-biological variability, e.g., scanner manufacturer’s ID or magnetic field strength, into the model to tackle the fact that Combat algorithms may be insensitive to these variabilities.
+
+Distribution alignment to learn invariant features
+
+Building representations of the source and target data that are invariant to their differences has be achieved using two main directions, (i) by employing discrepancy measures between two distributions and (ii) by using adversarial losses to build invariance. This suite of techniques are also called distribution alignment. Methods in first group use maximum mean discrepancy (MMD) (Tzeng et al., 2014; Long et al., 2015) or correlation distance (Sun et al., 2016) to measure distribution alignment. Adversarial adaptation methods such as Ganin et al. (2016); Tzeng et al. (2017); Liu et al. (2018); Meng et al. (2020b); Dinsdale et al. (2020) use a convolutional deep network to approximate the discrepancy. Domain classifier (discriminator) and domain-adversarial loss are used to learn features that are invariant across domains. The key issue with these methods is that the feature space of 3D MRI data is more complex than RGB data where these techniques have been primarily developed. This makes it difficult to measure distributional discrepancies and align the feature distribution for source and target data. Also, although adversarial adaptation techniques work well, optimizing adversarial objectives is very challenging and unstable in practice, especially for MRI data.
+
+Learning disentangled representations
+
+An alternative to aligning the entire distribution of features is to disentangle the representation; in this case one learns two sets of features, the first which are specific to source or target data (also known as nuisances) and a second set of features (sufficient statistics) that are common to the two and thereby useful to build a robust classifier. Mutual information-based criteria are popular to disentangle the features. For instance, Meng et al. (2020a) aims to extract generalized categorical features by explicitly disentangling categorical features and domain features via mutual information (MI) minimization. Since computing mutual information for real-valued features is very difficult, methods based on generative models such as Moyer et al. (2018, 2020) disentangle the latent representation using conditional variational autoencoders (VAEs) (Kingma and Welling, 2013; Sohn et al., 2015). Related works such as Dewey et al. (2020) disentangle the latents by extracting high-resolution anatomical information and low-dimensional scanner-related components separately. A common trait and disadvantage of these methods is that they require access to data from multiple sources during training. While this is reasonable for situations where agreements between different stake-holders make such sharing of data possible, it would be ideal if a method did not require data from all sources at the training time.
+
+Domain translation methods
+
+To better model variations in the data, domain translation methods seek to learn image-to-image transformation between the source and target tasks. Recent works such as Hoffman et al. (2018); Bashyam et al. (2020a); Robey et al. (2020); Robinson et al. (2020) utilize generative adversarial networks (GANs) (Goodfellow et al., 2014; Zhu et al., 2017; Huang et al., 2018) to learn source-to-target domain mapping for images, where cycle-consistency is enforced for learning a domain-invariant feature representation. Other works such as Shin et al. (2020) transfer the knowledge from MR images to positron emission tomography (PET) images by utilizing GANs for better diagnosis of Alzheimer’s disease. However, heterogeneity in data that comes from gender, age, ethnicity, and pathology, might not be preserved in an unpaired translation, especially when subjects are different in the source and target data. Furthermore, it is inefficient and ineffective to train multiple generative models in order to learn all mappings between multiple sites / domains. GANs, in particular for MRI data, are also notoriously difficult to train.
+
+Building robust representations using techniques in causality
+
+Several recent studies incorporate causal inference (Schölkopf, 2019) for learning robust representations. This is conceptually an extension of the idea of learning disentangled representations where one is interested in ensuring that the classifier only uses features that are causal predictors of the outcome. Causality-aware models (Arjovsky et al., 2019; Heinze-Deml and Meinshausen, 2021) learn invariant features using regularizers on domain-specific information in the training data; this allows the representation to generalize to new domains. There are also other works such as Li et al. (2020) that extend this idea, or Zhang et al. (2020b) which uses a graphical model to encode the domain variation and treats domain adaptation as Bayesian inference problem. Similarly Zhang et al. (2020a) build a causal graph to generate perturbation (intervention) for data augmentation. Wang et al. (2021) construct a structural causal model with bijective mapping functions to modify the covariates, such as the scanner, for counterfactual inference.
+
+Transfer learning and few-shot learning-based methods
+
+Few-shot learning methods seek to adapt a machine learning model to new classes with few labeled data by pretraining on other classes which may have abundant data available to train on. The broader problem is known as meta-learning or “learning to learn” (Thrun and Pratt, 2012). This has also found import in medical problems, e.g., Qiu et al. (2020) utilize meta-learning to learn a new task with few samples in cancer survival analysis, while Dou et al. (2019) introduce global class alignment as well as local sample clustering regularization in a meta-learning scheme for domain generalization. A theme that has emerged in recent literature is that transfer learning, i.e., training a classifier on the abundant training data using standard classification losses and fine-tuning it to the new data, is an effective strategy to tackle few-shot problems (Dhillon et al., 2019; Kolesnikov et al., 2019). Our methods for intra-study domain adaptation, where we pretrain a classifier on all available data but adapt it to data from a specific sub-group of the population, e.g., all people within a specific age-group, are directly motivated from the success of transfer and few-shot learning.
+
+3 Methods
+
+This section gives the details of our technical approach. We will first introduce notation and concepts using intra-study domain generalization problems where we also provide theoretical arguments that are the foundation of our approach. We then elaborate upon our techniques for inter-study domain generalization.
+
+3.1 Problem Formulation
+
+Let (x, y) denote the input datum and ground-truth labels, respectively. Labels y ∈ C belong to a finite set. The training dataset consists of N samples D={(xi,yi)i=1N} where each pair is drawn from the probability distribution (xi, yi) ~ P. A deep neural network is a machine learning model that predicts the probability of each output y ∈ C given the input datum xi using parameters (weights) θ∈ℝn. We denote the output of a deep network as a probability distribution over labels pθ(y | x) The goal of learning is to achieve good generalization, i.e., obtain accurate predictions over samples from the probability distribution P that may not be a part of the training set D. The best weights for this purpose are (1) θ*=argminθR(θ):=E(x,y)~P[−logpθ(y∣x)],
+
+where the prediction of the model is y^(θ)=argmaxy∈Cpθ^(y∣x). The quantity R(θ) is called the population risk of the model. However, we only have access to samples D from the distribution P and therefore find the best weights that fit a training dataset. This is achieved by minimizing the cross-entropy objective (2) θ^=argminθ1|D|∑(x,y)∈D−logpθ(y∣x)+Ω(θ),
+
+where Ω(θ) is a regularization term, e.g., Ω(θ)=λ∥θ∥22/2 for some constant λ &gt; 0, that controls the amount of over-fitting on the training data. This objective is minimized using stochastic gradient descent (Bottou, 2010).
+
+3.2 The Need for Adaptation
+
+If the training data is diverse, the training procedure above may not work well. To understand this, consider the case when the true distribution P is a mixture of two sub-groups, i.e., P=(Pg1+Pg2)/2 and similarly D=Dg1∪Dg2. In the context of the present paper, these sub-groups may consist of data from subjects within a specific age range, gender, race or inputs with the same scanner type. We seek to understand how the model θ^ trained using (2) on the entire training data performs on one of the groups, say g2, as compared to the best model trained only on Dg2. The development of Ben-David et al. (2010) shows that with probability at least 1 − δ over independent draws of the training dataset from the distribution P, (3) Rg2(θ^)≤Rg2(θ*g2)+cV−logδN+d(Pg1,Pg2)2+R(θ*);
+
+here c is a constant, Rg2(θ^) is the population risk on group g2 using our learned weights θ^ using the training data and Rg2(θ*g2) is the best population risk on g2 that one could have obtained by using (1) using data only from distribution Pg2. The constant V is the Vapnik-Chervonenkis dimension (Blumer et al., 1989) that characterizes the complexity of a deep network architecture. The third term d(Pg1,Pg2) is a measure of the diversity of data from the two sub-groups and the final term is the best population risk using data from both groups. This inequality, and an analogous expression for group g1, is particularly illuminating. Note that we want the population risk on group g2, i.e., the left-hand side Rg2(θ^) using our chosen weights θ^ to be as close as possible to the best population risk Rg2(θ*g2) for that sub-group. Ideally, the last three terms on the right-hand side should be small. First, if R(θ*) is large, i.e., there does not exist a well-performing model of our chosen architecture that can fit both sub-groups, then we expect the learned model θ^ to also work poorly on the group g2. This directly suggests that one must use a deep network with large learning capacity if the sub-groups are diverse. Second, larger the deep network, larger the capacity V and more the data N necessary to achieve a good generalization. Third, the term d(Pg1,Pg2) suggests that fixed the capacity V and number of data N, if data from the two sub-groups is diverse then the learned model θ^ may not be accurate on any of the sub-groups.
+
+In practice, data from different sub-groups such as age range, gender, race, and scanner type, can be quite diverse. The above discussion suggests that it is difficult to learn machine learning models that generalize well for each sub-group using data from the entire heterogeneous population. This is a fundamental hurdle to building performant machine learning models for clinical applications and we next propose a simple solution to this problem.
+
+3.3 Intra-Study Domain Generalization
+
+Consider the situation when we wish to obtain accurate predictions on one sub-group of the population, corresponding to the subset of the training data Dg ⊂ D. A naive way of doing so is to simply sequester the training dataset and employ (2) to learn a model θ^g using only data Dg. If we have m mutually exclusive sub-groups in the training data D=Dg1∪Dg2…∪Dgm, all say with equal amounts data N/m, then a classical bound (Wellner et al., 2013) on the generalization performance for each sub-group of this naive sequestering is given by (4) Rg(θ^g)≤Rg(θ*g)+cm(V−logδ)N;
+
+notice that the second term has degraded by a factor of m as compared to the situation if there were only one sub-group in the data. This degradation occurs because the model θ^g is fitted only on data from sub-group g. In this paper, we avoid this degradation by a simple modification to (2). Roughly speaking, our goal is to fit a classifier Dg on a restricted class of classifiers, namely the ones that are close to the classifier θ^ trained on the entire training dataset and reduce the factor of m above. To that end, we solve the optimization problem given by (5) θ^DRg=argminθ1|Dg|∑(x,y)∈Dg−logpθ(y∣x)+α2∥θ−θ^∥22,
+
+where θ^ is the model trained on the entire study D using (2). The objective is quite similar to the cross-entropy objective in (2) except that we have included an additional term, which we call a “proximal” term, that depends upon the hyper-parameter α &gt; 0. This term encourages the new weights θ^g to be close to the original learned weights θ^. Roughly speaking, if α is large, the optimization problem keeps the weights close to the pre-trained weights θ^. It is therefore beneficial to pick a large value of α if the number of samples in the subset Dg is small, or Dg is too different from the rest of the training data in D. A small value of α is ideal for the complementary cases, namely if Dg has a large number of samples which enables fitting a low-variance classifier in (5), or if the sub-group Dg has data similar to the other sub-groups.
+
+The technical argument for intra-study domain generalization for a restricted class of classifiers
+
+We next present a mathematically precise argument for our intra-study domain generalization methodology using the doubly robust estimation framework (Reddi et al., 2015). We will work in the restricted setting of a kernel-based binary classifier, i.e., C = {−1, 1}, denoted by f : X ↦ Y, that maps the inputs x ∈ X to their labels y ∈ Y. In the kernel setting we can write f(x)=∑i=1Nθik(xi,x) where k(·, ·) is called the “kernel” that measures the similarity between a new datum x and datum xi from the training set. The parameters θi parametrize the classifier in terms of these similarities and are conceptually similar to the weights of a neural network. In this case, a bound on the Vapnik-Chervonenkis dimension V in (4) can be explicitly computed and the population risk which we denote by R(f) is a convex function of the classifier f. As done in (2), let f^ be the classifier (6) f^=argminf:Ω(f)≤ν1n∑i=1nℓ(f,xi,yi);
+
+that minimizes the average misprediction loss ℓ(f, xi, yi) over all the training data. We have written the regularization Ω(θ) in (2) slightly differently here. We have written the training as a constrained minimization problem with the constraint Ω(f) ≤ ν; the two versions are equivalent to each other. In the kernel setting, the regularization akin to Ω(θ)=λ∥θ∥22/2 employed in (2) is written as Ω(f)=λ∥f∥2/2=12∑i,jθiθjk(xi,xj) where the norm is an appropriate function-space norm (the so-called Reproducing Kernel Hilbert Space (RKHS) norm). The error bound from (4) now looks like (7) Rg(f^g)≤Rg(f*g)+cm(ν2Tr(K)−logδ)N,
+
+with probability at least 1 − δ over draws of the dataset (Bartlett and Mendelson, 2002); here c &gt; 0 is a constant, Tr(K) is the trace of a certain kernel matrix of the training dataset and f* is the classifier that minimizes the population risk on the distribution P.
+
+If we now perform intra-study domain generalization to fit data from sub-group g, we should compute (8) f^DRg=argminf:Ω(f−f^)≤νDR1|Dg|∑(x,y)∈Dgℓ(f,x,y);
+
+the important thing to note here is that we are restricting the solution to be in the neighborhood of the pre-trained classifier f^ using the regularization Ω(f−f^)≤νDR. The result from Reddi et al. (2015, Theorem 4) then gives the following: with probability at least 1 − δ over different draws of the training dataset, (9) Rg(f^DRg)≤Rg(f*g)+cν′2Tr(K)−logδN+c′∥f^∥N.
+
+where ν′=νDR+ν2Tr(K)−logδN. The most important aspect of the above inequality, that directly motivates our approach in this paper, is that we have traded off the multiplicative factor of m in (7) with the additive term proportional to ∥f^∥N. If the norm of the pretrained classifier ∥f^∥ is small (conceptually this means that the hypothesis f^ is a “simple” function) then the right-hand side of (9) can be much smaller than that of (7). There are recent theoretical results that suggest that even non-kernel-based classifiers such as deep networks when trained with stochastic optimization algorithms result in simple hypotheses (Belkin et al., 2019). Roughly speaking, we have traded the variance in the classifier caused by the small sample size in (7) for the bias in (9) that arises from restricting the class of functions that are fitted to the new sub-group. Doing so is likely to be beneficial if the sub-group g has few samples.
+
+3.4 Inter-Study Domain Generalization
+
+In this section, we extend our arguments to inter-study domain generalization. Our approach builds upon intra-study generalization described in the previous section. In simple words, we would like to pre-train a classifier on the source study using (2) and then adapt (or fine-tune) it to data from the target study (5). The crucial difference however is that we may not have access to the ground-truth labels of the data from the target study and therefore cannot directly employ (5). We must therefore adapt the pre-trained classifier using some other means, which leads us to our main innovation for inter-study domain generalization.
+
+Using auxiliary tasks for domain generalization
+
+Let us denote the training data for the source study by Ds={(xi,yi,yai)}i=1Ns. We assume that we have access to two kinds of ground-truth labels, the first yi are the labels for the primary task, e.g., predicting the cognitive normal versus Alzheimer’s disease. The labels yai a ∈ A for consist of auxiliary attributes such as age, gender and race. The ideal auxiliary attribute is something that is readily available on both the source and the target study, and is correlated with the primary task label. Given target study data Dt={(xi,yi,yai)}i=1Nt, our domain generalization framework from the previous section can be now employed as follows.
+
+We build a deep network with the architecture depicted in Fig. 1. It consists of three parts, a feature extractor whose weights we denote by θbase, a multi-layer neural network-based primary (main) classifier with weights φmain which takes these features as inputs and predicts the primary task labels and another auxiliary classifier with weights φaux which predicts all auxiliary labels using these features. Training these three networks proceeds in three steps discussed below.
+
+Step 1: Pretraining We pretrain a classifier on the source study to predict both labels of the primary task and the auxiliary labels. This involves solving (10) θ^base ,φ^main ,φ^aux =argmin1|Ds||A|∑a∈A∑(x,y,ya)∈D−logpθbase ,φmain (y∣x)+βaℓa(θbase ,φaux ,x,ya)+Ω(θbase ,φmain ,φaux ).
+
+We use multiple auxiliary tasks, each with its own specific mis-prediction loss ℓa and coefficients βa that are hyper-parameters chosen via cross-validation. This is step is analogous to building the classifier f^ in (6) using data from the entire training set.
+
+Step 2: Adaptation of the feature extractor We next fine-tune the pretrained feature extractor and the classifier for the auxiliary tasks using data from the target study. (11) θ^^base ,φ^aux =argminθbase ,φaux 1|Dt||A|∑a∈A∑(x,ya)∈Dtℓa(θbase ,φaux ,x,ya)+α2‖θbase −θ^base  ‖22.
+
+This step is a key innovation of our approach: since labels for auxiliary tasks such as age, gender and race are easily available, we can adapt the feature extractor to learn features that better suited to making predictions on the target data. Note that we do not perform any regularization on the weights of the auxiliary classifier, this enables large changes to the auxiliary classifier to predict the target data accurately. This step is similar to the fine-tuning step in (5) or its kernel version (8) but instead of using a proximal penalty on both θbase and φaux, we use the penalty only on θbase to let the auxiliary classifier fit to the target data without any constraints. The rationale of doing so is to let the auxiliary classifier capture the variability between the source and target data through the auxiliary tasks without changing the feature extractor significantly.
+
+Step 3: Adaptation of the primary task classifier With the feature extractor fixed to the its value θ^^base  from Step 2, we fine-tune the primary classifier on the source data to get (12) φ^^main =argminφmain 1|Ds|∑(x,y)∈Ds−logpθ^^base ,φmain (y∣x)+Ω(φmain −φ^main ).
+
+This step adapts the primary classifier to the modified features generated by θ^^base . Its goal is to obtain the primary classifier φ^^main  that can accurately classify the primary task on the source study using the modified features provided by the feature extractor θ^^base . Conceptually, this is nothing but the pretraining phase in (2) or (6) except that weights of the feature extractor do not change and weights of the primary classifier are the only ones that change.
+
+Step 4: Inference on new data from the target task is performed using weights of the feature extractor θ^^base  and weights of the primary classifier φ^^main .
+
+4 Experiments
+
+4.1 Materials
+
+We validate our proposed method on 2,614 3D T1-weighted brain magnetic resonance imaging (MRI) scans from two large-scale imaging consortia: iSTAGING (Habes et al., 2021) and PEHNOM (Satterthwaite et al., 2010; Wolf et al., 2014; Zhang et al., 2015; Zhu et al., 2016; Zhuo et al., 2016; Rozycki et al., 2018; Chand et al., 2020). In the iSTAGING consortium, we investigate data from three sites, including the Alzheimer’s Disease Neuroimaging Initiative (ADNI) (Jack Jr et al., 2008), Penn Memory Center (PENN), and the Australian Imaging, Biomarkers and Lifestyle (AIBL) (Ellis et al., 2010). Cognitive normal (CN) and Alzheimer’s disease (AD) are the two diagnosis groups that considered in this dataset. The detailed description and clinical variables including age, gender, and race, are shown in Table 1. In the PHENOM consortium, we use data from multiple centers, including Penn, China, and Munich. There are two diagnosis groups: normal control (NC) and Schizophrenia (SCZ) patients. A detailed description of clinical variables including age and gender is shown in Table 2. We also show site differences in terms of scanner type, magnetic strength, and acquisition parameters in Appendix A. For image preprocessing, we use a minimal pipeline since neural networks can extract rich features automatically. All images are first bias-field corrected with N4ITK (Tustison et al., 2010), and then aligned to a standard MNI (Fonov et al., 2009) space using ANTs (Avants et al., 2008). Registered images have 193 × 229 × 193 with 1 mm3 isotropic voxels. We perform intensity normalization on the data before feeding them into the network.
+
+4.2 Network and Implementations
+
+Our deep networks are designed to be small to improve memory requirements and computational efficiency; it is based on the architecture of Wen et al. (2020). The feature extractor consists of five blocks where each block consists of one convolution layer, batch-normalization (Ioffe and Szegedy, 2015), rectified linear units (ReLU) nonlinearity, and max pooling. We enlarge the receptive field by using a 5 × 5 × 5 convolutional kernel. A three-layer multilayer perceptron (MLP) with ReLU nonlinearity is used as the classifier for the primary task; the classifier for the auxiliary task is the same. More details of the architecture are provided in Appendix B. All models are implemented using PyTorch (Paszke et al., 2019).
+
+Hyper-parameters
+
+We are keenly interested in developing robust methods that perform well across a wide variety of evaluation benchmarks. Our architectures and hyper-parameters are consistent across all experiments. We use Adam (Kingma and Ba, 2014) with initial learning rate 10−4 and weight decay 10−5 for optimization. A learning rate scheduler with cyclic cosine annealing (He et al., 2019) is used for better convergence. We use batch size of 6 and train for 60 epochs. During training, we augment the input data using a Gaussian blur filter. For fine-tuning in intra-study domain adaptation experiments, we use λ = 0.1 and α = 0.01. For inter-study experiments, we choose βa = 1.0 for cross-entropy loss in auxiliary task, and βa = 0.1 for those who use Huber loss as loss function. We demonstrate a case study on hyper-parameter search in Section 5.4.
+
+Baselines and Experimental Setup
+
+We compare the performance of our proposed method with state-of-the-art algorithms such as Invariant Risk Minimization (IRM) (Arjovsky et al., 2019), Adversarial Discriminative Domain Adaptation (ADDA) (Tzeng et al., 2017), Domain-Adversarial Neural Network (DANN) (Ganin et al., 2016), and cross-modal transformer (Fusion) (Yang et al., 2021) for both AD classification and SCZ classification tasks as shown in Table 3 and Table 4. IRM, ADDA, and DANN learn domain-invariant features by different techniques, e.g., causality-aware model for IRM and distribution alignment for ADDA and DANN. Fusion learns feature embedding from multi-modal data using the self-attention mechanism in Transformer models in natural language processing. We used publicly available code by the original authors of these methods. These methods, in particular ADDA and DANN had extremely poor performance out of the box on our datasets and we therefore spent significant amounts of effort and time to search for hyper-parameters for the existing methods to be able to provide a fair comparison against them. In our setup, we use sex and age information as the additional modality besides MRI images as inputs to the model. TarOnly and SrcOnly serve as two baselines that are trained directly on the target site and trained only on the source study and tested on the target study separately. We can think of the accuracy of TarOnly as an upper-bound on the target-study classification accuracy because it is the only algorithm that is trained directly on the inputs and labels from the target.
+
+5 Results
+
+5.1 Intra-Study Alzheimer’s Disease Classification
+
+We perform Alzheimer’s disease (AD) classification on the ADNI, PENN, and AIBL studies from iSTAGING consortium separately. First, we train a base model on all available data for each study individually and then evaluate each base model using its classification accuracy across five-fold cross-validation. Next, we fine-tune the models by training on data from each domain-specific group to boost the classification accuracy. In ADNI, we fine-tune the base model to four age groups: 3.4% participants with age less than 60, 25.8% participants with age between 60 and 70, 51.5% participants with age between 70 and 80, and 19.3% participants with age greater than 80. As shown in Fig. 3 (a), the AD classification of each transfer model increased significantly compared to the corresponding base models in all age groups. Similarly, we split data in PENN study into three race groups: 77.4% Caucasians, 20.8% African American, and 1.8% Asian. We find that the mean classification accuracy increases and the variance is reduced for both Caucasians and African Americans in Fig. 3 (b). Since there are only 10 Asian subjects, we couldn’t observe any substantiative improvement in this group. For the AIBL study, images are collected from three types of Siemens scanner including 65.0% from Trio, 18.5% from Verio, 16.5% from Avanto. In Fig. 3 (c), we also observe a substantial improvement for all scanner subgroups. The domain adaptation approach can help in providing more precise and accurate predictions compared to the base model when domain-related information, such as age, race and scanner are available.
+
+5.2 Inter-Study Alzheimer’s Disease Classification
+
+We next demonstrate inter-study domain generalization to tackle domain shift. We use auxiliary task that are different from the primary task for training on the source study. In this work, we consider two supervised auxiliary tasks: sex classification and age prediction; the rationale for picking these auxiliary tasks is that they are both tasks where ground-truth labels are readily accessible. The pretrained feature extractor is then adapted with these auxiliary tasks on data from the target study. Next, the pre-trained classifier for primary task is regularized on features from the source-study extracted from the adapted feature extractor. Finally, we test the model with the adapted feature extractor and primary task classifier on data from the target study.
+
+As shown in Table 3, we perform AD classification on ADNI-1, ADNI-2 and PENN studies with one study as source study and the other two studies as target study respectively. For comparison, we train vanilla models (SrcOnly) on the source-studies and test the model on the target studies. We find that there are very large gaps between the testing accuracies of SrcOnly classifiers on target-studies and the validation results of the TarOnly models that are directly trained on the target-studies, highlighting poor generalization. For example, a SrcOnly model trained on ADNI-1 shows 78.84% accuracy when tested on PENN, which is much lower than the TarOnly accuracy 92.14%. In contrast, our auxiliary task-assisted adaptation improves test accuracies substantially on all source-target settings for every auxiliary task. We also report the comparison graphically in Fig. 4 and observe that our proposed models show higher accuracies and reduced uncertainty in target-study prediction compared to SrcOnly models. Most noticeably, auxiliary task with age regression outperforms the one with sex classification in nearly all setups. We believe the reason for this is that age regression is more challenging task than a binary classification task like sex classification where the classifier need not be changed much.
+
+5.3 Inter-Study Schizophrenia Classification
+
+Similar to the setup in Section 5.2, we also perform schizophrenia (SCZ) classification on the PHENOM consortium with three different studies: Penn, China, and Munich. Based on existing results on this data (as discussed in the following section) we believe this is a more challenging problem compared to AD classification. As shown in Table 4 and Fig. 5, the gap in accuracy between different studies in this case are rather significant. SrcOnly classifiers achieve around 50% classification accuracies when testing on target studies; this is chance accuracy for this binary classification problem. Our methods significantly increased the testing accuracies on the target-studies in all source-target settings for both auxiliary tasks compared the SrcOnly models.
+
+5.4 Hyper-parameter Selection
+
+We provide a case study on hyper-parameter search for AD classification on data from the iSTAGING consortium. In Fig. 6, we study the sensitivity of the proposed proximal term coefficient α in Eqs. (11) and the auxiliary task parameter βa in Eqs. (10) and we search for the optimal hyper-parameter values. We performed this study for one particular transfer experiment, namely training on PENN and adapting to data from ADNI-1 and ADNI-2 separately. We first tune the coefficient βa of the auxiliary tasks ([0.1, 0.5, 1.0] for sex classification and [0.01, 0.05, 0.10] for age regression). From Fig. 6 (a), we observe that the performance of the feature extractor adaptation on the target site consistently improves as we increase the coefficient βa for both sex and age auxiliary tasks. Age regression task is more sensitive to βa compared to sex classification. This experiment also suggests that our chosen values of βa, i.e., 1 for sex classification and 0.1 for age regression are good. Next, we tune coefficient α of the proposed regularization on the primary task (AD classification) classifier and search in the range [0.1, 0.5] with increments of 0.1 while fixing βa. As shown in Fig. 6 (b) and (c), for both auxiliary tasks, for each fixed βa, the primary task adaptation of the feature extractor achieves relatively low accuracy on the target task when the coefficient α of the proximal term is small. The plots also show that the accuracy increases as α goes from 0.1 to 0.4 and accuracy eventually saturates at 0.5, which suggests that a good choice for α is 0.5.
+
+5.5 Traditional Machine Learning v.s. Deep Learning
+
+In both Table 3 and Table 4, we provide a comparison of a radial basis function (RBF) kernel SVM trained on 145 brain anatomical region-of-interest (ROI) volumes extracted from the T-1 MR images with in-house tools (Doshi et al., 2013, 2016) and deep learning models directly trained on target-study (TarOnly), trained on source-study and tested on target-study (SrcOnly), and our proposed model (SrcAdapt). We observe that SVMs have essentially comparable performance, they have only slightly worse accuracy in general as compared to a deep network trained on the source study for both iSTAGING and PHENOM studies (SVM vs. SrcOnly columns). Similar observation has been reported in (Koutsouleris et al., 2015; Rozycki et al., 2018), which suggests that traditional machine learning algorithms, such as SVM, generalize better than deep learning algorithms. However, the SVM model in general performs better on target studies as compared to SrcOnly. The differences are quite dramatic in certain cases, e.g., source PENN and target ADNI-1 in iSTAGING gets a boost of about 20%. There are also some cases when the SVM is worse, e.g., source ADNI-2 and target PENN. As compared to this, the accuracy of SrcAdapt is consistently higher than both SrcOnly and SVM. There are some instances where this does not hold, e.g., source Munich and Target China.
+
+6 Discussion
+
+Wide adoption of deep learning in medical imaging has been challenged by domain shift, i.e., changes in imaging characteristics/protocols across different sites and populations, which can significantly decrease generalization performance of models learned in a reference dataset. In this work, we present a systematic framework for improving the prediction accuracy of a deep learning model on both single-study and multi-study data with shifted distributions. In the single-study scenario, we adopt transfer learning with a weight-constraint penalty term to fine-tune a pre-trained model with a sub-group of data, e.g., age range, race, and scanner type. In the multi-study scenario, we adapt a source study-trained model to the target-study with the assistance of the auxiliary task, e.g., sex classification and age regression, which is widely accessible in the target domain and helps capture imaging characteristics of domain shift. By leveraging the demographic information of each participant, we train the primary task (prediction) and auxiliary task simultaneously with the source-study data where features are extracted for both tasks. To generalize the model on the target-study, we fine-tune the feature-extractor by training on the auxiliary task and regularize the parameters associated with the primary task (prediction) by re-playing on the source-study. From extensive experiments, we observed that our method significantly improved the models’ prediction accuracy and stability for different age, race, and scanner groups in single-study scenarios. Additionally, both sex and age-based auxiliary tasks helped in transferring models between studies when labels are not available in the target-study.
+
+Transfer learning and domain-shift remediation might help reduce health care disparities
+
+Biomedical data inequality between different age, ethnic, and scanner groups is set to generate new health care disparities (Gao and Cui, 2020). Insufficient training data in a particular group might lead to under-trained deep learning model with sub-optimal prediction performance. Thus, the health care received by the data-disadvantaged minority groups may be weakened. For example, in ADNI dataset, there’s only 19.3% participants with age greater than 80, whereas 51.5% of the participants are aged between 70 and 80. The AD classification accuracy for participants in the age group 70 − 80 is 90.14% and 88.62% for &gt; 80 age group. Biases from such data inequalities among age groups can be partially remedied by transfer learning. The transferred model on age group &gt; 80 achieved 97.10% accuracy in AD classification. Similarly, for ethnic groups, we improved the prediction accuracy in African-American group who represented 20.8% of the PENN dataset from 95.36% to 98.15%. On the other hand, transfer learning also helps in the majority groups. For example, the prediction accuracy of Caucasians (77.4% in PENN) is 90.23% and a transferred model reached 97.93%. Similarly, in scanner groups, Siemens Trio contributed 65.0% in AIBL dataset which has an AD classification accuracy of 90.88%, whereas the improved model achieved 98.51%.
+
+Pathology-specific classification benefits from gender and age guided features
+
+In the inter-study domain generalization experiments, we utilize gender and age guided auxiliary tasks to help adapt a model trained on the source study to the target study for two disease-specific classification tasks, namely Alzheimer’s disease and schizophrenia classification. We observed that high-level information like age and gender helped in extracting neuroimaging-related features for disease classification across studies, presumably because the domain shift in imaging features used for the auxiliary tasks was accounted for in a way that also helped the main (disease) classification tasks. We also find that age prediction consistently outperforms sex classification as an auxiliary task, in all experimental setups for both diseases (Alzheimer’s disease and schizophrenia). This might be due to the fact that brain aging is closely connected to neurodegeneration. Since brain shrinkage in different regions is associated with many diseases, age prediction is likely to naturally help in correcting for domain shift in pathology-specific features. This is also reported in (Bashyam et al., 2020b) where a brain age prediction model could better capture high-level abstract neuroimaging features in transfer learning.
+
+Deep learning models generalize poorly under small sample size
+
+In the schizophrenia classification experiments, the PHENOM consortium consists of 227, 142, and 302 subjects in Penn, China, and Munich datasets separately. Since the neuropathologic patterns of schizophrenia are indistinct and varied, and the training samples are limited, the classification task is difficult. We observed that models trained on one study could not generalize to another study. For example, model trained on Penn achieved 73.12% prediction accuracy but only 51.02% is reported when testing on Munich. A similar phenomenon has been reported in (Bashyam et al., 2020a) for schizophrenia classification with neural networks on MR images. In contrast, traditional machine learning algorithms (Koutsouleris et al., 2015; Rozycki et al., 2018), such as supported vector machine (SVM), have shown adequate generalization ability on human-designed features, e.g., regional volumetric maps (RAVENS) (Davatzikos et al., 2001) that quantify gray matter volume at each voxel, extracted from MR images. By utilizing the proposed method, we improved the classification accuracy substantially on the target-study.
+
+The proposed framework can easily be adapted to any auxiliary tasks that are accessible to different applications. One possible direction for future research is to explore the generalizability of self-supervised learning, e.g. contrastive learning, when labels are not available.
+
+Acknowledgments
+
+This work was supported by the National Institute on Aging (grant numbers RF1AG054409 and U01AG068057) and the National Institute of Mental Health (grant number R01MH112070). Pratik Chaudhari would like to acknowledge the support of cloud computing credits through the Amazon Machine Learning Research Award.
+
+A Site differences
+
+We show the MRI scanner manufacturers, magnetic strength, and acquisition protocols, such as repetition time (TR), time to echo (TE), inversion time (TI), and field-of-view (FOV) in Table 5.
+
+Table 5: Scanner manufacturers and acquisition protocols cross studies.
+
+Study	Scanner	Mag Strength	TR (ms)	TE (ms)	TI (ms)	FOV (mm)	
+ADNI-1	GE, Philips, Siemens	1.5T	1900	2.98	900	250 × 256 × 256	
+ADNI-2/GO	GE, Philips, Siemens	3.0T	2300	3.16	900	208 × 240 × 256	
+PENN	Siemens	3.0T	1600	3.87	950	-	
+AIBL	Siemens	1.5T, 3.0T	1900	2.13	900	240 × 256 × 160	
+Penn	Siemens	3.0T	1810	3.51	1100	240 × 180 × 160	
+China	GE	3.0T	8.2	3.2	450	256 × 256 × 188	
+Munich	Siemens	1.5T	11.6	4.9	-	230 × 256 × 126	
+The scans are sampled from diverse scanner manufacturers and acquisition protocols cross-studies, which indicates the strong heterogeneous property of the data.
+
+B Details of the neural architecture
+
+Table 6: Feature extractor network.
+
+Layer	Kernel Size	Feature #	Stride	Padding	Out Size	
+Conv + BN + ReLU	5 × 5 × 5	8	1	1	8 × 193 × 229 × 193	
+MaxPool	2 × 2 × 2	-	2	adaptive	8 × 97 × 115 × 97	
+Conv + BN + ReLU	5 × 5 × 5	16	1	1	16 × 97 × 115 × 97	
+MaxPool	2 × 2 × 2	-	2	adaptive	16 × 49 × 58 × 49	
+Conv + BN + ReLU	5 × 5 × 5	32	1	1	32 × 49 × 58 × 49	
+MaxPool	2 × 2 × 2	-	2	adaptive	32 × 25 × 29 × 25	
+Conv + BN + ReLU	5 × 5 × 5	64	1	1	64 × 25 × 29 × 25	
+MaxPool	2 × 2 × 2	-	2	adaptive	64 × 13 × 15 × 13	
+Conv + BN + ReLU	5 × 5 × 5	128	1	1	128 × 13 × 15 × 13	
+MaxPool	2 × 2 × 2	-	2	adaptive	128 × 7 × 8 × 7	
+Padding for max-pooling layers depends on the input: columns of zeros are added along a dimension until the size along this dimension is a multiple of the stride size.
+
+Table 7: Architecture of the classifier for the primary and auxiliary task.
+
+Layer	Feature #	Dropout Rate	Out Size	
+Dropout	-	0.5	19,200	
+Linear + ReLU	1,300	-	1,300	
+Linear + ReLU	50	-	50	
+Linear	n	-	n	
+The feature size (n) of the final layer is depends on the task; for sex classification the output has two logits whereas for age regression, the output is single real-valued output.
+
+Figure 1: Inter-study domain generalization framework.
+
+There are four sequential phases in the framework: (a) pre-train, (b) adaptation, (c) regularization, and (d) inference. We use source-study data Ds in phase (a) and (c); target-study data Dt in phase (b) and (d). The source and target data flows are denoted as solid and dashed lines. White and grey blocks indicate trainable network and frozen network separately. We have denoted the weights of the various blocks in the picture, which are computed using Eqs. (10) to (12).
+
+Figure 2: t-SNE (Van der Maaten and Hinton, 2008) embeddings of the features for ADNI-1 and ADNI-2 studies from a model trained on PENN.
+
+Colors denote the ground-truth labels. Translucent markers and opaque markers denote the embeddings before and after adaptation respectively. The figures show 2D t-SNE embeddings mapped from high-dimensional features that are extracted from the feature extractor. We observe that samples (translucent markers) from two two categories are entangled with each other before adaptation. After performing auxiliary task based adaptation, the samples (opaque markers) are well separated to two groups.
+
+Figure 3: Intra-study Alzheimer’s disease classification accuracy on domain-specific groups in iSTAGING consortium.
+
+The transfer (adapted) models in each sub-group achieve higher accuracies and reduced variance compared to the base models in all studies.
+
+Figure 4: Alzheimer’s disease classification accuracy comparison in iSTAGING consortium.
+
+We show results with auxiliary tasks of both sex and age predictions. SrcOnly and TarOnly are vanilla models trained on source-study and target-study respectively. TarAdapt and SrcReg corresponding to the two adaptation steps in the framework. Adapted models show substantial improvements.
+
+Figure 5: Schizophrenia classification accuracy comparison in PHENOM consortium.
+
+We show results with auxiliary tasks of both sex and age predictions. SrcOnly and TarOnly are vanilla models trained on source-study and target-study respectively. TarAdapt and SrcReg corresponding to the two adaptation steps in the framework. Adapted models show substantial improvements.
+
+Figure 6: Hyper-parameters (βa in Eqs. (10) and α in Eqs. (11)) selection case study when training on PENN and testing on ADNI-1 and ADNI-2 in iSTAGING consortium.
+
+In (a), we tune βa in range 0.1 to 1.0 for sex classification task and in range 0.01 to 0.10 for age regression task. In (b) and (c), we tune α in range 0.1 to 0.5 for each fixed βa separately in both sex and age prediction settings.
+
+Table 1: Summary of participant demographics in iSTAGING consortium.
+
+Study	Subjects	CN	AD	Age	Gender (F/M)	Race (W/AA/A)	
+ADNI-1	369	178	191	75.5 ± 6.5 [55.0, 90.9]	178 / 191	341 / 21 / 5	
+ADNI-2/GO	407	261	146	73.1 ± 6.8 [55.4, 90.3]	206 / 201	369 / 21 / 9	
+ADNI-3	27	24	3	71.0 ± 7.1 [55.8, 89.2]	18 / 9	27 / 0 / 0	
+PENN	572	229	343	72.0 ± 11.9 [22.6, 95.2]	361 / 211	432 / 116 / 10	
+AIBL	568	481	87	-	-	-	
+CN and AD denote cognitive normal and Alzheimer’s disease respectively. Age is described in format: mean ± std [min, max]. F and M in gender represent female and male separately. W, AA and A in race represent white, African American, and Asian separately.
+
+Table 2: Summary of participant demographics in PHENOM consortium.
+
+Study	Subjects	NC	SCZ	Age	Gender (F/M)	Field Strength	
+Penn	227	131	96	30.5 ± 7.2 [16.2, 45.0]	121 / 106	3.0T	
+China	142	76	66	31.2 ± 7.5 [17.0, 45.0]	69 / 73	3.0T	
+Munich	302	157	145	29.4 ± 6.9 [18.0, 45.0]	79 / 223	1.5T	
+NC and SCZ denote normal control and Schizophrenia respectively. Age is described in format: mean ± std [min, max]. F and M in gender represent female and male separately.
+
+Table 3: Inter-study Alzheimer’s disease classification accuracy (%) for the iSTAGING consortium data.
+
+	Study	TarOnly	SrcOnly	SVM	IRM	ADDA	DANN	Fusion	Sex	Age	
+JointSup	TarAdapt	SrcReg	JointSup	TarAdapt	SrcReg	
+Source	ADNI-1	-	84.55	86.99	86.98	-	-	84.51	84.54	-	-	78.60	-	-	
+(1.82)	(1.67)	(4.36)	(5.97)	(4.07)	(9.47)	
+Target	ADNI-2	90.91	86.24	83.54	88.95	83.64	86.36	85.48	80.31	77.13	87.22	80.14	88.70	89.68	
+(1.49)	(6.65)	(4.44)	(2.96)	(2.65)	(3.27)	(3.14)	(7.53)	(8.82)	(4.03)	(8.58)	(3.13)	(1.47)	
+Target	PENN	92.14	78.84	81.72	80.59	76.36	79.21	80.39	82.69	83.92	86.89	78.68	87.93	89.33	
+(2.76)	(5.63)	(2.47)	(4.15)	(3.07)	(2.55)	(4.15)	(1.53)	(3.69)	(3.26)	(4.31)	(3.98)	(3.01)	
+Source	ADNI-2	-	90.91	86.49	89.43	-	-	88.95	89.67	-	-	90.91	-	-	
+(1.49)	(4.39)	(2.53)	(2.18)	(5.34)	(3.15)	
+Target	ADNI-1	84.55	82.92	79.68	82.92	81.74	82.94	83.76	80.21	80.21	85.08	82.38	83.47	84.82	
+(1.82)	(5.14)	(2.21)	(4.25)	(1.31)	(3.75)	(4.88)	(2.66)	(3.16)	(3.03)	(4.48)	(6.54)	(5.59)	
+Target	PENN	92.14	79.54	68.47	80.81	75.40	80.37	76.93	78.30	78.16	83.22	80.59	82.86	84.78	
+(2.76)	(2.46)	(6.37)	(3.27)	(3.26)	(4.74)	(7.56)	(6.14)	(6.01)	(4.76)	(4.44)	(2.90)	(4.88)	
+Source	PENN	-	92.14	90.85	91.96	-	-	92.48	91.26	-	-	92.67	-	-	
+(2.76)	(1.47)	(2.83)	(0.89)	(2.33)	(2.61)	
+Target	ADNI-1	84.55	58.52	78.86	58.79	59.27	66.37	59.07	53.39	65.14	74.59	57.73	65.07	76.16	
+(1.82)	(5.72)	(1.85)	(3.51)	(4.24)	(5.75)	(5.02)	(1.72)	(5.17)	(3.40)	(6.10)	(6.47)	(4.23)	
+Target	ADNI-2	90.91	53.51	69.79	49.86	54.83	63.85	52.08	38.82	61.78	73.34	47.94	66.34	80.85	
+(1.49)	(12.57)	(2.30)	(6.05)	(3.86)	(3.85)	(10.01)	(4.22)	(4.90)	(3.54)	(9.45)	(4.28)	(2.89)	
+We report the mean accuracy and standard deviation (in round brackets) across 5-fold cross-validation 1. We use sex classification and age regression as auxiliary tasks separately. TarOnly and SrcOnly denote models trained on target-study and source-study respectively. JointSup represents training on both primary and auxiliary tasks. TarAdapt and SrcReg are adapted models from the second and third phases of the proposed method. Adapted models achieve higher accuracies and reduced variance compared to SrcOnly models.
+
+Table 4: Inter-study Schizophrenia classification accuracy (%) comparison in PHENOM consortium.
+
+	Study	TarOnly	SrcOnly	SVM	IRM	ADDA	DANN	Fusion	Sex	Age	
+JointSup	TarAdapt	SrcReg	JointSup	TarAdapt	SrcReg	
+Source	Penn	-	73.12	66.96	71.37	-	-	73.13	73.15	-	-	74.46	-	-	
+(2.63)	(2.00)	(1.21)	(3.17)	(4.54)	(3.46)	
+Target	China	78.94	54.29	65.52	51.40	53.84	58.30	57.00	55.67	61.97	66.97	53.55	62.02	68.37	
+(5.65)	(8.81)	(8.62)	(5.57)	(2.75)	(5.74)	(4.41)	(8.41)	(4.08)	(11.15)	(2.94)	(6.94)	(5.46)	
+Target	Munich	64.22	51.02	62.22	48.67	50.74	53.74	51.99	46.68	54.93	62.58	55.30	56.98	62.24	
+(4.56)	(3.74)	(4.99)	(2.11)	(2.36)	(2.84)	(2.68)	(3.57)	(6.02)	(4.86)	(4.21)	(3.91)	(4.26)	
+Source	China	-	78.94	75.27	77.51	-	-	76.76	73.99	-	-	74.01	-	-	
+(5.65)	(7.68)	(4.47)	(5.76)	(3.19)	(4.84)	
+Target	Penn	73.12	57.71	68.77	55.04	57.56	58.30	59.45	51.55	57.67	63.02	56.84	66.50	67.38	
+(2.63)	(5.66)	(5.33)	(6.51)	(3.85)	(3.26)	(1.50)	(6.46)	(5.02)	(4.24)	(5.05)	(8.08)	(4.78)	
+Target	Munich	64.22	51.64	69.18	54.28	54.38	59.38	55.63	49.35	53.93	55.63	51.34	59.92	60.63	
+(4.56)	(2.91)	(5.52)	(4.09)	(2.65)	(4.18)	(4.74)	(2.85)	(6.43)	(5.19)	(3.80)	(4.74)	(5.74)	
+Source	Munich	-	64.22	65.23	67.54	-	-	66.25	65.23	-	-	66.87	-	-	
+(4.56)	(3.12)	(5.47)	(5.26)	(3.95)	(6.51)	
+Target	Penn	73.12	48.89	65.67	47.11	54.64	57.29	48.96	52.39	50.67	59.03	44.95	60.35	66.16	
+(2.63)	(4.57)	(5.62)	(6.66)	(4.72)	(2.74)	(5.59)	(4.88)	(3.55)	(1.65)	(3.45)	(5.69)	(3.11)	
+Target	China	78.94	46.48	76.08	46.48	51.04	54.7 fc	46.48	46.48	53.52	66.75	45.07	59.93	66.85	
+(5.65)	(1.09)	(9.60)	(1.09)	(3.72)	4.83)	(0.10)	(1.09)	(5.10)	(5.19)	(2.55)	(8.83)	(3.44)	
+We report the mean accuracy and standard deviation (in round brackets) across 5-fold cross-validation. We use sex classification and age regression as auxiliary tasks separately. TarOnly and SrcOnly denote models trained on target-study and source-study respectively. JointSup represents training on both primary and auxiliary tasks. TarAdapt and SrcReg are adapted models from the second and third phases of the proposed method. Adapted models achieve higher accuracies and reduced variance compared to SrcOnly models.
+
+Highlights
+
+Large-scale study on intra- and inter-dataset model generalization ability
+
+Simple and effective domain adaptation and generalization strategies
+
+Transfer learning helps in reducing the health care disparities
+
+Pathology-specific diagnosis benefits from demographic-guided features
+
+This is a PDF file of an unedited manuscript that has been accepted for publication. As a service to our customers we are providing this early version of the manuscript. The manuscript will undergo copyediting, typesetting, and review of the resulting proof before it is published in its final form. Please note that during the production process errors may be discovered which could affect the content, and all legal disclaimers that apply to the journal pertain.
+
+Declaration of Competing Interest
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+Credit Author Statment
+
+Rongguang Wang: Conceptualization; Investigation; Methodology; Formal analysis; Software; Validation; Visualization; Writing - original draft;
+
+Pratik Chaudhari: Conceptualization; Methodology; Formal analysis; Resources; Supervision; Writing - review &amp; editing;
+
+Christos Davatzikos: Conceptualization; Methodology; Funding acquisition; Project administration; Resources; Supervision; Writing - review &amp; editing.
+
+1 k-fold CV estimated variances could be biased as studied in (Bengio and Grandvalet, 2004; Bates et al., 2021).
+
+
+References
+
+Arjovsky M , Bottou L , Gulrajani I , and Lopez-Paz D (2019). Invariant risk minimization. arXiv preprint arXiv:1907.02893
+Avants BB , Epstein CL , Grossman M , and Gee JC (2008). Symmetric diffeomorphic image registration with cross-correlation: evaluating automated labeling of elderly and neurodegenerative brain. Medical image analysis, 12 (1 ):26–41.17659998
+Bartlett PL and Mendelson S (2002). Rademacher and gaussian complexities: Risk bounds and structural results. Journal of Machine Learning Research, 3 (Nov ):463–482.
+Bashyam VM , Doshi J , Erus G , Srinivasan D , Abdulkadir A , Habes M , Fan Y , Masters CL , Maruff P , Zhuo C , (2020a). Medical image harmonization using deep learning based canonical mapping: Toward robust and generalizable learning in imaging. arXiv preprint arXiv:2010.05355
+Bashyam VM , Erus G , Doshi J , Habes M , Nasrallah IM , Truelove-Hill M , Srinivasan D , Mamourian L , Pomponio R , Fan Y , (2020b). Mri signatures of brain age and disease over the lifespan based on a deep brain network and 14 468 individuals worldwide. Brain, 143 (7 ):2312–2324.32591831
+Bates S , Hastie T , and Tibshirani R (2021). Cross-validation: what does it estimate and how well does it do it? arXiv preprint arXiv:2104.00673
+Belkin M , Hsu D , Ma S , and Mandal S (2019). Reconciling modern machine-learning practice and the classical bias–variance trade-off. Proceedings of the National Academy of Sciences, 116 (32 ):15849–15854.
+Ben-David S , Blitzer J , Crammer K , Kulesza A , Pereira F , and Vaughan JW (2010). A theory of learning from different domains. Machine learning, 79 (1 ):151–175.
+Bengio Y and Grandvalet Y (2004). No unbiased estimator of the variance of k-fold cross-validation. Journal of machine learning research, 5 (Sep ):1089–1105.
+Blumer A , Ehrenfeucht A , Haussler D , and Warmuth MK (1989). Learnability and the vapnik-chervonenkis dimension. Journal of the ACM (JACM), 36 (4 ):929–965.
+Bottou L (2010). Large-scale machine learning with stochastic gradient descent. In Proceedings of COMPSTAT’2010, pages 177–186. Springer.
+Chand GB , Dwyer DB , Erus G , Sotiras A , Varol E , Srinivasan D , Doshi J , Pomponio R , Pigoni A , Dazzan P , (2020). Two distinct neuroanatomical subtypes of schizophrenia revealed using machine learning. Brain, 143 (3 ):1027–1038.32103250
+Davatzikos C (2019). Machine learning in neuroimaging: Progress and challenges. NeuroImage, 197 :652.30296563
+Davatzikos C , Genc A , Xu D , and Resnick SM (2001). Voxel-based morphometry using the ravens maps: methods and validation using simulated longitudinal atrophy. NeuroImage, 14 (6 ):1361–1369.11707092
+Dewey BE , Zuo L , Carass A , He Y , Liu Y , Mowry EM , Newsome S , Oh J , Calabresi PA , and Prince JL (2020). A disentangled latent space for cross-site mri harmonization. In International Conference on Medical Image Computing and Computer-Assisted Intervention, pages 720–729. Springer.
+Dhillon GS , Chaudhari P , Ravichandran A , and Soatto S (2019). A baseline for few-shot image classification. arXiv preprint arXiv:1909.02729
+Dinsdale NK , Jenkinson M , and Namburete AI (2020). Unlearning scanner bias for mri harmonisation. In International Conference on Medical Image Computing and Computer-Assisted Intervention, pages 369–378. Springer.
+Dong A , Honnorat N , Gaonkar B , and Davatzikos C (2015). Chimera: clustering of heterogeneous disease effects via distribution matching of imaging patterns. IEEE transactions on medical imaging, 35 (2 ):612–621.26452275
+Doshi J , Erus G , Ou Y , Gaonkar B , and Davatzikos C (2013). Multi-atlas skull-stripping. Academic radiology, 20 (12 ):1566–1576.24200484
+Doshi J , Erus G , Ou Y , Resnick SM , Gur RC , Gur RE , Satterthwaite TD , Furth S , Davatzikos C , Initiative AN , (2016). Muse: Multi-atlas region segmentation utilizing ensembles of registration algorithms and parameters, and locally optimal atlas selection. Neuroimage, 127 :186–195.26679328
+Dou Q , Castro DC , Kamnitsas K , and Glocker B (2019). Domain generalization via modelagnostic learning of semantic features. arXiv preprint arXiv:1910.13580
+Ellis KA , Rowe CC , Villemagne VL , Martins RN , Masters CL , Salvado O , Szoeke C , Ames D , Group A. R., (2010). Addressing population aging and alzheimer’s disease through the australian imaging biomarkers and lifestyle study: Collaboration with the alzheimer’s disease neuroimaging initiative. Alzheimer’s &amp; dementia, 6 (3 ):291–296.
+Esteva A , Kuprel B , Novoa RA , Ko J , Swetter SM , Blau HM , and Thrun S (2017). Dermatologist-level classification of skin cancer with deep neural networks. nature, 542 (7639 ):115–118.28117445
+Fonov VS , Evans AC , McKinstry RC , Almli C , and Collins D (2009). Unbiased nonlinear average age-appropriate brain templates from birth to adulthood. NeuroImage, (47 ):S102.
+Ganin Y , Ustinova E , Ajakan H , Germain P , Larochelle H , Laviolette F , Marchand M , and Lempitsky V (2016). Domain-adversarial training of neural networks. The Journal of Machine Learning Research, 17 (1 ):2096–2030.
+Gao Y and Cui Y (2020). Deep transfer learning for reducing health care disparities arising from biomedical data inequality. Nature communications, 11 (1 ):1–8.
+Goodfellow I , Pouget-Abadie J , Mirza M , Xu B , Warde-Farley D , Ozair S , Courville A , and Bengio Y (2014). Generative adversarial nets. In Advances in neural information processing systems, pages 2672–2680.
+Habes M , Pomponio R , Shou H , Doshi J , Mamourian E , Erus G , Nasrallah I , Launer LJ , Rashid T , Bilgel M , (2021). The brain chart of aging: Machine-learning analytics reveals links between brain aging, white matter disease, amyloid burden, and cognition in the istaging consortium of 10,216 harmonized mr scans. Alzheimer’s &amp; Dementia, 17 (1 ):89–102.
+He T , Zhang Z , Zhang H , Zhang Z , Xie J , and Li M (2019). Bag of tricks for image classification with convolutional neural networks. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 558–567.
+Heinze-Deml C and Meinshausen N (2021). Conditional variance penalties and domain shift robustness. Machine Learning, 110 (2 ):303–348.
+Hoffman J , Tzeng E , Park T , Zhu J-Y , Isola P , Saenko K , Efros A , and Darrell T (2018). Cycada: Cycle-consistent adversarial domain adaptation. In International conference on machine learning, pages 1989–1998. PMLR.
+Huang X , Liu M-Y , Belongie S , and Kautz J (2018). Multimodal unsupervised image-to-image translation. In Proceedings of the European conference on computer vision (ECCV), pages 172–189.
+Ioffe S and Szegedy C (2015). Batch normalization: Accelerating deep network training by reducing internal covariate shift. In International conference on machine learning, pages 448–456. PMLR.
+Jack CR Jr , Bernstein MA , Fox NC , Thompson P , Alexander G , Harvey D , Borowski B , Britson PJ , L. Whitwell J , Ward C , (2008). The alzheimer’s disease neuroimaging initiative (adni): Mri methods. Journal of Magnetic Resonance Imaging: An Official Journal of the International Society for Magnetic Resonance in Medicine, 27 (4 ):685–691.
+Johnson WE , Li C , and Rabinovic A (2007). Adjusting batch effects in microarray expression data using empirical bayes methods. Biostatistics, 8 (1 ):118–127.16632515
+Kingma DP and Ba J (2014). Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980
+Kingma DP and Welling M (2013). Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114
+Kolesnikov A , Beyer L , Zhai X , Puigcerver J , Yung J , Gelly S , and Houlsby N (2019). Big transfer (bit): General visual representation learning. arXiv preprint arXiv:1912.11370, 6 (2 ):8.
+Koutsouleris N , Meisenzahl EM , Borgwardt S , Riecher-Rössler A , Frodl T , Kambeitz J , Köhler Y , Falkai P , Möller H-J , Reiser M , (2015). Individualized differential diagnosis of schizophrenia and mood disorders using neuroanatomical biomarkers. Brain, 138 (7 ):2059–2073.25935725
+Li H , Wang Y , Wan R , Wang S , Li T-Q , and Kot AC (2020). Domain generalization for medical imaging classification with linear-dependency regularization. arXiv preprint arXiv:2009.12829
+Liu Y-C , Yeh Y-Y , Fu T-C , Wang S-D , Chiu W-C , and Wang Y-CF (2018). Detach and adapt: Learning cross-domain disentangled deep representation. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 8867–8876.
+Long M , Cao Y , Wang J , and Jordan M (2015). Learning transferable features with deep adaptation networks. In International conference on machine learning, pages 97–105.
+Meng Q , Rueckert D , and Kainz B (2020a). Learning cross-domain generalizable features by representation disentanglement. arXiv preprint arXiv:2003.00321
+Meng Q , Rueckert D , and Kainz B (2020b). Unsupervised cross-domain image classification by distance metric guided feature alignment. In Medical Ultrasound, and Preterm, Perinatal and Paediatric Image Analysis, pages 146–157. Springer.
+Menze BH , Jakab A , Bauer S , Kalpathy-Cramer J , Farahani K , Kirby J , Burren Y , Porz N , Slotboom J , Wiest R , (2014). The multimodal brain tumor image segmentation benchmark (brats). IEEE transactions on medical imaging, 34 (10 ):1993–2024.25494501
+Morris CN (1983). Parametric empirical bayes inference: theory and applications. Journal of the American statistical Association, 78 (381 ):47–55.
+Moyer D , Gao S , Brekelmans R , Galstyan A , and Ver Steeg G (2018). Invariant representations without adversarial training. In Advances in Neural Information Processing Systems, pages 9084–9093.
+Moyer D , Ver Steeg G , Tax CM , and Thompson PM (2020). Scanner invariant representations for diffusion mri harmonization. Magnetic Resonance in Medicine.
+Paszke A , Gross S , Massa F , Lerer A , Bradbury J , Chanan G , Killeen T , Lin Z , Gimelshein N , Antiga L , (2019). Pytorch: An imperative style, high-performance deep learning library. In Advances in neural information processing systems, pages 8026–8037.
+Pomponio R , Erus G , Habes M , Doshi J , Srinivasan D , Mamourian E , Bashyam V , Nasrallah IM , Satterthwaite TD , Fan Y , (2020). Harmonization of large mri datasets for the analysis of brain imaging patterns throughout the lifespan. NeuroImage, 208 :116450.31821869
+Qiu YL , Zheng H , Devos A , Selby H , and Gevaert O (2020). A meta-learning approach for genomic survival analysis. Nature communications, 11 (1 ):1–11.
+Rathore S , Akbari H , Rozycki M , Abdullah KG , Nasrallah MP , Binder ZA , Davuluri RV , Lustig RA , Dahmane N , Bilello M , (2018). Radiomic mri signature reveals three distinct subtypes of glioblastoma with different clinical and molecular characteristics, offering prognostic value beyond idh1. Scientific reports, 8 (1 ):1–12.29311619
+Rathore S , Habes M , Iftikhar MA , Shacklett A , and Davatzikos C (2017). A review on neuroimaging-based classification studies and associated feature extraction methods for alzheimer’s disease and its prodromal stages. NeuroImage, 155 :530–548.28414186
+Reddi S , Poczos B , and Smola A (2015). Doubly robust covariate shift correction. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 29 .
+Robey A , Hassani H , and Pappas GJ (2020). Model-based robust deep learning. arXiv preprint arXiv:2005.10247
+Robinson R , Dou Q , Castro D , Kamnitsas K , de Groot M , Summers R , Rueckert D , and Glocker B (2020). Image-level harmonization of multi-site data using image-and-spatial transformer networks. arXiv preprint arXiv:2006.16741
+Rozycki M , Satterthwaite TD , Koutsouleris N , Erus G , Doshi J , Wolf DH , Fan Y , Gur RE , Gur RC , Meisenzahl EM , (2018). Multisite machine learning analysis provides a robust structural imaging signature of schizophrenia detectable across diverse patient populations and within individuals. Schizophrenia bulletin, 44 (5 ):1035–1044.29186619
+Satterthwaite TD , Wolf DH , Loughead J , Ruparel K , Valdez JN , Siegel SJ , Kohler CG , Gur RE , and Gur RC (2010). Association of enhanced limbic response to threat with decreased cortical facial recognition memory response in schizophrenia. American Journal of Psychiatry, 167 (4 ):418–426.
+Schölkopf B (2019). Causality for machine learning. arXiv preprint arXiv:1911.10500
+Shin H-C , Ihsani A , Xu Z , Mandava S , Sreenivas ST , Forster C , Cha J , Initiative ADN , (2020). Gandalf: Generative adversarial networks with discriminator-adaptive loss fine-tuning for alzheimer’s disease diagnosis from mri. In International Conference on Medical Image Computing and Computer-Assisted Intervention, pages 688–697. Springer.
+Sohn K , Lee H , and Yan X (2015). Learning structured output representation using deep conditional generative models. Advances in neural information processing systems, 28 :3483–3491.
+Sun B , Feng J , and Saenko K (2016). Return of frustratingly easy domain adaptation. In Thirtieth AAAI Conference on Artificial Intelligence.
+Thrun S and Pratt L (2012). Learning to learn. Springer Science &amp; Business Media.
+Tustison NJ , Avants BB , Cook PA , Zheng Y , Egan A , Yushkevich PA , and Gee JC (2010). N4itk: improved n3 bias correction. IEEE transactions on medical imaging, 29 (6 ):1310–1320.20378467
+Tzeng E , Hoffman J , Saenko K , and Darrell T (2017). Adversarial discriminative domain adaptation. In Proceedings of the IEEE conference on computer vision and pattern recognition, pages 7167–7176.
+Tzeng E , Hoffman J , Zhang N , Saenko K , and Darrell T (2014). Deep domain confusion: Maximizing for domain invariance. arXiv preprint arXiv:1412.3474
+Van der Maaten L and Hinton G (2008). Visualizing data using t-sne. Journal of machine learning research, 9 (11 ).
+Varol E , Sotiras A , Davatzikos C , Initiative ADN , (2017). Hydra: revealing heterogeneity of imaging and genetic patterns through a multiple max-margin discriminative analysis framework. Neuroimage, 145 :346–364.26923371
+Wachinger C , Rieckmann A , Pölsterl S , Initiative ADN , (2021). Detect and correct bias in multi-site neuroimaging datasets. Medical Image Analysis, 67 :101879.33152602
+Wang R , Chaudhari P , and Davatzikos C (2021). Harmonization with flow-based causal inference. arXiv preprint arXiv:2106.06845
+Wellner J (2013). Weak convergence and empirical processes: with applications to statistics. Springer Science &amp; Business Media.
+Wen J , Thibeau-Sutre E , Diaz-Melo M , Samper-González J , Routier A , Bottani S , Dormont D , Durrleman S , Burgos N , Colliot O , (2020). Convolutional neural networks for classification of alzheimer’s disease: Overview and reproducible evaluation. Medical Image Analysis, page 101694.32417716
+Wolf DH , Satterthwaite TD , Kantrowitz JJ , Katchmar N , Vandekar L , Elliott MA , and Ruparel K (2014). Amotivation in schizophrenia: integrated assessment with behavioral, clinical, and imaging measures. Schizophrenia bulletin, 40 (6 ):1328–1337.24657876
+Yang R , Zhang M , Hansen N , Xu H , and Wang X (2021). Learning vision-guided quadrupedal locomotion end-to-end with cross-modal transformers. arXiv preprint arXiv:2107.03996
+Zhang C , Zhang K , and Li Y (2020a). A causal view on robustness of neural networks. arXiv preprint arXiv:2005.01095
+Zhang K , Gong M , Stojanov P , Huang B , Liu Q , and Glymour C (2020b). Domain adaptation as a problem of inference on graphical models. arXiv preprint arXiv:2002.03278
+Zhang T , Koutsouleris N , Meisenzahl E , and Davatzikos C (2015). Heterogeneity of structural brain changes in subtypes of schizophrenia revealed using magnetic resonance imaging pattern analysis. Schizophrenia bulletin, 41 (1 ):74–84.25261565
+Zhou SK , Greenspan H , Davatzikos C , Duncan JS , van Ginneken B , Madabhushi A , Prince JL , Rueckert D , and Summers RM (2020). A review of deep learning in medical imaging: Image traits, technology trends, case studies with progress highlights, and future promises. arXiv preprint arXiv:2008.09104
+Zhu J , Zhuo C , Liu F , Xu L , and Yu C (2016). Neural substrates underlying delusions in schizophrenia. Scientific reports, 6 (1 ):1–10.28442746
+Zhu J-Y , Park T , Isola P , and Efros AA (2017). Unpaired image-to-image translation using cycle-consistent adversarial networks. In Proceedings of the IEEE international conference on computer vision, pages 2223–2232.
+Zhuo C , Ma X , Qu H , Wang L , Jia F , and Wang C (2016). Schizophrenia patients demonstrate both inter-voxel level and intra-voxel level white matter alterations. PLoS One, 11 (9 ):e0162656.27618693
